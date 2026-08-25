@@ -1,0 +1,15 @@
+        1日 2日 3日   勤務  夜勤
+職員A   *夜  休 *夜    2     2
+職員B    休  日  日    2     0
+職員C    日 *夜  休    2     1
+職員D    日  日  日    3     0
+希望休違反 = 0   勤務日数の偏り = 1   夜勤回数の偏り = 2   目的関数 = 3
+#size 4 3
+#shift A NON
+#shift B ODD
+#shift C DNO
+#shift D DDD
+#value pref 0
+#value unfair 1
+#value night_unfair 2
+#value penalty 3

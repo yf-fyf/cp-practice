@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# サイトの生成物（tools/build_site.py）
+.site/
+
+# Pages release output
+.pages/
+
+# 図の TikZ ビルド中間物（tools/build_figures.py）
+materials/figures/_build/
+
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.claude/
+.DS_Store
+*.swp
+*~
+.vscode/
+.idea/

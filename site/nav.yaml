@@ -1,0 +1,112 @@
+# サイト構成の単一の出典。
+#
+# tools/build_site.py がこのファイルを読んで、全ページの HTML・上部メニュー・
+# 前後ナビ・トップページを生成する。教材を追加・改名したときはここに1行足す
+# （手順は design/maintaining.md の「教材追加の手順」）。
+#
+# 各ページのタイトルは原稿の先頭 H1 から取るので、ここには書かない。
+# 出力先は <section slug>/<原稿の stem>/index.html。
+# stem が README のものだけは <section slug>/index.html（セクションの入口）になる。
+#
+# ここに書いた原稿が実在しないと build_site.py は SystemExit で落ちる。
+# したがって「これから書くページ」はコメントのまま置き、原稿を書いた回に
+# コメントを外す。全体の完成形は site-plan-2026.md §4.2 が持っている。
+#
+# projects セクションの slug は site-plan-2026.md §4.2 の案から3つ変えてある。
+# テーマ例は独立ページにせず README.md の節にしたので topics.md は作らず、
+# deliverables / presentation は中身が「確認する表」と「構成の手引き」なので
+# deliverables-checklist / presentation-guide にした。README テンプレートと
+# 検証チェックリストは案に無かったぶんの追加である（curriculum §13.2・§13.3）。
+
+title: 実践・制約プログラミング
+description: 問題を変数・定義域・制約・目的へ分解し、Prolog / MiniZinc / Z3 で解く演習教材。
+base_url: https://yf-fyf.github.io/cp-practice/
+repo_url: https://github.com/yf-fyf/cp-practice
+repo_branch: dev
+
+# サイト内に無い Markdown へのリンクは repo_url/blob/repo_branch/<path> へ逃がす。
+
+# group は上部メニューの群分け。group が変わる位置に区切り線が入る
+# （「教材｜引くもの｜道具」の3群に見せる）。
+
+sections:
+  - slug: sessions
+    title: 講義（全15回）
+    group: 教材
+    summary: >
+      全15回・各100分。第01〜02回はPrologで宣言的記述を体験し、第03〜04回でMiniZincによる
+      制約モデリング、第05〜06回でSAT・SMTとZ3、第07回で最適化、第08〜10回でナース
+      スケジューリングの総合演習を行う。第11〜14回は自由課題、第15回は成果発表会である。
+    pages:
+      - materials/sessions/01-prolog-intro.md
+      - materials/sessions/02-prolog-modeling.md
+      - materials/sessions/03-minizinc-sudoku.md
+      - materials/sessions/04-sudoku-data-uniqueness.md
+      - materials/sessions/05-sat-dependencies.md
+      - materials/sessions/06-smt-versions.md
+      - materials/sessions/07-theme-assignment.md
+      - materials/sessions/08-roster-hard.md
+      - materials/sessions/09-roster-soft.md
+      - materials/sessions/10-roster-verification.md
+      - materials/sessions/11-project-formulation.md
+      - materials/sessions/12-project-minimal-model.md
+      - materials/sessions/13-project-extension.md
+      - materials/sessions/14-project-completion.md
+      - materials/sessions/15-presentation.md
+
+  # 並びは「案内 → 企画書 → README → 検証 → 提出 → 発表」で、第11回から
+  # 第15回までの使う順に対応する。README.md が案内（セクションの入口）になる。
+  # site-plan-2026.md §4.2 の案から slug を3つ変えてある（下の注記を参照）。
+  - slug: projects
+    title: 自由課題
+    group: 教材
+    summary: >
+      第11〜14回で取り組む自由課題の案内。テーマ例・成果物一式・評価の観点と、
+      企画書・README・検証記録・発表資料のテンプレート。記入用の実体は
+      配布する演習ファイルの projects/ にある。
+    pages:
+      - materials/projects/README.md
+      - materials/projects/proposal-template.md
+      - materials/projects/readme-template.md
+      - materials/projects/verification-checklist.md
+      - materials/projects/deliverables-checklist.md
+      - materials/projects/presentation-guide.md
+
+  # 並びは「索引 → 環境構築 → 早見表 → 概説・比較・手順 → エラー集 → 用語集」。
+  # README.md が索引（セクションの入口）になる。
+  - slug: references
+    title: 参考資料
+    group: 引くもの
+    summary: 最初に読むもの（環境構築）と、必要なときに引くもの（早見表・概説・用語集）に分かれる。
+    pages:
+      - materials/references/README.md
+      - materials/references/setup-prolog.md
+      - materials/references/setup-minizinc.md
+      - materials/references/setup-z3.md
+      - materials/references/prolog-cheatsheet.md
+      - materials/references/minizinc-cheatsheet.md
+      - materials/references/z3py-cheatsheet.md
+      - materials/references/logic-intro.md
+      - materials/references/logic-semantics.md
+      - materials/references/logic-sat-smt.md
+      - materials/references/graph-coloring.md
+      - materials/references/modeling-steps.md
+      - materials/references/errors.md
+      - materials/references/glossary.md
+
+  - slug: guides
+    title: 進め方・演習ファイル
+    group: 道具
+    summary: 科目の進め方と、配布する演習ファイルの使い方。表示見本は教材を書く人向けのページである。
+    pages:
+      - workbook/README.md                    # セクションの入口（stem が README のため）
+      - materials/guides/how-to-study.md
+      - materials/guides/style-sample.md
+
+# 実行ページの実体は web/prolog/。.site/tools/ は build_site.py の copy_tools() が
+# web/ をコピーして作るので、ここには生成先の URL を書く。
+external_links:
+  - title: Prolog 実行環境
+    url: tools/prolog/
+    group: 道具
+    summary: ブラウザだけで動く Prolog（Tau Prolog 同梱）

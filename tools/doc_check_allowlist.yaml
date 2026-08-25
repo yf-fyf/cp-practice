@@ -1,0 +1,107 @@
+# tools/check_docs.py の除外リスト。
+#
+# 「なぜ除外するか」を必ず reason に書く。理由のない除外は原則追加しない。
+#
+# 除外は「file + match + check」の3点で指定する。
+#
+# match には、その行に必ず含まれる文字列を書く。行番号で留めると、上の行を
+# 1行足し引きしただけで除外が外れて誤検出になり、逆にずれた先に別の違反が
+# あれば黙って握り潰す。
+#
+# check には検出種別を書く。1行が複数の種別に引っかかることがあるので、
+# 行の内容だけで除外すると、許すつもりのない違反まで黙る。
+# 名指しした種別だけを除外する。複数を許すときは配列で書く。
+# 使える種別は `python3 tools/check_docs.py --list-kinds` で確認できる。
+#
+# 一度も一致しなかったエントリは「死んだ除外」として check_docs.py が違反に
+# するので、本文を直したらこのエントリごと削除する。
+#
+# status: legitimate  … 誤検出ではなく、本文として正当な出現（恒久的に除外）
+# status: pending     … メンテナ判断待ちの未修正項目（対応が終わったら削除する）
+
+style_terms:
+  # 第07回の題材名。学ぶ人の呼称ではなく、架空データの登場人物の区分である。
+  # curriculum-2026.md §4.4「学生と研究テーマの割当」が題材名の正本。
+  - file: design/curriculum-2026.md
+    match: "学生と研究テーマの割当"
+    check: gakusei
+    status: legitimate
+    reason: >
+      第07回の題材名そのもの（架空データ）。学習者の呼称ではないので置換しない。
+
+  - file: design/curriculum-2026.md
+    match: "学生を定員付きの研究テーマへ割り当てる"
+    check: gakusei
+    status: legitimate
+    reason: >
+      第07回の題材の説明。架空データの登場人物の区分を指している。
+
+  - file: design/curriculum-2026.md
+    match: "最も不満の大きい学生を優先した場合"
+    check: gakusei
+    status: legitimate
+    reason: >
+      第07回の目的関数の比較の説明。架空データの登場人物を指している。
+
+  - file: design/curriculum-2026.md
+    match: "学生・テーマ割当"
+    check: gakusei
+    status: legitimate
+    reason: >
+      回割り表（§7）の第07回の題材名。
+
+  - file: design/curriculum-2026.md
+    match: "学生、テーマ、定員、希望順位のデータ"
+    check: gakusei
+    status: legitimate
+    reason: >
+      第07回の詳細（§8）の入力データの説明。架空データの列名にあたる。
+
+  - file: design/curriculum-2026.md
+    match: "特定条件を持つ学生の分散"
+    check: gakusei
+    status: legitimate
+    reason: >
+      第07回の発展演習の説明。架空データの登場人物を指している。
+
+  - file: design/glossary-ledger.md
+    match: "## 第07回 学生と研究テーマの割当"
+    check: gakusei
+    status: legitimate
+    reason: >
+      用語初出台帳の節見出し。curriculum-2026.md §8 の第07回のタイトルを
+      そのまま写している（題材名であって学ぶ人の呼称ではない）。
+      curriculum 側のタイトルを変えたら、ここも一緒に直す。
+
+  - file: materials/sessions/07-theme-assignment.md
+    match: "# 第07回 学生と研究テーマの割当"
+    check: gakusei
+    status: legitimate
+    reason: >
+      第07回の原稿の見出し（H1）。curriculum-2026.md §8 の題材名をそのまま写している。
+      本文では架空データの登場人物を「6人」「各人」と書き、この語は見出しにしか出さない。
+
+  - file: workbook/sessions/07-theme-assignment/README.md
+    match: "# 第07回 学生と研究テーマの割当（演習ファイル）"
+    check: gakusei
+    status: legitimate
+    reason: >
+      演習ファイル README の見出し。原稿の H1（題材名）に合わせている。
+
+  - file: design/site-design.md
+    match: "/sessions/07-theme-assignment/        第07回 学生と研究テーマの割当"
+    check: gakusei
+    status: legitimate
+    reason: >
+      §5 の URL 一覧に並べた第07回のページ題名。curriculum-2026.md §8 の題材名を
+      原稿の H1 からそのまま写しているので、学習者の呼称ではない。
+
+  # site-design.md にあった「第4回」「第1回」の除外（status: pending）は、
+  # 2026-08-22 に同文書を実装済みの事実へ書き換えたときに本文ごと解消したので削除した。
+  # pending の除外はこれで無くなった。
+
+privacy: []
+
+numbers: []
+
+codeblock: []

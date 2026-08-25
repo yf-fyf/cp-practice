@@ -1,0 +1,61 @@
+% 講義資料の図（materials/figures/*.tex）共通プリアンブル。
+% 各図の .tex から \input{figure-preamble} で読み込む。
+% 配色は site/style.css の CSS 変数と揃える（片方を変えたらもう片方も直す）。
+
+% 日本語（LuaLaTeX + luatexja）。等幅セル内の日本語も和文フォントで出す
+\usepackage{luatexja}
+\usepackage{luatexja-fontspec}
+\setmainfont{Noto Sans CJK JP}
+\setmainjfont{Noto Sans CJK JP}
+\setmonofont{Inconsolata}[Scale=MatchLowercase]
+\setmonojfont{Noto Sans CJK JP}
+
+\usepackage{xcolor}
+\definecolor{CpAccentDark}{HTML}{583B66}
+\definecolor{CpAccentLight}{HTML}{EEE6F2}
+\definecolor{CpAccentLighter}{HTML}{F7F3F9}
+\definecolor{CpEmph}{HTML}{E64B17}
+\definecolor{CpText}{HTML}{262626}
+\definecolor{CpGrayText}{HTML}{737373}
+\definecolor{CpGrayBg}{HTML}{F2F2F2}
+% グラフ彩色・勤務表で使う「色そのものが意味を持つ」パレット。
+% 色覚特性によらず判別しやすい組を選び、図では必ず記号（色1/色2 等）も併記する。
+\definecolor{CpHue1}{HTML}{B03A2E}
+\definecolor{CpHue2}{HTML}{1E6FB8}
+\definecolor{CpHue3}{HTML}{2E7D64}
+\definecolor{CpHue4}{HTML}{B07A00}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,decorations.pathreplacing,fit,backgrounds}
+
+\tikzset{
+  % テキスト
+  every node/.style={text=CpText},
+  annot/.style={font=\small, text=CpText, align=left},
+  gannot/.style={font=\small, text=CpGrayText, align=center},
+  % 制約グラフの頂点（地区・人・タスク）
+  vertex/.style={circle, draw=CpAccentDark, line width=0.7pt, fill=white,
+                 minimum size=11mm, font=\small, inner sep=1pt},
+  vertex hi/.style={vertex, fill=CpAccentLighter},
+  % 割り当て済みの頂点。色 + 記号の二重符号化で示す
+  vertex c1/.style={vertex, draw=CpHue1, line width=1.2pt, fill=CpHue1!12},
+  vertex c2/.style={vertex, draw=CpHue2, line width=1.2pt, fill=CpHue2!12},
+  vertex c3/.style={vertex, draw=CpHue3, line width=1.2pt, fill=CpHue3!12},
+  % 制約の辺（隣接＝異なる値でなければならない）
+  cedge/.style={draw=CpAccentDark, line width=0.8pt},
+  cedge soft/.style={draw=CpGrayText, line width=0.7pt, dashed},
+  % 盤面・表のセル（数独・勤務表）
+  cell/.style={draw=CpAccentDark, line width=0.6pt, fill=white,
+               minimum size=9mm, font=\ttfamily, inner sep=1pt, outer sep=0pt},
+  cell fixed/.style={cell, fill=CpGrayBg},
+  cell hi/.style={cell, fill=CpAccentLighter},
+  % 箱と矢印（探索の流れ・符号化の対応図）
+  cbox/.style={draw=CpAccentDark, line width=0.6pt, fill=white, rounded corners=1.5mm,
+               minimum width=28mm, minimum height=8mm, font=\small, align=center,
+               inner sep=2pt},
+  flow/.style={-{Stealth[length=2.4mm]}, line width=0.8pt, color=CpAccentDark},
+  flow back/.style={flow, dashed},
+  emph arrow/.style={-{Stealth[length=2.8mm]}, line width=1.1pt, color=CpEmph},
+  bracestyle/.style={decorate, decoration={brace, amplitude=4pt}, line width=0.8pt,
+                     color=CpAccentDark},
+}

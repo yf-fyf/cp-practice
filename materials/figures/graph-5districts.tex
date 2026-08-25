@@ -1,0 +1,61 @@
+% 第02回・第03回・第05回の縦断題材「グラフ彩色」の制約グラフ（架空の5地区）。
+% 左が問題（隣接関係だけ）、右が3色での解の一例。
+% 隣接関係は coloring.pl / coloring5.mzn / graph-coloring.md と同じ8辺である。
+%   中央区は北区・南区・東区・西区のすべてと隣り合う（4辺）
+%   外側は 北 - 東 - 南 - 西 - 北 の順に隣り合う（4辺）
+% 色だけに頼らないよう、解の側は頂点に色名も書く。
+\documentclass[border=8pt]{standalone}
+\input{figure-preamble}
+\begin{document}
+\begin{tikzpicture}
+
+  % ================ 左: 問題（隣接関係） ================
+  \node[gannot] at (18mm, 42mm) {問題: 隣り合う地区は違う色にする};
+
+  \node[vertex] (N)  at ( 18mm,  30mm) {北区};
+  \node[vertex] (E)  at ( 38mm,  10mm) {東区};
+  \node[vertex] (S)  at ( 18mm, -10mm) {南区};
+  \node[vertex] (W)  at ( -2mm,  10mm) {西区};
+  \node[vertex, minimum size=14mm] (C)  at ( 18mm,  10mm) {中央区};
+
+  \draw[cedge] (N) -- (C);
+  \draw[cedge] (S) -- (C);
+  \draw[cedge] (E) -- (C);
+  \draw[cedge] (W) -- (C);
+  \draw[cedge] (N) -- (E);
+  \draw[cedge] (E) -- (S);
+  \draw[cedge] (S) -- (W);
+  \draw[cedge] (W) -- (N);
+
+  \node[annot, align=center] at (18mm, -26mm)
+    {辺は「隣接している」\\ = 同じ色にできない};
+
+  % ================ 右: 解の一例 ================
+  \node[gannot] at (90mm, 42mm) {解の一例: 3色で塗り分けられる};
+
+  \node[vertex c1] (N2) at ( 90mm,  30mm) {北区};
+  \node[vertex c2] (E2) at (110mm,  10mm) {東区};
+  \node[vertex c1] (S2) at ( 90mm, -10mm) {南区};
+  \node[vertex c2] (W2) at ( 70mm,  10mm) {西区};
+  \node[vertex c3, minimum size=14mm] (C2) at ( 90mm,  10mm) {中央区};
+
+  \node[annot, font=\scriptsize, above=0.5mm of N2] {色1};
+  \node[annot, font=\scriptsize, right=0.5mm of E2] {色2};
+  \node[annot, font=\scriptsize, below=0.5mm of S2] {色1};
+  \node[annot, font=\scriptsize, left=0.5mm of W2] {色2};
+  \node[annot, font=\scriptsize, above right=0.2mm of C2] {色3};
+
+  \draw[cedge] (N2) -- (C2);
+  \draw[cedge] (S2) -- (C2);
+  \draw[cedge] (E2) -- (C2);
+  \draw[cedge] (W2) -- (C2);
+  \draw[cedge] (N2) -- (E2);
+  \draw[cedge] (E2) -- (S2);
+  \draw[cedge] (S2) -- (W2);
+  \draw[cedge] (W2) -- (N2);
+
+  \node[annot, align=center] at (90mm, -26mm)
+    {どの辺の両端も\\ 違う色になっている};
+
+\end{tikzpicture}
+\end{document}

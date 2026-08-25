@@ -1,0 +1,65 @@
+% 第05回の導入図。論理回路の記号（NOT / AND / OR）と、論理式・Z3Py の書き方を並べる。
+% 含意には対応する回路記号が無いことを、記号の位置を空けて示す。
+\documentclass[border=8pt]{standalone}
+\input{figure-preamble}
+\usetikzlibrary{shapes.gates.logic.US}
+\begin{document}
+\begin{tikzpicture}[
+  gate/.style={draw=CpAccentDark, line width=0.8pt, fill=white,
+               logic gate inputs=nn, minimum height=8mm},
+  gate1/.style={draw=CpAccentDark, line width=0.8pt, fill=white,
+                logic gate inputs=n, minimum height=8mm},
+  wire/.style={draw=CpAccentDark, line width=0.7pt},
+  head/.style={font=\small, text=CpGrayText},
+  form/.style={font=\small, align=center},
+]
+
+  % ── 見出し ──────────────────────────────────────────
+  \node[head, anchor=east] at (-6mm, 20mm) {回路};
+  \node[head, anchor=east] at (-6mm,  4mm) {論理式};
+  \node[head, anchor=east] at (-6mm, -6mm) {読み};
+  \node[head, anchor=east] at (-6mm,-16mm) {Z3Py};
+
+  % ── NOT ────────────────────────────────────────────
+  \node[not gate US, gate1] (notg) at (12mm, 20mm) {};
+  \draw[wire] (notg.input) -- ++(-6mm, 0) node[left, font=\scriptsize] {$p$};
+  \draw[wire] (notg.output) -- ++(5mm, 0);
+  \node[form] at (12mm,  4mm) {$\neg p$};
+  \node[form] at (12mm, -6mm) {でない};
+  \node[form] at (12mm,-16mm) {\texttt{Not(p)}};
+
+  % ── AND ────────────────────────────────────────────
+  \node[and gate US, gate] (andg) at (46mm, 20mm) {};
+  \draw[wire] (andg.input 1) -- ++(-6mm, 0) node[left, font=\scriptsize] {$p$};
+  \draw[wire] (andg.input 2) -- ++(-6mm, 0) node[left, font=\scriptsize] {$q$};
+  \draw[wire] (andg.output) -- ++(5mm, 0);
+  \node[form] at (46mm,  4mm) {$p \land q$};
+  \node[form] at (46mm, -6mm) {かつ};
+  \node[form] at (46mm,-16mm) {\texttt{And(p, q)}};
+
+  % ── OR ─────────────────────────────────────────────
+  \node[or gate US, gate] (org) at (82mm, 20mm) {};
+  \draw[wire] (org.input 1) -- ++(-7mm, 0) node[left, font=\scriptsize] {$p$};
+  \draw[wire] (org.input 2) -- ++(-7mm, 0) node[left, font=\scriptsize] {$q$};
+  \draw[wire] (org.output) -- ++(5mm, 0);
+  \node[form] at (82mm,  4mm) {$p \lor q$};
+  \node[form] at (82mm, -6mm) {または};
+  \node[form] at (82mm,-16mm) {\texttt{Or(p, q)}};
+
+  % ── 含意（回路記号は無い） ─────────────────────────
+  \node[cbox, dashed, minimum width=30mm, minimum height=10mm,
+        text=CpGrayText] (impg) at (120mm, 20mm) {対応する記号は無い};
+  \node[form, text=CpEmph] at (120mm,  4mm) {$p \to q$};
+  \node[form] at (120mm, -6mm) {ならば};
+  \node[form] at (120mm,-16mm) {\texttt{Implies(p, q)}};
+
+  \node[annot, align=center, text=CpGrayText] at (120mm,-27mm)
+    {$\neg p \lor q$ と同じ意味\\（真理値表で確かめる）};
+
+  % 既習と新出の区切り
+  \draw[cedge soft] (101mm, 28mm) -- (101mm, -32mm);
+  \node[head, anchor=south east] at (99mm, 28mm) {論理回路で見たもの};
+  \node[head, anchor=south west, text=CpEmph] at (103mm, 28mm) {この回で新しく出るもの};
+
+\end{tikzpicture}
+\end{document}

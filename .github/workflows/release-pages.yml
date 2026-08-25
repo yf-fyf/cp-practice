@@ -1,0 +1,59 @@
+name: Release Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version used in the ZIP file name, for example v1.0.0
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-24.04
+    env:
+      VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc python3-yaml
+      - name: Check Python sources
+        run: python3 -m compileall -q tools workbook
+      - name: Check the site for broken internal links
+        run: make site && make check-links
+      - name: Check documentation consistency
+        run: make check-docs
+      - name: Build the allowlisted Pages tree
+        run: python3 tools/build_pages.py "$VERSION" --output "$RUNNER_TEMP/pages" --revision "$GITHUB_SHA"
+      - name: Check the assembled tree for broken links
+        # 組み立て後は tools/ が実体になるので、資料と実行ページの間のリンクも
+        # ここで初めて検査できる
+        run: python3 tools/build_site.py --check-links --output "$RUNNER_TEMP/pages"
+      - name: Verify the release archive
+        run: unzip -t "$RUNNER_TEMP/pages/downloads/cp-practice-workbook-$VERSION.zip"
+      - name: Publish main branch
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PAGES_DIR: ${{ runner.temp }}/pages
+        run: |
+          release_dir="$RUNNER_TEMP/pages-branch"
+          git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$release_dir"
+          if git -C "$release_dir" ls-remote --exit-code --heads origin main; then
+            git -C "$release_dir" fetch origin main
+            git -C "$release_dir" checkout -B main origin/main
+          else
+            git -C "$release_dir" checkout --orphan main
+          fi
+          git -C "$release_dir" rm -rf --ignore-unmatch .
+          cp -a "$PAGES_DIR/." "$release_dir/"
+          git -C "$release_dir" add --all
+          git -C "$release_dir" -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "Release $VERSION from ${GITHUB_SHA}"
+          git -C "$release_dir" push origin main

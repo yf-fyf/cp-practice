@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
+
+permissions:
+  contents: read
+
+jobs:
+  site:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install pandoc and PyYAML
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc python3-yaml
+      - name: Show the pandoc version
+        # ディストリの pandoc は手元より古いことがある。差分の切り分け用に出す。
+        # 新しい pandoc は「Deprecated: --highlight-style」を出すが、生成物は
+        # 変わらないので無害である。置き換え先の --syntax-highlighting は
+        # ディストリ版に無いので使わない（tools/build_site.py の run_pandoc() 参照）
+        run: pandoc --version | head -1
+      - name: Build the site
+        run: make site
+      - name: Check internal links
+        run: make check-links
+      - name: Check documentation consistency
+        run: make check-docs
+
+  scripts:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check Python sources
+        run: python3 -m compileall -q tools workbook
+
+# 演習モデル（MiniZinc）・演習コード（Z3）は CI では走らせない
+# （site-plan-2026.md §9.0-14 の決定）。動作確認はローカルで行い、
+# 結果を非公開 ../cp-practice-design/teacher/quality/records/ に記録する。

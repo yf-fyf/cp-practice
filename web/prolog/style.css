@@ -1,0 +1,204 @@
+/* Prolog 実行ページのスタイル。
+ *
+ * 配色とフォントは site/style.css に揃えてあるが、このページは
+ * 資料サイトのビルドを通さない素の静的ファイルなので、値をここに写して
+ * 単体で完結させている（site/style.css を読み込まない）。
+ * 資料サイト側の配色を変えたときは、ここも同じ値に直す。
+ */
+
+:root {
+  --accent-dark: #583B66;
+  --accent-light: #EEE6F2;
+  --accent-lighter: #F7F3F9;
+  --emph: #E64B17;
+  --text: #262626;
+  --gray-text: #737373;
+  --gray-bg: #F2F2F2;
+  --code-frame: #D6D6D6;
+  --pre-bg: #FDFAFF;
+  --link: #0065CC;
+  --warning-bg: #FFF4EF;
+  --ok: #2E7D64;
+
+  --sans: "Noto Sans CJK JP", "Noto Sans JP", "Hiragino Sans",
+          "Yu Gothic Medium", "Meiryo", system-ui, sans-serif;
+  --mono: "Inconsolata", "SFMono-Regular", "Consolas", "DejaVu Sans Mono",
+          monospace;
+
+  --content-max: 54rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  color: var(--text);
+  background: #fff;
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+a { color: var(--link); }
+a:hover { text-decoration: none; }
+
+code { font-family: var(--mono); background: var(--gray-bg); padding: 0 0.2em; }
+
+.skiplink { position: absolute; left: -9999px; }
+.skiplink:focus {
+  left: 0.5rem; top: 0.5rem; z-index: 20; background: #fff;
+  padding: 0.5rem 0.9rem; border: 2px solid var(--accent-dark);
+}
+
+/* ── ヘッダ ── */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 0.7rem 1.2rem;
+  background: var(--accent-dark);
+  color: #fff;
+}
+.topbar .brand { color: #fff; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.topnav { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 1.1rem; font-size: 0.9rem; }
+.topnav a { color: #E8DDEE; text-decoration: none; white-space: nowrap; }
+.topnav a:hover { color: #fff; }
+
+/* ── 本文 ── */
+
+.layout { max-width: var(--content-max); margin: 0 auto; padding: 1.4rem 1.3rem 4rem; }
+
+.page-title {
+  margin: 0 0 1.2rem;
+  padding: 0.3rem 0 0.3rem 0.9rem;
+  border-left: 5px solid var(--accent-dark);
+  font-size: 1.7rem;
+  line-height: 1.4;
+}
+
+.lead { margin: 0 0 1.6rem; }
+
+.panel { margin: 0 0 1.6rem; }
+.panel h2 {
+  margin: 0 0 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 2px solid var(--accent-light);
+  font-size: 1.15rem;
+}
+
+.note { margin: 0.3rem 0 0.6rem; color: var(--gray-text); font-size: 0.9rem; }
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.4rem 0;
+}
+.row label { font-size: 0.9rem; color: var(--gray-text); }
+.row.buttons { gap: 0.5rem; }
+
+select, input[type="text"], textarea {
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  color: var(--text);
+  background: var(--pre-bg);
+  border: 1px solid var(--code-frame);
+  border-radius: 3px;
+  padding: 0.45rem 0.6rem;
+}
+select { font-family: var(--sans); max-width: 100%; }
+input[type="text"] { flex: 1 1 20rem; min-width: 0; }
+
+textarea {
+  display: block;
+  width: 100%;
+  min-height: 14rem;
+  line-height: 1.6;
+  resize: vertical;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  tab-size: 4;
+}
+
+select:focus-visible, input:focus-visible, textarea:focus-visible,
+button:focus-visible, pre:focus-visible {
+  outline: 3px solid #C9A9D8;
+  outline-offset: 1px;
+}
+
+/* ── ボタン ── */
+
+.btn {
+  font-family: var(--sans);
+  font-size: 0.92rem;
+  line-height: 1.4;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--accent-dark);
+  border-radius: 3px;
+  background: #fff;
+  color: var(--accent-dark);
+  cursor: pointer;
+}
+.btn:hover:not(:disabled) { background: var(--accent-lighter); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-main { background: var(--accent-dark); color: #fff; font-weight: 700; }
+.btn-main:hover:not(:disabled) { background: #6b4a7c; }
+.btn-sub { border-color: var(--code-frame); color: var(--gray-text); }
+.btn-stop { border-color: var(--emph); color: var(--emph); }
+.btn-stop:hover:not(:disabled) { background: var(--warning-bg); }
+
+/* ── 状態と結果 ── */
+
+.status {
+  margin: 0.6rem 0 0;
+  font-size: 0.88rem;
+  color: var(--gray-text);
+}
+.status[data-state="running"] { color: var(--accent-dark); font-weight: 700; }
+.status[data-state="error"] { color: var(--emph); font-weight: 700; }
+.status[data-state="done"] { color: var(--ok); }
+
+#output {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  min-height: 8rem;
+  max-height: 28rem;
+  overflow: auto;
+  background: var(--pre-bg);
+  border: 1px solid var(--code-frame);
+  border-left: 4px solid var(--accent-dark);
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+#output .ans { color: var(--text); }
+#output .no { color: var(--gray-text); }
+#output .err { color: var(--emph); }
+#output .hint { color: var(--gray-text); }
+#output .sep { color: var(--code-frame); }
+
+/* ── 補助 ── */
+
+.help { background: var(--accent-lighter); padding: 0.8rem 1.1rem 1rem; border-radius: 3px; }
+.help h2 { border-bottom-color: #DCCFE4; }
+.help ul { margin: 0.5rem 0 0; padding-left: 1.3rem; }
+.help li { margin: 0.25rem 0; font-size: 0.93rem; }
+
+.sitefoot {
+  border-top: 1px solid var(--accent-light);
+  padding: 1.2rem 1.3rem 2.5rem;
+  color: var(--gray-text);
+  font-size: 0.85rem;
+}
+.sitefoot p { max-width: var(--content-max); margin: 0 auto; }
+
+@media (max-width: 30rem) {
+  .row.buttons .btn { flex: 1 1 auto; }
+  .page-title { font-size: 1.4rem; }
+}

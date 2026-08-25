@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prolog 実行ページ — 実践・制約プログラミング</title>
+<meta name="description" content="ブラウザだけで動く Prolog 実行ページ。Tau Prolog を同梱しているので、インストールも通信も要らない。">
+<!-- 通信を一切させないので、favicon も外に取りに行かせない（空の data URI） -->
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+<script defer src="vendor/tau-prolog/modules/core.js"></script>
+<script defer src="vendor/tau-prolog/modules/lists.js"></script>
+<script defer src="app.js"></script>
+</head>
+<body>
+<a class="skiplink" href="#program">プログラム欄へスキップ</a>
+
+<header class="topbar">
+  <a class="brand" href="../../">実践・制約プログラミング</a>
+  <nav class="topnav" aria-label="関連ページ">
+    <a href="../../">ホーム</a>
+    <a href="../../references/setup-prolog/">使い方</a>
+    <a href="../../sessions/">講義</a>
+  </nav>
+</header>
+
+<main class="layout" id="main">
+  <h1 class="page-title">Prolog 実行ページ</h1>
+
+  <p class="lead">
+    第01〜02回で使う Prolog の実行ページです。処理系（Tau Prolog）はこのページに同梱してあるので、
+    インストールも通信も要りません。使い方の詳しい説明は
+    <a href="../../references/setup-prolog/">参考資料「Prolog 実行環境の使い方」</a>にあります。
+  </p>
+
+  <section class="panel" aria-labelledby="h-sample">
+    <h2 id="h-sample">サンプル</h2>
+    <div class="row">
+      <label for="sample">読み込むサンプル</label>
+      <select id="sample"></select>
+      <button type="button" id="load" class="btn btn-sub">サンプルを読み込む</button>
+    </div>
+    <p class="note" id="sample-note"></p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-program">
+    <h2 id="h-program">プログラム</h2>
+    <p class="note">事実・規則を書きます。1つの節はピリオド <code>.</code> で終わります。</p>
+    <textarea id="program" spellcheck="false" autocapitalize="off" autocorrect="off"
+              aria-describedby="h-program" rows="18"></textarea>
+  </section>
+
+  <section class="panel" aria-labelledby="h-query">
+    <h2 id="h-query">クエリ</h2>
+    <p class="note">問い合わせたいことを1行で書きます。末尾のピリオドは省略できます。</p>
+    <div class="row">
+      <input type="text" id="query" spellcheck="false" autocapitalize="off" autocorrect="off"
+             aria-label="クエリ" placeholder="例: drinks(aoi, X)">
+    </div>
+    <div class="row buttons">
+      <button type="button" id="run" class="btn btn-main">実行（ロード＋問い合わせ）</button>
+      <button type="button" id="next" class="btn" disabled>次の解</button>
+      <button type="button" id="stop" class="btn btn-stop" disabled>中断</button>
+      <button type="button" id="reset" class="btn btn-sub">リセット</button>
+    </div>
+    <p class="status" id="status" role="status" aria-live="polite">待機中</p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-output">
+    <h2 id="h-output">結果</h2>
+    <pre id="output" tabindex="0" aria-labelledby="h-output">ここに結果が出ます。</pre>
+  </section>
+
+  <section class="panel help" aria-labelledby="h-help">
+    <h2 id="h-help">つまずいたら</h2>
+    <ul>
+      <li>アトム（<code>aoi</code>・<code>coffee</code>）は小文字始まり、変数（<code>X</code>・<code>Drink</code>）は大文字始まりです。</li>
+      <li>1つの節の終わりはピリオド <code>.</code>、条件のつなぎはカンマ <code>,</code> です。</li>
+      <li>日本語をアトムに使うときは <code>'コーヒー'</code> のように引用符でくくります。くくらないと構文エラーになります。</li>
+      <li>探索が長引いたときは「中断」を押します。押さなくても画面は固まりません。</li>
+      <li>より詳しい説明とエラー一覧は<a href="../../references/setup-prolog/">参考資料</a>にあります。</li>
+    </ul>
+  </section>
+</main>
+
+<footer class="sitefoot">
+  <p>
+    <a href="../../">実践・制約プログラミング</a> の実行ページ ·
+    同梱物の表記は <a href="../../THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES.md</a> ·
+    代替・発展用の環境として
+    <a href="https://swish.swi-prolog.org/" rel="noopener">SWISH（SWI-Prolog のオンライン版）</a>
+    もあります（外部サイト・英語・アカウント不要の範囲で使えます）。
+  </p>
+</footer>
+</body>
+</html>

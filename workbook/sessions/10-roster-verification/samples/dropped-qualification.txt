@@ -1,0 +1,23 @@
+        1日 2日 3日 4日 5日 6日 7日   勤務  夜勤
+職員A    夜  休  日  日  夜 *休 *休    4     2
+職員B    夜  休  日  夜  休 *休 *休    3     2
+職員C    日  夜 *休  日  夜  休  日    5     2
+職員D    日  夜  休  日 *休  休  日    4     1
+職員E    日  日  日  夜  休  夜 *休    5     2
+職員F   *休  日  夜  休  日  夜  休    4     2
+職員G    休  日  夜 *休  日  日  夜    5     2
+職員H   *休 *休 *休 *休  日  日  夜    3     1
+希望休違反 = 0   勤務日数の偏り = 2   夜勤回数の偏り = 1   目的関数 = 3
+#size 8 7
+#shift A NODDNOO
+#shift B NODNOOO
+#shift C DNODNOD
+#shift D DNODOOD
+#shift E DDDNONO
+#shift F ODNODNO
+#shift G ODNODDN
+#shift H OOOODDN
+#value pref 0
+#value unfair 2
+#value night_unfair 1
+#value penalty 3
