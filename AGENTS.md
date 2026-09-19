@@ -57,8 +57,10 @@
 
 ## ビルドとテスト
 
-依存はサイト生成が pandoc + PyYAML + Python 3.11 以上、図の生成が
+依存はサイト生成が Pandoc（検証版 3.10.2）+ PyYAML + Python 3.11 以上、図の生成が
 LuaLaTeX + poppler-utils だけである。opam・node・qemu の類は要らない。
+CI とリリース処理の Pandoc 版・SHA-256 は `.github/actions/setup-pandoc/action.yml` に固定する。
+構文強調には `--syntax-highlighting=tango` を使い、未対応の旧版は更新する。
 
 ```bash
 make site          # .site/ にサイトを生成

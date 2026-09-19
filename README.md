@@ -56,7 +56,9 @@
 
 ## 資料サイトを自前でビルドする場合
 
-サイトの生成に要るのは pandoc・PyYAML・Python 3.11 以上だけである。
+サイトの生成には Pandoc（検証版 3.10.2）・PyYAML・Python 3.11 以上が要る。
+CI とリリース処理も同じ Pandoc 版を使う。導入・更新は
+[保守手順](./design/maintaining.md#資料サイト)を参照する。
 
 ```bash
 make site     # .site/ にサイトを生成

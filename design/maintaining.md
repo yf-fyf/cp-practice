@@ -134,7 +134,7 @@ GitHub Pages へ出す。構成は `site/nav.yaml` が単一の出典で、
 
 | 依存 | 何に要るか |
 |---|---|
-| pandoc、PyYAML、Python 3.11+ | サイトの生成（`make site` / `make serve`） |
+| Pandoc（検証版 3.10.2）、PyYAML、Python 3.11+ | サイトの生成（`make site` / `make serve`） |
 | LuaLaTeX（Noto Sans CJK JP / Inconsolata）、poppler-utils の `pdftocairo` | 図の生成（`make figures`） |
 
 **図の SVG はコミット対象**なので、図を触らないなら TeX は要らない。
@@ -156,17 +156,17 @@ python3 tools/build_site.py --only 03-   # 1ページだけ作り直す
 ```
 
 CI（`.github/workflows/ci.yml`）は push のたびに `make site`・`make check-links`・
-`make check-docs` を通す。**CI が入れる pandoc はディストリ版なので手元より
-古いことがある。**テンプレートやフィルタで新しい機能を使ったときは、
-CI の `pandoc --version` の出力と突き合わせて切り分ける。
+`make check-docs` を通す。CI とリリース処理（`.github/workflows/release-pages.yml`）は
+共通の [Pandoc 導入処理](../.github/actions/setup-pandoc/action.yml) を使い、
+[公式配布の Pandoc 3.10.2](https://github.com/jgm/pandoc/releases/tag/3.10.2) を導入する。
+Ubuntu の配布版や自動的に変わる最新版に依存せず、版と SHA-256 をこの一か所に固定する。
+ダウンロードしたアーカイブを照合してから展開し、その実行ファイルを PATH の先頭へ置く。
 
-新しい pandoc は `--highlight-style` を非推奨として
-`Deprecated: --highlight-style. Use --syntax-highlighting instead.` を出す。
-**この警告は無害で、生成物は変わらない。**`--syntax-highlighting` は新しい
-pandoc にしか無く、CI の ubuntu が入れる版では動かないので、
-CI と手元の両方で通る `--highlight-style` を使い続ける
-（`tools/build_site.py` の `run_pandoc()`）。
-CI の pandoc が新しい綴りを解するようになったら差し替える。
+ローカルでも検証版の 3.10.2 を推奨する。[公式の導入手順](https://pandoc.org/installing.html)
+でインストールし、`pandoc --version` で確認する。構文強調には
+`--syntax-highlighting=tango` を使うため、このオプションがない旧版は更新する。
+Pandoc を更新するときは共通処理の版・SHA-256 と本書・README・AGENTS の検証版を揃え、
+`make check` と `make serve` で生成・表示を確認する。稼働中の `make serve` は起動し直す。
 演習モデル（MiniZinc）と演習コード（Z3）は CI では走らせない。
 動作確認はローカルで行い、結果を品質記録に残す。
 

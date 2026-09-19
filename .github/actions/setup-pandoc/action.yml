@@ -1,0 +1,22 @@
+name: Set up Pandoc
+description: Install the verified official Pandoc release on Linux amd64
+
+runs:
+  using: composite
+  steps:
+    - name: Download and verify Pandoc
+      shell: bash
+      env:
+        PANDOC_VERSION: "3.10.2"
+        PANDOC_SHA256: "c7edd535941c48be6a362081a748272837de81ae11777202d9c341d3d8261c9a"
+      run: |
+        archive="$RUNNER_TEMP/pandoc-${PANDOC_VERSION}-linux-amd64.tar.gz"
+        curl --fail --location --silent --show-error --retry 3 \
+          "https://github.com/jgm/pandoc/releases/download/${PANDOC_VERSION}/pandoc-${PANDOC_VERSION}-linux-amd64.tar.gz" \
+          --output "$archive"
+        printf '%s  %s\n' "$PANDOC_SHA256" "$archive" | sha256sum --check
+        tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP"
+        printf '%s\n' "$RUNNER_TEMP/pandoc-${PANDOC_VERSION}/bin" >> "$GITHUB_PATH"
+    - name: Show Pandoc version
+      shell: bash
+      run: pandoc --version

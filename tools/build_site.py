@@ -212,11 +212,7 @@ def run_pandoc(source: Path, destination: Path, *, variables: dict[str, str],
             f"--metadata-file={meta_path}",
             "--toc", "--toc-depth=2",
             "--mathml",
-            # 新しい pandoc は「Deprecated: --highlight-style」の警告を出すが、
-            # 生成物は変わらないので無害である。置き換え先の --syntax-highlighting は
-            # 新しい pandoc にしか無く、CI の ubuntu が入れるディストリ版では
-            # 動かない。CI と手元の両方で通るこちらの綴りを使い続ける。
-            "--highlight-style=tango",
+            "--syntax-highlighting=tango",
             "--wrap=preserve",
             "-o", str(destination),
         ]
