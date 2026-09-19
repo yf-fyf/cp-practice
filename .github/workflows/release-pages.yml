@@ -27,6 +27,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-yaml
+      - name: Test publication checks
+        run: python3 -m unittest discover -s tools -p 'test_*.py'
       - name: Check Python sources
         run: python3 -m compileall -q tools workbook
       - name: Check the site for broken internal links
@@ -36,8 +38,7 @@ jobs:
       - name: Build the allowlisted Pages tree
         run: python3 tools/build_pages.py "$VERSION" --output "$RUNNER_TEMP/pages" --revision "$GITHUB_SHA"
       - name: Check the assembled tree for broken links
-        # 組み立て後は tools/ が実体になるので、資料と実行ページの間のリンクも
-        # ここで初めて検査できる
+        # リリースZIPへのリンクを含む組立後の成果物も検査する
         run: python3 tools/build_site.py --check-links --output "$RUNNER_TEMP/pages"
       - name: Verify the release archive
         run: unzip -t "$RUNNER_TEMP/pages/downloads/cp-practice-workbook-$VERSION.zip"

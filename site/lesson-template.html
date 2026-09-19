@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>$if(pagetitle)$$pagetitle$ - $endif$$site-title$</title>
+<link rel="stylesheet" href="$base$assets/lesson-style.css">
+<link rel="stylesheet" href="$base$assets/site-header.css">
+<link rel="stylesheet" href="$base$assets/lesson-syntax.css">
+<link rel="stylesheet" href="$base$assets/lesson-lightbox.css">
+<script defer src="$base$assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="$base$assets/code-preview.css">
+<script defer src="$base$assets/code-preview.js"></script>
+$if(math)$
+$math$
+$endif$
+$for(header-includes)$
+$header-includes$
+$endfor$
+</head>
+<body>
+$site-header$
+<div class="layout">
+$if(breadcrumb)$
+  <nav class="breadcrumb" aria-label="現在の位置">$breadcrumb$</nav>
+$endif$
+  <main class="content" id="main">
+    <h1 class="page-title">$pagetitle$</h1>
+$if(session-nav)$
+    $session-nav$
+$endif$
+$if(toc)$
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      $toc$
+    </details>
+$endif$
+$body$
+  </main>
+$if(pager)$
+  <nav class="pager" aria-label="前後の移動">$pager$</nav>
+$endif$
+  <footer class="sitefoot">
+    <p>$site-title$ — $release$</p>
+  </footer>
+</div>
+</body>
+</html>

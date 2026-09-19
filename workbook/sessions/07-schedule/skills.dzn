@@ -1,0 +1,9 @@
+% 発展演習2。practice.dznと組み合わせる。
+n_skills = 2;
+qualified = [| 1, 0
+             | 1, 1
+             | 0, 1
+             | 0, 1
+             | 0, 0 |];
+skill_required = [| 1, 1, 1, 1
+                  | 1, 1, 1, 1 |];

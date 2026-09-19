@@ -1,0 +1,19 @@
+% c-comp/latex/figure-preamble.tex の配色と LuaLaTeX + TikZ の方式を参照。
+\usepackage{luatexja}
+\usepackage{luatexja-fontspec}
+\setmainfont{Noto Sans CJK JP}
+\setmainjfont{Noto Sans CJK JP}
+\usepackage{amsmath,amssymb}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,calc,patterns,positioning}
+\definecolor{Accent}{HTML}{583B66}
+\definecolor{Light}{HTML}{EEE6F2}
+\definecolor{Emph}{HTML}{C44919}
+\definecolor{Ink}{HTML}{262626}
+\tikzset{
+  every node/.style={text=Ink,font=\small},
+  heading/.style={font=\small\bfseries,text=Accent,align=center},
+  cell/.style={draw=Accent,minimum width=7mm,minimum height=7mm,inner sep=0pt},
+  flow/.style={-{Stealth[length=2mm]},draw=Accent,thick},
+  note/.style={align=left,font=\small},
+}

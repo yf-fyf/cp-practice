@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- MiniZinc / .dzn for Pandoc (Skylighting, KDE syntax definition format).
+     Maintained locally from the lexical rules in the MiniZinc specification:
+     https://docs.minizinc.dev/en/stable/spec.html#syntax-overview
+     This is a highlighter, not a parser or a catalogue of library functions. -->
+<language name="MiniZinc" version="1" kateversion="5.0" section="Scientific" extensions="*.mzn;*.dzn" casesensitive="1">
+  <highlighting>
+    <list name="keywords">
+      <item>annotation</item><item>case</item><item>constraint</item><item>default</item>
+      <item>else</item><item>elseif</item><item>endif</item><item>function</item>
+      <item>if</item><item>include</item><item>let</item><item>maximize</item>
+      <item>minimize</item><item>output</item><item>predicate</item><item>satisfy</item>
+      <item>solve</item><item>test</item><item>then</item><item>type</item><item>where</item>
+    </list>
+    <list name="types">
+      <item>ann</item><item>any</item><item>array</item><item>bool</item><item>enum</item>
+      <item>float</item><item>int</item><item>list</item><item>of</item><item>opt</item>
+      <item>par</item><item>record</item><item>set</item><item>string</item><item>tuple</item>
+      <item>var</item><item>variant_record</item>
+    </list>
+    <list name="operators">
+      <item>diff</item><item>div</item><item>in</item><item>intersect</item><item>mod</item>
+      <item>not</item><item>subset</item><item>superset</item><item>symdiff</item>
+      <item>union</item><item>xor</item>
+    </list>
+    <list name="constants"><item>true</item><item>false</item><item>infinity</item></list>
+    <contexts>
+      <context name="Normal" attribute="Normal" lineEndContext="#stay">
+        <DetectSpaces/>
+        <DetectChar char="%" attribute="Comment" context="Line comment"/>
+        <StringDetect String="/*" attribute="Comment" context="Block comment"/>
+        <DetectChar char="&quot;" attribute="String" context="String"/>
+        <RegExpr String="'[^'\r\n]+'" attribute="Normal"/>
+        <keyword String="keywords" attribute="Keyword"/>
+        <keyword String="types" attribute="Type"/>
+        <keyword String="operators" attribute="Operator"/>
+        <keyword String="constants" attribute="Constant"/>
+        <RegExpr String="\b(?:0[xX](?:[0-9A-Fa-f]*\.[0-9A-Fa-f]+|[0-9A-Fa-f]+\.?)[pP][+-]?[0-9]+|0x[0-9A-Fa-f]+|0o[0-7]+|[0-9]+(?:\.[0-9]+)?(?:[Ee][+-]?[0-9]+)?)\b" attribute="Number"/>
+        <RegExpr String="\b_?[A-Za-z][A-Za-z0-9_]*(?=\s*\()" attribute="Function"/>
+        <RegExpr String="\b_?[A-Za-z][A-Za-z0-9_]*" attribute="Normal"/>
+        <RegExpr String="&lt;-&gt;|-&gt;|&lt;-|&lt;=|&gt;=|==|!=|\/\\|\\/|\.\.|::|\+\+|[+*/=&lt;&gt;^~-]" attribute="Operator"/>
+      </context>
+      <context name="Line comment" attribute="Comment" lineEndContext="#pop"/>
+      <context name="Block comment" attribute="Comment" lineEndContext="#stay">
+        <StringDetect String="*/" attribute="Comment" context="#pop"/>
+      </context>
+      <context name="String" attribute="String" lineEndContext="#pop">
+        <StringDetect String="\(" attribute="Escape" context="Interpolation"/>
+        <RegExpr String="\\(?:[\\&quot;nt]|x[0-9a-fA-F]{1,2}|[0-7]{1,3})" attribute="Escape"/>
+        <DetectChar char="&quot;" attribute="String" context="#pop"/>
+      </context>
+      <context name="Interpolation" attribute="Normal" lineEndContext="#stay">
+        <DetectChar char="(" attribute="Operator" context="Interpolation"/>
+        <DetectChar char=")" attribute="Operator" context="#pop"/>
+        <IncludeRules context="Normal"/>
+      </context>
+    </contexts>
+    <itemDatas>
+      <itemData name="Normal" defStyleNum="dsNormal"/>
+      <itemData name="Keyword" defStyleNum="dsKeyword"/>
+      <itemData name="Type" defStyleNum="dsDataType"/>
+      <itemData name="Operator" defStyleNum="dsOperator"/>
+      <itemData name="Constant" defStyleNum="dsConstant"/>
+      <itemData name="Number" defStyleNum="dsDecVal"/>
+      <itemData name="Function" defStyleNum="dsFunction"/>
+      <itemData name="String" defStyleNum="dsString"/>
+      <itemData name="Escape" defStyleNum="dsSpecialChar"/>
+      <itemData name="Comment" defStyleNum="dsComment"/>
+    </itemDatas>
+  </highlighting>
+  <general><keywords casesensitive="1"/></general>
+</language>

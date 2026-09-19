@@ -1,112 +1,18 @@
-# 演習ファイルの使い方
+# 演習ファイル
 
-このディレクトリは、授業で編集・実行する演習ファイル一式である。
-**説明の本文は教材サイトが正本**で、ここには実行に必要なことだけを置く。
+[科目の進め方](../materials/sessions/01-prolog/guides/course-start.md)を読み、各回の本文から指定されたファイルを使います。本文には実行手順・必修演習・自己確認、発展ページには発展・選択演習があります。
 
-## 入手する
-
-| 方法 | 手順 |
-|---|---|
-| ZIP | 教材サイトのトップページ「演習ファイル」からダウンロードして展開する |
-| Git | `git clone https://github.com/yf-fyf/cp-practice.git` して `workbook/` を使う |
-
-どちらでも中身は同じである。ZIP を展開すると `cp-practice-workbook-<版>/workbook/` の下に
-このディレクトリがそのまま入っている。
-
-## 構成
-
-```text
-workbook/
-├── README.md                     このファイル
-├── sessions/                     各回の演習ファイル
-│   ├── 01-prolog-intro/          第01回（Prolog・事実と規則）
-│   ├── 02-prolog-modeling/       第02回（Prolog・論理グリッド）
-│   ├── 03-minizinc-sudoku/       第03回（MiniZinc・数独）
-│   ├── 04-sudoku-data-uniqueness/  第04回（MiniZinc・データ分離と一意性）
-│   ├── 05-sat-dependencies/      第05回（Python+Z3・パッケージ依存関係）
-│   ├── 06-smt-versions/          第06回（Python+Z3・バージョン選択）
-│   ├── 07-theme-assignment/      第07回（MiniZinc・割当てと最適化）
-│   ├── 08-roster-hard/           第08回（MiniZinc・勤務表とハード制約）
-│   ├── 09-roster-soft/           第09回（MiniZinc・ソフト制約と公平性）
-│   └── 10-roster-verification/   第10回（MiniZinc+Python・検証と性能評価）
-└── projects/                     自由課題のテンプレート（第11〜14回）
-    ├── README.md                 成果物 README の記入用
-    ├── proposal.md               企画書の記入用
-    ├── experiments.md            実験記録の記入用
-    ├── verify.py                 独立した検査の雛形
-    ├── minizinc/                 MiniZinc の最小雛形（model.mzn・data.dzn）
-    └── z3/                       Python+Z3 の最小雛形（model.py・requirements.txt）
-```
-
-回ごとのディレクトリには次を置く。README には起動方法と教材ページへのリンクだけを書き、
-考え方・手順・ヒントは教材ページ側に置く。
-
-| ファイル | 役割 |
-|---|---|
-| `README.md` | 実行方法と教材ページへのリンク |
-| `*.mzn` | MiniZinc のモデル（`% TODO` を埋めるところがある） |
-| `*.dzn` | MiniZinc の入力データ |
-| `*.pl` | Prolog のプログラム |
-| `*.py` | Z3 のプログラム、または解の確認スクリプト |
-| `samples/` | 検証器にかける出力の例（第10回だけ） |
-| `requirements.txt` | Python から使う道具の版（Z3 を使う回だけ） |
-
-## 実行する
-
-実行環境の用意は回によって違う。第05〜06回の Z3 以外は、ブラウザだけで始められる。
-
-| 回 | 実行環境 | 用意すること |
+| 回 | 本文 | 配布物 |
 |---|---|---|
-| 第01〜02回 | 教材サイトの Prolog 実行ページ | なし（ブラウザだけ） |
-| 第03〜04回、第07〜10回 | [MiniZinc Playground](https://play.minizinc.dev/) | なし（ブラウザだけ） |
-| 第05〜06回 | Python + `z3-solver` | Python 3 と `pip install -r requirements.txt`（版を固定してある） |
-| 第10回 | 上記に加えて Python 3 | 追加の導入は無い（外部ライブラリを使わない） |
+| 第01回 | [第01回　Prologで関係を書く](../materials/sessions/01-prolog/lesson.md) | [演習ファイル](sessions/01-prolog/) |
+| 第02回 | [第02回　MiniZincで小さな数独を解く](../materials/sessions/02-minizinc/lesson.md) | [演習ファイル](sessions/02-minizinc/) |
+| 第03回 | [第03回　候補を減らし、場合分けして解く](../materials/sessions/03-search/lesson.md) | [演習ファイル](sessions/03-search/) |
+| 第04回 | [第04回　ルールを制約にして、パズルを作る](../materials/sessions/04-rules/lesson.md) | [演習ファイル](sessions/04-rules/) |
+| 第05回 | [第05回　講座の割当を0/1の表で表す](../materials/sessions/05-assignment/lesson.md) | [演習ファイル](sessions/05-assignment/) |
+| 第06回 | [第06回　目的関数で良さを比べる](../materials/sessions/06-optimization/lesson.md) | [演習ファイル](sessions/06-optimization/) |
+| 第07回 | [第07回　勤務表を数理モデルとして解く](../materials/sessions/07-schedule/lesson.md) | [演習ファイル](sessions/07-schedule/) |
+| 第08回 | [第08回　希望の上限と、最小化する指標](../materials/sessions/08-preferences/lesson.md) | [演習ファイル](sessions/08-preferences/) |
+| 第09回 | [第09回　SATで依存・排他・選択を扱う](../materials/sessions/09-sat/lesson.md) | [演習ファイル](sessions/09-sat/) |
+| 第10回 | [第10回　SMTで作業の日程を組む](../materials/sessions/10-smt/lesson.md) | [演習ファイル](sessions/10-smt/) |
 
-MiniZinc Playground はブラウザ上でモデルを編集して実行する。
-`.mzn` ファイルの中身を貼り付けるか、ファイルとして読み込ませて使う。
-
-## 自由課題のテンプレート（`projects/`）
-
-第11〜14回は各自の題材で進めるので、共通の演習ファイルは無い。
-代わりに、記入用のテンプレートと最小雛形が入っている。
-**`projects/` ごと自分の作業用ディレクトリへ複製して**、名前を題材に合わせて変える。
-
-| ファイル | 使う回 | 書き方のあるページ |
-|---|---|---|
-| `proposal.md` | 第11回 | 自由課題 > 企画書テンプレート |
-| `minizinc/model.mzn` ・ `minizinc/data.dzn` | 第12回 | 講義 > 第12回 自由課題: 最小実行モデル |
-| `z3/model.py` ・ `z3/requirements.txt` | 第12回 | 講義 > 第12回 自由課題: 最小実行モデル |
-| `README.md` | 第12〜14回 | 自由課題 > README テンプレート |
-| `verify.py` | 第13〜14回 | 自由課題 > 検証チェックリストと実験記録 |
-| `experiments.md` | 第13〜14回 | 自由課題 > 検証チェックリストと実験記録 |
-
-`minizinc/` と `z3/` は**同じ形の最小雛形**である。使うほうだけを残してよい。
-どちらもそのままで動く（制約が1本も無いので、どんな解でも返る）。
-まず動かしてから、`TODO` の制約を1本ずつ足していく。
-
-```console
-$ python3 z3/model.py > out.txt
-$ python3 verify.py out.txt
-```
-
-`verify.py` は、書いていない検査を「未実装」として知らせる。
-**未実装のまま出た「合格」は、書いた検査を通った以上のことを意味しない。**
-
-## 演習の3段階
-
-演習は3段階に分かれている。どこまで進めるかの目安は教材ページの各節に書いてある。
-
-| 段階 | 位置づけ |
-|---|---|
-| 必須演習 | 次回の内容に必要。授業後の自習を含めて必ず終える |
-| 標準演習 | その回の中心。100分の授業と必要な自習で終えるのを目指す |
-| 発展演習 | 先へ進みたい人向け。終わらなくても次回に困らない |
-
-必須演習には段階的ヒントが付いていて、最後の段に解答がある。
-標準演習の中心部分と発展演習の完成コードは公開していない。
-
-## 困ったとき
-
-1. まず教材ページの「よくある誤り」節を見る。
-2. エラーメッセージの1行目だけを読み、どのファイルの何行目かを確かめる。
-3. それでも進まないときは、モデルを小さくして（制約を1つずつ消して）どこで壊れるかを探す。
+ファイル間の相対参照を保って使ってください。通常演習の提出や宿題はありません。第11〜15回の自由課題の提出方法は、決まり次第案内します。

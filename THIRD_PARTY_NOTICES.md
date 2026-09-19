@@ -40,3 +40,10 @@ BSD 3-Clause License は、著作権表示・条件・免責事項を再配布�
   参考資料からリンクするだけで同梱しない（`design/prolog-environment.md` §3.3）。
 - 2024年度版の実行ページが使っていた jQuery・milligram・CodeMirror は**引き継いでいない**。
   実行ページの UI は自前の HTML・CSS・JavaScript だけで書いてある。
+
+## KaTeX
+
+- Version: 0.18.7
+- Source: https://github.com/KaTeX/KaTeX
+- License: MIT（`site/vendor/katex/LICENSE`）
+- Files: `site/vendor/katex/`。サイト生成時に `assets/katex/` へコピーする。

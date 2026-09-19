@@ -1,112 +1,358 @@
-# サイト構成の単一の出典。
-#
-# tools/build_site.py がこのファイルを読んで、全ページの HTML・上部メニュー・
-# 前後ナビ・トップページを生成する。教材を追加・改名したときはここに1行足す
-# （手順は design/maintaining.md の「教材追加の手順」）。
-#
-# 各ページのタイトルは原稿の先頭 H1 から取るので、ここには書かない。
-# 出力先は <section slug>/<原稿の stem>/index.html。
-# stem が README のものだけは <section slug>/index.html（セクションの入口）になる。
-#
-# ここに書いた原稿が実在しないと build_site.py は SystemExit で落ちる。
-# したがって「これから書くページ」はコメントのまま置き、原稿を書いた回に
-# コメントを外す。全体の完成形は site-plan-2026.md §4.2 が持っている。
-#
-# projects セクションの slug は site-plan-2026.md §4.2 の案から3つ変えてある。
-# テーマ例は独立ページにせず README.md の節にしたので topics.md は作らず、
-# deliverables / presentation は中身が「確認する表」と「構成の手引き」なので
-# deliverables-checklist / presentation-guide にした。README テンプレートと
-# 検証チェックリストは案に無かったぶんの追加である（curriculum §13.2・§13.3）。
-
-title: 実践・制約プログラミング
-description: 問題を変数・定義域・制約・目的へ分解し、Prolog / MiniZinc / Z3 で解く演習教材。
-base_url: https://yf-fyf.github.io/cp-practice/
-repo_url: https://github.com/yf-fyf/cp-practice
-repo_branch: dev
-
-# サイト内に無い Markdown へのリンクは repo_url/blob/repo_branch/<path> へ逃がす。
-
-# group は上部メニューの群分け。group が変わる位置に区切り線が入る
-# （「教材｜引くもの｜道具」の3群に見せる）。
-
-sections:
-  - slug: sessions
-    title: 講義（全15回）
-    group: 教材
-    summary: >
-      全15回・各100分。第01〜02回はPrologで宣言的記述を体験し、第03〜04回でMiniZincによる
-      制約モデリング、第05〜06回でSAT・SMTとZ3、第07回で最適化、第08〜10回でナース
-      スケジューリングの総合演習を行う。第11〜14回は自由課題、第15回は成果発表会である。
-    pages:
-      - materials/sessions/01-prolog-intro.md
-      - materials/sessions/02-prolog-modeling.md
-      - materials/sessions/03-minizinc-sudoku.md
-      - materials/sessions/04-sudoku-data-uniqueness.md
-      - materials/sessions/05-sat-dependencies.md
-      - materials/sessions/06-smt-versions.md
-      - materials/sessions/07-theme-assignment.md
-      - materials/sessions/08-roster-hard.md
-      - materials/sessions/09-roster-soft.md
-      - materials/sessions/10-roster-verification.md
-      - materials/sessions/11-project-formulation.md
-      - materials/sessions/12-project-minimal-model.md
-      - materials/sessions/13-project-extension.md
-      - materials/sessions/14-project-completion.md
-      - materials/sessions/15-presentation.md
-
-  # 並びは「案内 → 企画書 → README → 検証 → 提出 → 発表」で、第11回から
-  # 第15回までの使う順に対応する。README.md が案内（セクションの入口）になる。
-  # site-plan-2026.md §4.2 の案から slug を3つ変えてある（下の注記を参照）。
-  - slug: projects
-    title: 自由課題
-    group: 教材
-    summary: >
-      第11〜14回で取り組む自由課題の案内。テーマ例・成果物一式・評価の観点と、
-      企画書・README・検証記録・発表資料のテンプレート。記入用の実体は
-      配布する演習ファイルの projects/ にある。
-    pages:
-      - materials/projects/README.md
-      - materials/projects/proposal-template.md
-      - materials/projects/readme-template.md
-      - materials/projects/verification-checklist.md
-      - materials/projects/deliverables-checklist.md
-      - materials/projects/presentation-guide.md
-
-  # 並びは「索引 → 環境構築 → 早見表 → 概説・比較・手順 → エラー集 → 用語集」。
-  # README.md が索引（セクションの入口）になる。
-  - slug: references
-    title: 参考資料
-    group: 引くもの
-    summary: 最初に読むもの（環境構築）と、必要なときに引くもの（早見表・概説・用語集）に分かれる。
-    pages:
-      - materials/references/README.md
-      - materials/references/setup-prolog.md
-      - materials/references/setup-minizinc.md
-      - materials/references/setup-z3.md
-      - materials/references/prolog-cheatsheet.md
-      - materials/references/minizinc-cheatsheet.md
-      - materials/references/z3py-cheatsheet.md
-      - materials/references/logic-intro.md
-      - materials/references/logic-semantics.md
-      - materials/references/logic-sat-smt.md
-      - materials/references/graph-coloring.md
-      - materials/references/modeling-steps.md
-      - materials/references/errors.md
-      - materials/references/glossary.md
-
-  - slug: guides
-    title: 進め方・演習ファイル
-    group: 道具
-    summary: 科目の進め方と、配布する演習ファイルの使い方。表示見本は教材を書く人向けのページである。
-    pages:
-      - workbook/README.md                    # セクションの入口（stem が README のため）
-      - materials/guides/how-to-study.md
-      - materials/guides/style-sample.md
-
-# 実行ページの実体は web/prolog/。.site/tools/ は build_site.py の copy_tools() が
-# web/ をコピーして作るので、ここには生成先の URL を書く。
-external_links:
-  - title: Prolog 実行環境
-    url: tools/prolog/
-    group: 道具
-    summary: ブラウザだけで動く Prolog（Tau Prolog 同梱）
+# URL・原稿・配布範囲の登録。handouts 以外はダウンロードへコピーしない。
+sessions:
+- number: '01'
+  slug: 01-prolog
+  advanced_slug: prolog-challenges
+  guides:
+  - course-start
+  - prolog-start
+  handouts:
+  - event-basic.pl
+  - help-start.pl
+  - pair-start.pl
+  - distinct-start.pl
+  - reach-start.pl
+  - path-start.pl
+  - family-start.pl
+  - event-compare.py
+- number: '02'
+  slug: 02-minizinc
+  advanced_slug: sudoku-challenges
+  guides:
+  - minizinc-start
+  handouts:
+  - warmup.mzn
+  - sudoku4.mzn
+  - sudoku4-demo.mzn
+  - demo.dzn
+  - practice-start.mzn
+  - practice.dzn
+  - diagonal-start.mzn
+  - diagonal.dzn
+  - check-BR.dzn
+  - check-BC.dzn
+  - check-BB.dzn
+  - inequality-start.mzn
+  - empty.dzn
+  - second-start.mzn
+  - first.dzn
+  - complete.dzn
+  - minimal.dzn
+  - check-G2.dzn
+  - kinki-start.mzn
+  - australia-start.mzn
+- number: '03'
+  slug: 03-search
+  advanced_slug: propagation-challenges
+  guides:
+  - propagation-check
+  handouts:
+  - V1.json
+  - V2.json
+  - V3.json
+  - V4.json
+  - V5.json
+  - V6.json
+  - V7.json
+  - branch-work.txt
+  - branch.dzn
+  - branch.json
+  - check-start.py
+  - compare-solutions.py
+  - compare.dzn
+  - compare.json
+  - conflict.dzn
+  - conflict.json
+  - demo-work.txt
+  - demo.dzn
+  - demo.json
+  - empty.dzn
+  - empty.json
+  - practice-work.txt
+  - practice.dzn
+  - practice.json
+  - propagation.py
+  - search-start.py
+  - solutions.json
+  - sudoku4.mzn
+- number: '04'
+  slug: 04-rules
+  advanced_slug: puzzle-challenges
+  guides:
+  - puzzle-check
+  handouts:
+  - session-04.zip
+  - P-demo-high.dzn
+  - P-demo-low.dzn
+  - P-demo.dzn
+  - P-practice-high.dzn
+  - P-practice-low.dzn
+  - P-practice.dzn
+  - P.dzn
+  - P.json
+  - Q.dzn
+  - Q.json
+  - boards.json
+  - candidate-clues.dzn
+  - candidate-list.md
+  - checks/D-high.dzn
+  - checks/D-high.expected.txt
+  - checks/D-low.dzn
+  - checks/D-low.expected.txt
+  - checks/D-ok.dzn
+  - checks/D-ok.expected.txt
+  - checks/D-open.dzn
+  - checks/D-open.expected.txt
+  - checks/G-all.dzn
+  - checks/G-all.expected.txt
+  - checks/G-three.dzn
+  - checks/G-three.expected.txt
+  - checks/G-two.dzn
+  - checks/G-two.expected.txt
+  - checks/M-bad.dzn
+  - checks/M-bad.expected.txt
+  - checks/M-off.dzn
+  - checks/M-off.expected.txt
+  - checks/M-ok.dzn
+  - checks/M-ok.expected.txt
+  - checks/M-open.dzn
+  - checks/M-open.expected.txt
+  - checks/R-high.dzn
+  - checks/R-high.expected.txt
+  - checks/R-low.dzn
+  - checks/R-low.expected.txt
+  - checks/R-ok.dzn
+  - checks/R-ok.expected.txt
+  - checks/R-open.dzn
+  - checks/R-open.expected.txt
+  - checks/U-many.dzn
+  - checks/U-many.expected.txt
+  - checks/U-none.dzn
+  - checks/U-none.expected.txt
+  - checks/cases.json
+  - clue-search-start.py
+  - clue-tools.py
+  - demo.dzn
+  - design-start.mzn
+  - empty.dzn
+  - first.dzn
+  - multi-base.mzn
+  - multi-start.mzn
+  - practice.dzn
+  - second-start.mzn
+  - send-leading-zero.dzn
+  - send-more-start.mzn
+  - send-repeated.dzn
+  - send-valid.dzn
+  - send-wrong-sum.dzn
+  - sudoku4.mzn
+  - sum-demo-inline.mzn
+  - sum-demo.mzn
+  - sum-start.mzn
+  - three-clues.dzn
+  - two-clues.dzn
+- number: '05'
+  slug: 05-assignment
+  advanced_slug: assignment-challenges
+  guides:
+  - assignment-check
+  handouts:
+  - assignment-base.mzn
+  - base.dzn
+  - base.json
+  - check-capacity.dzn
+  - check-double.dzn
+  - check-empty-seat.dzn
+  - check-forbidden.dzn
+  - check-open-empty.dzn
+  - check-open-missing.dzn
+  - check-open-single.dzn
+  - check-open-valid.dzn
+  - check-same.dzn
+  - check-unassigned.dzn
+  - check-valid.dzn
+  - impossible.dzn
+  - impossible.json
+  - obstruction-start.py
+  - open-start.mzn
+  - open.dzn
+  - open.json
+  - practice-start.mzn
+  - practice.dzn
+  - practice.json
+  - repaired.dzn
+  - repaired.json
+  - roomy.dzn
+  - roomy.json
+  - separate-start.mzn
+  - series-start.mzn
+  - series-wrong.dzn
+  - series.dzn
+  - value-start.mzn
+- number: '06'
+  slug: 06-optimization
+  advanced_slug: optimization-challenges
+  guides:
+  - optimization-check
+  handouts:
+  - assignment-base.mzn
+  - assignment-core.mzn
+  - base.dzn
+  - best-start.dzn
+  - cakes-start.mzn
+  - cakes.dzn
+  - cost-base.dzn
+  - cost-base.json
+  - cost-core.mzn
+  - cost-demo.mzn
+  - cost-practice.dzn
+  - cost-practice.json
+  - cost-start.mzn
+  - cost-zero.dzn
+  - cost-zero.json
+  - exclude-start.mzn
+  - first.dzn
+  - kits-base.mzn
+  - kits-core.mzn
+  - kits-lex.dzn
+  - kits-start.mzn
+  - kits.dzn
+  - knapsack-6.dzn
+  - knapsack-7.dzn
+  - knapsack-start.mzn
+  - lex-cases.json
+  - lex-general-start.py
+  - lex-start.mzn
+  - optimal-start.mzn
+  - quantity-demo.mzn
+  - solve_tools.py
+  - weight-start.dzn
+  - weighted-start.mzn
+- number: '07'
+  slug: 07-schedule
+  advanced_slug: roster-challenges
+  guides:
+  - roster-check
+  handouts:
+  - roster-basic.mzn
+  - base.dzn
+  - practice.dzn
+  - skill.dzn
+  - skills.dzn
+  - practice-start.mzn
+  - skill-start.mzn
+  - pair-start.mzn
+  - two-skill-start.mzn
+  - cycle-start.mzn
+  - cycle-14.dzn
+  - cycle-16.dzn
+  - cycle-17.dzn
+  - cycle-14.json
+  - cycle-16.json
+  - cycle-17.json
+  - cycle-check-start.py
+  - cycle-cases.json
+- number: 08
+  slug: 08-preferences
+  advanced_slug: preferences-challenges
+  guides:
+  - preferences-check
+  handouts:
+  - all-rosters.json
+  - best-worst.dzn
+  - cap-0.dzn
+  - cap-1.dzn
+  - capped-start.mzn
+  - enumerate.mzn
+  - examples.json
+  - frontier-start.py
+  - individual-core.mzn
+  - individual-start.mzn
+  - metric_values.py
+  - metrics-core.mzn
+  - practice.dzn
+  - recalculate-start.py
+  - request-all.dzn
+  - request-all.json
+  - request-demo.dzn
+  - request-demo.json
+  - request-individual.dzn
+  - request-individual.json
+  - request-practice.dzn
+  - request-practice.json
+  - roster-basic.mzn
+  - roster-core.mzn
+  - roster_io.py
+  - second-stage-start.mzn
+  - weighted-demo.mzn
+  - weighted-start.mzn
+  - weights-10.dzn
+  - weights-11.dzn
+  - weights-12.dzn
+- number: 09
+  slug: 09-sat
+  advanced_slug: sat-challenges
+  guides:
+  - sat-start
+  handouts:
+  - australia.json
+  - cnf-branch-unsat.json
+  - cnf-compare.py
+  - cnf-conflict.json
+  - cnf-empty-clause.json
+  - cnf-empty.json
+  - cnf-free.json
+  - cnf-restore.json
+  - cnf-tautology.json
+  - cnf-unit.json
+  - cnf-unused.json
+  - cnf_tools.py
+  - color-checks.json
+  - color-start.py
+  - dpll-start.py
+  - enumerate-start.py
+  - exclusive-start.py
+  - features-demo.py
+  - features-start.py
+  - features_base.py
+  - maxsat-start.py
+  - maxsat-work.md
+  - one-start.py
+  - requirements.txt
+  - sat_io.py
+  - warmup.py
+- number: '10'
+  slug: 10-smt
+  advanced_slug: scheduling-challenges
+  guides:
+  - schedule-check
+  handouts:
+  - deadline-start.py
+  - demo-4.json
+  - demo-5.json
+  - demo.json
+  - integer_io.py
+  - jobshop-cases.json
+  - jobshop-compare.py
+  - jobshop-long.json
+  - jobshop-start.py
+  - jobshop.json
+  - jobshop_tools.py
+  - machines-5.json
+  - machines-6.json
+  - machines-start.py
+  - practice.json
+  - requirements.txt
+  - sat_io.py
+  - schedule-checks.json
+  - schedule-demo.py
+  - schedule-start.py
+  - schedule_base.py
+  - seats-checks.json
+  - seats-start.py
+  - send-checks.json
+  - send-more-start.py
+  - wait-6.json
+  - wait-7.json
+  - wait-start.py
+  - warmup.py

@@ -1,98 +1,52 @@
 # 実践・制約プログラミング
 
-[![code: MIT](https://img.shields.io/badge/code-MIT-blue.svg)](./LICENSE)
-[![materials: CC BY-NC-SA 4.0](https://img.shields.io/badge/materials-CC%20BY--NC--SA%204.0-lightgrey.svg)](./LICENSE-MATERIALS)
+2026年度の教材です。新版の第01〜10回を移植し、**このリポジトリの原稿と配布物を編集してレビューする段階**です。内容の人手レビュー・授業試行は完了していません。
 
-問題を「変数・定義域・制約・目的」へ分解し、ソルバーに解かせる考え方を、Prolog → MiniZinc → SAT/SMT（Z3）の順に身につける演習教材（全15回・各100分）。
+通常回は Prolog → MiniZinc → SAT・SMT の順で進み、第11〜15回は個別の自由課題です。各回100分。通常演習の提出・宿題は設けません。
 
-> **状態**: 初版準備中（v1.0.0 リリース前）。全15回の原稿・演習ファイル・参考資料・
-> 用語集・自由課題の支援物と、サイトのビルド系・Prolog 実行ページは揃っている。
-> 残っているのは GitHub 上での公開作業だけである。
-> 公開サイトは <https://yf-fyf.github.io/cp-practice/> を予定しており、
-> 最初のリリース（`v1.0.0`）以降に閲覧できるようになる。
+## レビューするファイル
 
-## 特徴
+- `materials/sessions/<URL名>/lesson.md`：本文と必修演習
+- 同じフォルダーの `advanced-exercises.md`：発展・選択演習
+- 同じフォルダーの `guides/` と `figures/`：手引きと図
+- `workbook/sessions/<URL名>/`：配布するモデル・入力・確認用ファイル
+- `site/nav.yaml`：URL、原稿の対応、配布するファイルの一覧
 
-- **同じ手順を題材を変えて繰り返す。** 論理グリッドパズル・数独・パッケージ依存関係・
-  テーマ割当・勤務表と題材を変えながら、「定式化 → 実行 → 検証」を毎回通す。
-  後半は各自の問題を定式化する自由課題に充てる
-- **道具の違いを縦断して見る。** グラフ彩色を Prolog・MiniZinc・SAT 符号化の3通りで
-  書き比べ、同じ問題が道具ごとにどう見えるかを扱う
-- **環境構築で授業を止めない。** Prolog と MiniZinc はブラウザ上で実行する
-  （Tau Prolog を同梱した実行ページ／MiniZinc Playground）。SAT/SMT だけ Python + Z3 を使う
-- **演習は必須・標準・発展の3段階。** 必須演習には完了条件と段階的ヒントを付け、
-  欠席時・復習時にも自力で再現できるようにしてある
-- **対象**: Python の経験があれば履修できる。論理回路（AND/OR/NOT）程度の知識を前提とし、
-  命題論理・Prolog・MiniZinc の経験は仮定しない
+例えば第07回は `materials/sessions/07-schedule/lesson.md` を編集します。サイトのURLは `/sessions/07-schedule/` です。
 
-回割り・各回の目標・演習3段階・完了条件の**正本**は
-[`design/curriculum-2026.md`](./design/curriculum-2026.md) である。
+| 回 | 本文 | 配布物 |
+|---|---|---|
+| 第01回 | [第01回　Prologで関係を書く](materials/sessions/01-prolog/lesson.md) | [演習ファイル](workbook/sessions/01-prolog/) |
+| 第02回 | [第02回　MiniZincで小さな数独を解く](materials/sessions/02-minizinc/lesson.md) | [演習ファイル](workbook/sessions/02-minizinc/) |
+| 第03回 | [第03回　候補を減らし、場合分けして解く](materials/sessions/03-search/lesson.md) | [演習ファイル](workbook/sessions/03-search/) |
+| 第04回 | [第04回　ルールを制約にして、パズルを作る](materials/sessions/04-rules/lesson.md) | [演習ファイル](workbook/sessions/04-rules/) |
+| 第05回 | [第05回　講座の割当を0/1の表で表す](materials/sessions/05-assignment/lesson.md) | [演習ファイル](workbook/sessions/05-assignment/) |
+| 第06回 | [第06回　目的関数で良さを比べる](materials/sessions/06-optimization/lesson.md) | [演習ファイル](workbook/sessions/06-optimization/) |
+| 第07回 | [第07回　勤務表を数理モデルとして解く](materials/sessions/07-schedule/lesson.md) | [演習ファイル](workbook/sessions/07-schedule/) |
+| 第08回 | [第08回　希望の上限と、最小化する指標](materials/sessions/08-preferences/lesson.md) | [演習ファイル](workbook/sessions/08-preferences/) |
+| 第09回 | [第09回　SATで依存・排他・選択を扱う](materials/sessions/09-sat/lesson.md) | [演習ファイル](workbook/sessions/09-sat/) |
+| 第10回 | [第10回　SMTで作業の日程を組む](materials/sessions/10-smt/lesson.md) | [演習ファイル](workbook/sessions/10-smt/) |
 
-## はじめかた
+## ローカルで読む・確認する
 
-**学習者**は、演習ファイルの入手と実行を [`workbook/README.md`](./workbook/README.md) から
-始める。本文はすべて公開サイト（<https://yf-fyf.github.io/cp-practice/>）にあり、
-そちらが正本である。演習ファイルはサイトの `downloads/` から ZIP でも取得できる。
+依存は Python 3.11以上、PyYAML、Pandoc（検証版3.10.2）です。図のSVGは同梱済みなので、通常のサイト生成にTeXは不要です。
 
-**教える側・教材を改変する人**は、次の順で読む。
-
-1. [`design/curriculum-2026.md`](./design/curriculum-2026.md) — 回割りと各回の目標
-2. [`design/site-design.md`](./design/site-design.md) — サイトが何を満たすか
-3. [`design/maintaining.md`](./design/maintaining.md) — どう作り、どう公開するか
-
-## リポジトリ構成
-
-| パス | 内容 | 読む人 |
-|------|------|--------|
-| [`workbook/`](./workbook/README.md) | 演習の配布物（演習ファイル・実行環境の案内） | 学習者 |
-| `materials/` | 資料の Markdown 原稿と図の TikZ ソース | 教材を書く人 |
-| [`design/`](./design/curriculum-2026.md) | カリキュラム設計書・サイト方針・環境選定・保守手順・品質管理 | 教える側・改変する人 |
-| `site/` / `tools/` / `latex/` | 資料サイトと図のビルドシステム | 教材を書く人 |
-| `web/prolog/` | ブラウザで動く Prolog 実行ページ（Tau Prolog 同梱） | 学習者 |
-| [`AGENTS.md`](./AGENTS.md) | AI コーディングエージェント向けガイド | — |
-
-完成解答・隠しテスト・評価ルーブリック・品質記録は、このリポジトリには置かない。
-非公開リポジトリ `cp-practice-design` で管理する。
-
-## 資料サイトを自前でビルドする場合
-
-サイトの生成には Pandoc（検証版 3.10.2）・PyYAML・Python 3.11 以上が要る。
-CI とリリース処理も同じ Pandoc 版を使う。導入・更新は
-[保守手順](./design/maintaining.md#資料サイト)を参照する。
-
-```bash
-make site     # .site/ にサイトを生成
-make serve    # 生成して http://127.0.0.1:8000/ で配信
-make check    # 生成 → 内部リンク検査 → 文書検査
+```sh
+make serve                         # http://127.0.0.1:8000/ を開く
+make serve PORT=9000               # 別ポート
+make serve HOST=0.0.0.0            # 別端末からも閲覧する場合
+make check                        # 生成・リンク・原稿・配布範囲の検査
+make pages VERSION=v0.1.0-preview # ローカルに .pages/ と配布ZIPを組み立てる
 ```
 
-ページ間のリンクはディレクトリ形式なので `file://` では辿れない。
-ローカルで見るときは `make serve` を使う。
+`make serve` は原稿・配布物・表示資産・生成コードの保存を検知して再生成し、ブラウザを更新します。失敗時は直前の生成物を表示し、修正後に再生成します。終了は Ctrl-C です。
 
-図を作り直すときだけ LuaLaTeX と poppler-utils が要る（`make figures`）。
-生成した SVG はコミットしてあるので、図を触らないなら不要である。
-手順の詳細は [`design/maintaining.md`](./design/maintaining.md) にある。
+プログラムや入力・出力例のリンクは、本文の上に読み取り専用のプレビューを開きます。全文コピーと元ファイルのダウンロードができ、「閉じる」またはEscで元の位置に戻ります。ZIPは直接ダウンロードします。
 
-## 公開とリリース
+CIとリリース処理は `.github/actions/setup-pandoc/action.yml` でPandoc 3.10.2とSHA-256を固定しています。構文強調は `--syntax-highlighting=tango` を使います。
 
-開発は既定ブランチの `dev` で行う。GitHub Pages 用の `main` は手動リリースで
-生成する公開専用ブランチであり、直接編集しない。Pages には資料サイト、
-Prolog 実行ページ、`workbook/` 全体の ZIP を置く。
-
-GitHub Actions の **Release Pages** を `dev` から手動実行し、`v1.0.0` のような
-リリース番号を指定する。ローカルで公開物を確認する場合は、リポジトリルートから次を実行する。
-
-```bash
-make pages VERSION=v1.0.0
-# .pages/index.html を開く。配信するのは .pages/ の内容だけ
-```
-
-公開物は許可リスト方式で組み立て、教員用資産や個人情報が混ざっていないかを
-実行時に検査する。公開前チェックリストは
-[`design/maintaining.md`](./design/maintaining.md) にある。
+[回割りと方針](design/curriculum-2026.md)、[保守手順](design/maintaining.md)、[レビュー手順](design/quality_guide.md)も参照してください。旧版教材はGit履歴から確認できます。
 
 ## ライセンス
 
-プログラムコードは [MIT](./LICENSE)、講義資料（本文・図・設計文書）は [CC BY-NC-SA 4.0](./LICENSE-MATERIALS)。
-
-Prolog 実行ページには第三者ソフトウェア **Tau Prolog 0.3.4（BSD 3-Clause）** を `web/prolog/vendor/` へ同梱している。版・ライセンス・原著作権表記・入手元は [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) に記載してある。
+教材は [LICENSE-MATERIALS](LICENSE-MATERIALS)、コードは [LICENSE](LICENSE) を参照してください。同梱ソフトウェアは [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) に記載しています。

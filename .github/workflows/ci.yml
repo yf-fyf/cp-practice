@@ -26,6 +26,8 @@ jobs:
         run: make check-links
       - name: Check documentation consistency
         run: make check-docs
+      - name: Test publication checks
+        run: python3 -m unittest discover -s tools -p 'test_*.py'
 
   scripts:
     runs-on: ubuntu-24.04
@@ -35,5 +37,5 @@ jobs:
         run: python3 -m compileall -q tools workbook
 
 # 演習モデル（MiniZinc）・演習コード（Z3）は CI では走らせない
-# （site-plan-2026.md §9.0-14 の決定）。動作確認はローカルで行い、
+# 動作確認はローカルで行い、
 # 結果を非公開 ../cp-practice-design/teacher/quality/records/ に記録する。

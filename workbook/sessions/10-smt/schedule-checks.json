@@ -1,0 +1,90 @@
+[
+  {
+    "name": "demo-A-first",
+    "input": "demo.json",
+    "start": [
+      0,
+      2,
+      2
+    ],
+    "valid": true,
+    "model": "basic"
+  },
+  {
+    "name": "demo-C-first",
+    "input": "demo.json",
+    "start": [
+      2,
+      4,
+      0
+    ],
+    "valid": true,
+    "model": "basic"
+  },
+  {
+    "name": "overlap",
+    "input": "demo.json",
+    "start": [
+      0,
+      2,
+      1
+    ],
+    "valid": false,
+    "model": "basic"
+  },
+  {
+    "name": "precedence",
+    "input": "demo.json",
+    "start": [
+      0,
+      1,
+      2
+    ],
+    "valid": false,
+    "model": "basic"
+  },
+  {
+    "name": "late",
+    "input": "demo.json",
+    "start": [
+      0,
+      5,
+      2
+    ],
+    "valid": false,
+    "model": "basic"
+  },
+  {
+    "name": "negative",
+    "input": "demo.json",
+    "start": [
+      -1,
+      1,
+      1
+    ],
+    "valid": false,
+    "model": "basic"
+  },
+  {
+    "name": "practice-touch",
+    "input": "practice.json",
+    "start": [
+      0,
+      3,
+      3
+    ],
+    "valid": true,
+    "model": "basic"
+  },
+  {
+    "name": "wait-touch",
+    "input": "wait-7.json",
+    "start": [
+      0,
+      5,
+      3
+    ],
+    "valid": true,
+    "model": "wait"
+  }
+]

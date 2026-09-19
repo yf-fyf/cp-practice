@@ -1,4 +1,5 @@
-.PHONY: site serve check-links check-docs check-publish check figures pages clean
+.NOTPARALLEL: check
+.PHONY: site serve check-links check-docs check-publish check check-tools figures pages clean
 
 HOST ?= 127.0.0.1
 PORT ?= 8000
@@ -13,7 +14,7 @@ site:
 #     make serve HOST=tailscale   別端末から Tailscale 経由で見る
 #     make serve HOST=0.0.0.0     全インターフェース（LAN からも見える）
 #
-# ページ間のリンクは sessions/03-minizinc-sudoku/ のディレクトリ形式なので、
+# ページ間のリンクは sessions/02-minizinc/ のディレクトリ形式なので、
 # file:// で開いても辿れない。ローカル確認は必ずこれを使う。
 serve:
 	python3 tools/build_site.py --serve --host $(HOST) --port $(PORT)
@@ -31,7 +32,10 @@ check-publish:
 	python3 tools/check_docs.py --only publish,privacy
 
 # push 前に一括で通すもの
-check: site check-links check-docs
+check: site check-links check-docs check-tools
+
+check-tools:
+	python3 -m unittest discover -s tools -p 'test_*.py'
 
 # 図を SVG で生成する（依存: lualatex + poppler-utils）。
 # 生成 SVG はコミット対象なので、図の .tex を触ったときだけ実行する。
