@@ -1,0 +1,1 @@
+{"name": "best-worst.dzn", "language": "minizinc", "label": "MiniZincの入力", "code": "best_worst = 1;\n", "lines": ["best_worst <span class=\"op\">=</span> <span class=\"dv\">1</span>;"]}

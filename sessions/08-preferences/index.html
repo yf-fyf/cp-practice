@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第08回　希望の上限と、最小化する指標 - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+<script defer="" src="../../assets/katex/katex.min.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+</script>
+<link rel="stylesheet" href="../../assets/katex/katex.min.css" />
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 通常講義</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第08回　希望の上限と、最小化する指標</h1>
+    <nav class="session-nav" aria-label="第08回の講義資料"><a href="../../sessions/08-preferences/index.html" aria-current="page">通常講義</a><a href="../../advanced/preferences-challenges/index.html">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#目標">目標</a>
+      </li>
+      <li><a href="#問題">1. 問題</a>
+      </li>
+      <li><a href="#定式化">2. 定式化</a>
+      <ul>
+      <li><a href="#必須条件と希望違反">必須条件と希望違反</a></li>
+      <li><a href="#全員の日数と最大最小">全員の日数と最大・最小</a></li>
+      <li><a href="#重み付きの評価値">重み付きの評価値</a></li>
+      </ul>
+      </li>
+      <li><a href="#解説例">3. 解説例</a>
+      <ul>
+      <li><a href="#手順1-必須条件と希望">手順1　必須条件と希望</a></li>
+      <li><a href="#手順2-全員の日数と日数差">手順2　全員の日数と日数差</a></li>
+      <li><a href="#手順3-重みと最小化">手順3　重みと最小化</a></li>
+      </ul>
+      </li>
+      <li><a href="#結果">4. 結果</a>
+      </li>
+      <li><a href="#演習">5. 演習</a>
+      <ul>
+      <li><a href="#必修1-希望の変更">必修1　希望の変更</a></li>
+      <li><a href="#必修2-違反の上限">必修2　違反の上限</a></li>
+      </ul>
+      </li>
+      <li><a href="#発展">6. 発展</a>
+      </li>
+      <li><a href="#振り返り">7. 振り返り</a>
+      </li>
+      <li><a href="#参照">参照</a>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p>勤務できる人だけで人数を揃えた勤務表にも、休みの希望や日数の偏りという違いがある。希望違反と勤務日数の差を数にして比べ、重みで選ぶ方法から、「違反はここまで」と保証する条件の書き方へ進む。</p>
+</header>
+<section id="目標" class="level2 unnumbered sec-goal">
+<h2 class="unnumbered sec-goal">目標</h2>
+<p>この回では、必須条件を守る勤務表の中で何を改善するかを考える。表から評価値を読み取り、目的を変えた結果について、次の三つを説明できるようになろう。</p>
+<ul>
+<li>勤務できない日と、勤務可能だが休みたい日を区別できる。</li>
+<li>希望違反V・全員の日数差F・重み付きの評価値Jを計算できる。</li>
+<li>違反上限を制約に置き、その範囲で日数差を最小化できる。</li>
+</ul>
+<p>第06回の和と最小化、第07回の0/1勤務表を使う。<a href="../../downloads/session-08/roster-basic.mzn" data-code-preview="../../previews/session-08/roster-basic.mzn.json">技能なしの基本モデル</a>と<a href="../../downloads/session-08/practice.dzn" data-code-preview="../../previews/session-08/practice.dzn.json">5人の入力</a>を再配布する。前の必修の完成は不要で、技能・周期の条件も使わない。最大・最小の記法はこの回で説明する。操作は<a href="../../guides/preferences-check/index.html">入力と結果の確認手引き</a>で授業内に確認できる。</p>
+<p>説明・実演に50分、<a href="#演習">5. 演習</a>に45分、振り返りに5分を使う。必修1は15分、必修2は25分、残り5分は確認の目安である。通常演習の提出・宿題・完了報告はなく、教員の完了承認も待たない。発展は選んで取り組む。</p>
+</section>
+<section id="問題" class="level2 sec-problem">
+<h2 class="sec-problem">1. 問題</h2>
+<p>勤務の可否は、表が必ず守る条件である。一方、休みたいという希望は、必要な人数を揃えるためにかなわないこともある。まず二種類の入力を別々に読み、どちらが選択を禁止するかを確かめよう。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 5人A〜Eの4日間の勤務を決める。一人一日について勤務するかしないかを選び、各日ちょうど2人、一人の勤務は合計2日以下とする。勤務可能性が0の位置では勤務させない。</p>
+<p>各欄は左から1・2・3・4日目の値。勤務可能性の1は勤務可能、休み希望の1は休みたいことを表す。希望の0は休みの希望なしであり、出勤の義務ではない。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th>勤務可能性（1〜4日）</th>
+<th>休み希望（1〜4日）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>1 1 0 1</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>B</td>
+<td>1 0 1 1</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>C</td>
+<td>0 1 1 1</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>D</td>
+<td>1 1 1 0</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>E</td>
+<td>1 1 1 1</td>
+<td>1 1 1 1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>休み希望のある位置で勤務した回数の合計をV、全員の勤務日数の最大と最小の差をFとする。非負の整数重みα・βを使い、J=αV+βFを最小にする。重みは(1,0)、(1,1)、(1,2)を別々に試す。</p>
+</div>
+<p>Eは4日とも勤務可能なので、選ぶこと自体は禁止されていない。Eが1日勤務すると希望違反は1回になる。この区別を保つため、勤務可能性と休み希望を同じ表へ上書きしない。</p>
+</section>
+<section id="定式化" class="level2 sec-model">
+<h2 class="sec-model">2. 定式化</h2>
+<p>勤務表の条件をそのまま残し、表に応じて決まる指標を追加する。指標の定義と、どの指標を小さくするかという指定を分けると、目的を切り替えたときの違いを説明しやすくなる。</p>
+<section id="必須条件と希望違反" class="level3">
+<h3>必須条件と希望違反</h3>
+<p><span class="math inline">x_{p,d}\in\{0,1\}</span>を人pが日dに勤務するかどうかとする。勤務可能性を<span class="math inline">a_{p,d}</span>、休み希望を<span class="math inline">r_{p,d}</span>と置く。基本条件は、各日2人、勤務可能、一人2日以下の三種類である。</p>
+<p><span class="math display">\sum_p x_{p,d}=2\quad(各日d),\qquad
+x_{p,d}\le a_{p,d}\quad(各組p,d),\qquad
+\sum_d x_{p,d}\le2\quad(各人p).</span></p>
+<p>希望違反の合計は <span class="math inline">V=\sum_{p,d}r_{p,d}x_{p,d}</span> と定義する。希望が1かつ勤務が1の位置だけが1を加える。希望があるだけで違反にはならず、その日に実際に勤務した場合に数える。</p>
+<p>例えばEが1日目と3日目に勤務すれば、Eの4日分は1×1+1×0+1×1+1×0=2となる。他の人には休み希望がないので、勤務してもこの入力のVは増えない。</p>
+</section>
+<section id="全員の日数と最大最小" class="level3">
+<h3>全員の日数と最大・最小</h3>
+<p>各人の勤務日数を <span class="math inline">L_p=\sum_d x_{p,d}</span> とする。この値を全員分並べ、その中で最も大きい値を最大、最も小さい値を最小と呼ぶ。どちらも一人の行の中ではなく、全員の日数から選ぶ値である。</p>
+<p><span class="math display">F=\max_p L_p-\min_p L_p.</span></p>
+<p>日数が(2,2,2,2,0)なら最大2・最小0でF=2、(2,2,2,1,1)なら最大2・最小1でF=1となる。勤務0日の人も全員の一人なので、最小を取る前に除外しない。</p>
+<p>ここで測るのは勤務日数の差である。各日の忙しさや担当内容の違いまでは測っていない。「公平」という言葉だけで指標を決めず、Fがどの差を数えているかを説明しよう。</p>
+</section>
+<section id="重み付きの評価値" class="level3">
+<h3>重み付きの評価値</h3>
+<p>J=αV+βFを小さくする。αは希望違反1回、βは日数差1日の増加に付ける重みである。例えば(α,β)=(1,2)なら、Vが1減る改善より、Fが1減る改善に大きい点数を付ける。</p>
+<p>重みを変えると、同じ勤務表のVとFは変わらなくてもJが変わる。片方の重みが0なら、その指標をJで比較しない。両方0では全表のJが0となるため、今回の入力では使わない。</p>
+<p>重みは違反回数の上限そのものではない。「Vはk以下」という保証には、その条件を別に置く必要がある。<a href="#演習">必修2</a>では、保証したい量と、その条件の中で小さくする量を選び分ける。</p>
+</section>
+</section>
+<section id="解説例" class="level2 sec-demo">
+<h2 class="sec-demo">3. 解説例</h2>
+<p>教員が基本勤務表を開き、希望入力、日数の集計、重み付きの最小化を順に確認する。集計値が表からどう決まるかを追い、重みを変える前後で、基本勤務条件が残っていることも見ていこう。</p>
+<section id="手順1-必須条件と希望" class="level3">
+<h3>手順1　必須条件と希望</h3>
+<p><a href="../../downloads/session-08/weighted-demo.mzn" data-code-preview="../../previews/session-08/weighted-demo.mzn.json">weighted-demo.mzn</a>は<a href="../../downloads/session-08/metrics-core.mzn" data-code-preview="../../previews/session-08/metrics-core.mzn.json">metrics-core.mzn</a>を読み、その中から<a href="../../downloads/session-08/roster-core.mzn" data-code-preview="../../previews/session-08/roster-core.mzn.json">roster-core.mzn</a>の基本条件を読む。共通部分には<code class="sourceCode minizinc"><span class="kw">solve</span></code>を置かず、実行するモデルだけに置く。</p>
+<figure class="code"><figcaption>metrics-core.mzn</figcaption>
+<div class="sourceCode" id="cb1"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">include</span> <span class="st">&quot;roster-core.mzn&quot;</span>;</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="dt">array</span>[PEOPLE, DAYS] <span class="dt">of</span> <span class="dv">0</span><span class="op">..</span><span class="dv">1</span>: request;</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="dt">var</span> <span class="dt">int</span>: violations <span class="op">=</span> <span class="fu">sum</span>(p <span class="op">in</span> PEOPLE, d <span class="op">in</span> DAYS)(</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    request[p,d]<span class="op">*</span>work[p,d]</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>);</span></code></pre></div>
+</figure>
+<p><code>request</code>は0/1の入力なので<code class="sourceCode minizinc"><span class="dt">var</span></code>を付けない。<code>violations</code>は勤務表に応じて決まるVなので<code class="sourceCode minizinc"><span class="dt">var</span></code>を付ける。<a href="../../downloads/session-08/request-demo.dzn" data-code-preview="../../previews/session-08/request-demo.dzn.json">request-demo.dzn</a>には、5人の基本入力と、Eの4日分だけ1の希望をまとめてある。</p>
+</section>
+<section id="手順2-全員の日数と日数差" class="level3">
+<h3>手順2　全員の日数と日数差</h3>
+<p>まず人ごとに一行の勤務を足して<code class="sourceCode minizinc">load[p]</code>へ結び付ける。その配列全体を<code>max</code>と<code>min</code>へ渡せば、全員の日数の最大と最小が得られる。最小値の対象には勤務0日の人も含まれる。</p>
+<figure class="code"><figcaption>metrics-core.mzn</figcaption>
+<div class="sourceCode" id="cb2"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dt">array</span>[PEOPLE] <span class="dt">of</span> <span class="dt">var</span> <span class="dv">0</span><span class="op">..</span>n_days: load;</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">forall</span>(p <span class="op">in</span> PEOPLE)(load[p] <span class="op">=</span> <span class="fu">sum</span>(d <span class="op">in</span> DAYS)(work[p,d]));</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="dt">var</span> <span class="dt">int</span>: spread <span class="op">=</span> <span class="fu">max</span>(load) <span class="op">-</span> <span class="fu">min</span>(load);</span></code></pre></div>
+</figure>
+<p><code>load</code>の範囲0〜日数は安全な宣言であり、一人2日以下という基本条件も引き続き働く。<code>spread</code>がFに当たる。<code class="sourceCode minizinc"><span class="fu">max</span>(load)</code>は配列から最大値を取る式で、目的を大きくする<code class="sourceCode minizinc"><span class="kw">solve</span> <span class="kw">maximize</span></code>とは役割が異なる。</p>
+</section>
+<section id="手順3-重みと最小化" class="level3">
+<h3>手順3　重みと最小化</h3>
+<p>VとFの定義を共通部分に残し、実行するモデルで重みと目的を指定する。ここでは重みを定数入力として読み、勤務表に応じたJへ<code>objective</code>という名前を付けている。</p>
+<figure class="code"><figcaption>weighted-demo.mzn</figcaption>
+<div class="sourceCode" id="cb3"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">var</span> <span class="dt">int</span>: objective <span class="op">=</span> alpha<span class="op">*</span>violations <span class="op">+</span> beta<span class="op">*</span>spread;</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">solve</span> <span class="kw">minimize</span> objective;</span></code></pre></div>
+</figure>
+<p><a href="../../downloads/session-08/weights-10.dzn" data-code-preview="../../previews/session-08/weights-10.dzn.json">weights-10.dzn</a>、<a href="../../downloads/session-08/weights-11.dzn" data-code-preview="../../previews/session-08/weights-11.dzn.json">weights-11.dzn</a>、<a href="../../downloads/session-08/weights-12.dzn" data-code-preview="../../previews/session-08/weights-12.dzn.json">weights-12.dzn</a>を一つずつ選び、Gecodeで実行する。重みを二つ同時に読み込むと入力が重複する。</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode weighted-demo.mzn request-demo.dzn weights-12.dzn</span></code></pre></div>
+<p>出力には勤務表、<code>load</code>、V・F・Jが出る。表示順に依存せず、<code>load=</code>・<code>V=</code>・<code>F=</code>・<code>J=</code>の名前で対応を確かめる。最後の<code>==========</code>まで確認する。途中の候補や時間制限で止めた候補は、それよりよい解がないことまで確認済みとは限らない。</p>
+</section>
+</section>
+<section id="結果" class="level2 sec-result">
+<h2 class="sec-result">4. 結果</h2>
+<p>次の二表は、いずれも勤務可能性、各日2人、一人2日以下を満たす。日ごとの担当者を読み、AからEまで各人が何日出ているかを数えると、希望と日数差の違いを比較できる。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>表</th>
+<th>1日目</th>
+<th>2日目</th>
+<th>3日目</th>
+<th>4日目</th>
+<th>日数A〜E</th>
+<th style="text-align: right;">V</th>
+<th style="text-align: right;">F</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S0</td>
+<td>AB</td>
+<td>AD</td>
+<td>CD</td>
+<td>BC</td>
+<td>2,2,2,2,0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td>S1</td>
+<td>AB</td>
+<td>AC</td>
+<td>BD</td>
+<td>CE</td>
+<td>2,2,2,1,1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>S0はEが勤務しないのでV=0、最小の日数は0なのでF=2である。S1はEが4日目に勤務してV=1となるが、勤務0日の人はいなくなりF=1となる。希望を一つかなえないことと引き換えに、日数差が小さくなる。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>重み(α,β)</th>
+<th style="text-align: right;">S0のJ</th>
+<th style="text-align: right;">S1のJ</th>
+<th>最適な指標対(V,F)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>(1,0)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td>(0,2)</td>
+</tr>
+<tr>
+<td>(1,1)</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td>(0,2)と(1,1)</td>
+</tr>
+<tr>
+<td>(1,2)</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">3</td>
+<td>(1,1)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>重み1対1では二つの指標対が同点になる。S0とS1のどちらが出ても誤りではなく、同じ指標対を持つ別の勤務表が出る場合もある。表の完全一致ではなく、基本条件・VとFの再計算・Jの最適値を順に確認する。</p>
+<p>この二表だけを比べることと、全勤務表の最適性を証明することは別である。実行では最適終了を確認し、手計算では表示された値の意味を確かめる。<a href="../../guides/preferences-check/index.html">確認手引き</a>には入力ごとの希望・上限・目的をまとめてある。</p>
+</section>
+<section id="演習" class="level2 sec-exercise">
+<h2 class="sec-exercise">5. 演習</h2>
+<p>必修1では集計と重み付きの最小化を再現し、必修2では条件と目的の置き場所を変える。それぞれ別の出発ファイルを使うので、前の作業中の入力や目的が残っていないかを確認しよう。</p>
+<section id="必修1-希望の変更" class="level3">
+<h3>必修1　希望の変更</h3>
+<p>Eの休み希望を1日分に減らした場合を扱う。勤務可能性を変えず、希望の表だけを変えることがポイントである。同じ重みで比べると、どの指標が改善できるかを調べられる。</p>
+<section id="問題-1" class="level4">
+<h4>問題</h4>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 5人A〜Eの4日間の勤務を、勤務するなら1、休むなら0で決める。各日ちょうど2人、一人の勤務は合計2日以下。勤務可能性0の位置では勤務させない。各欄は左から1・2・3・4日目である。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th>勤務可能性（1〜4日）</th>
+<th>休み希望（1〜4日）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>1 1 0 1</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>B</td>
+<td>1 0 1 1</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>C</td>
+<td>0 1 1 1</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>D</td>
+<td>1 1 1 0</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>E</td>
+<td>1 1 1 1</td>
+<td>0 0 0 1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Eは4日目だけ休みを希望し、他の人には希望がない。希望1の位置で勤務した回数の合計をV、勤務0日の人も含む全員の勤務日数の最大と最小の差をFとし、J=V+2Fを最小にする。希望0は出勤の義務ではなく、違反上限は追加しない。</p>
+</div>
+</section>
+<section id="作業" class="level4">
+<h4>作業</h4>
+<p>モデルの <code class="sourceCode minizinc">work[p,d]</code> は勤務の有無、<code class="sourceCode minizinc">available[p,d]</code> は勤務可能性、<code class="sourceCode minizinc">request[p,d]</code> は休み希望を表す。添字は <code class="sourceCode minizinc">PEOPLE<span class="op">=</span><span class="dv">1</span><span class="op">..</span><span class="dv">5</span></code> がA〜E、<code class="sourceCode minizinc">DAYS<span class="op">=</span><span class="dv">1</span><span class="op">..</span><span class="dv">4</span></code> が日1〜4である。<code class="sourceCode minizinc">load[p]</code> は人pの勤務日数、<code>violations</code> は希望違反の合計V、<code>spread</code> は日数差Fを表す。</p>
+<p><a href="../../downloads/session-08/weighted-start.mzn" data-code-preview="../../previews/session-08/weighted-start.mzn.json">weighted-start.mzn</a>と<a href="../../downloads/session-08/roster-core.mzn" data-code-preview="../../previews/session-08/roster-core.mzn.json">roster-core.mzn</a>、<a href="../../downloads/session-08/request-practice.dzn" data-code-preview="../../previews/session-08/request-practice.dzn.json">request-practice.dzn</a>、<a href="../../downloads/session-08/weights-12.dzn" data-code-preview="../../previews/session-08/weights-12.dzn.json">weights-12.dzn</a>を使う。<code>roster-core.mzn</code> に基本勤務条件、出発ファイルに各人の日数・出力の足場が完成している。<code>request-practice.dzn</code> が上の表と人数・日数上限、<code>weights-12.dzn</code> が重み <code class="sourceCode minizinc">alpha<span class="op">=</span><span class="dv">1</span></code>、<code class="sourceCode minizinc">beta<span class="op">=</span><span class="dv">2</span></code> を持つ。自分で定義する <code>objective</code> がJに対応する。</p>
+<ol type="1">
+<li><strong>作業1：</strong> <code>violations</code>と<code>spread</code>を定義する。希望位置と勤務の積を足し、日数差には全員の<code>load</code>を使う。</li>
+<li><strong>作業2：</strong> <code>objective</code>を重み付きの合計として定義し、最小化する<code class="sourceCode minizinc"><span class="kw">solve</span></code>を一つ書く。入力を選んで実行する。</li>
+<li>表から日数・V・Fを手で求め、表示されたJまで照合する。</li>
+</ol>
+<figure class="code"><figcaption>weighted-start.mzn</figcaption>
+<div class="sourceCode" id="cb5"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業1): 希望違反violationsと、全員の日数差spreadを定義する。</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業2): 重み付きのobjectiveを定義し、最小化する。</span></span></code></pre></div>
+</figure>
+<p>出力は作業1・2で定義する名前を使うため、未記入では未定義のエラーになる。入力だけを変えて完成したことにはせず、何を足し、どの値を小さくするかを自分の式へ写そう。</p>
+</section>
+<section id="自己確認" class="level4">
+<h4>自己確認</h4>
+<p>最適値はJ=2、指標対は(V,F)=(0,1)である。例えば日ごとの担当者がAB／AE／CD／BCなら、日数は(2,2,2,1,1)。Eの勤務は2日目だけなので、4日目の休み希望を守れる。</p>
+<p>別表でも基本条件と指標対が一致すればよい。総勤務は4日×2人=8で、5人へ同じ整数日数を割り当てられないためF=0にはできない。V≥0と合わせるとJ≥2であり、上の表がその値を達成している。</p>
+<details class="hint"><summary>ヒントを開く：二つの集計の対象</summary><div class="hint-body">
+<p>Vは人と日の全組について<code class="sourceCode minizinc">request[p,d]<span class="op">*</span>work[p,d]</code>を足す。Fは<code class="sourceCode minizinc"><span class="fu">max</span>(load)<span class="op">-</span><span class="fu">min</span>(load)</code>とする。希望が変わるとVは変わり得るが、同じ勤務表のFは変わらない。</p>
+</div></details>
+</section>
+</section>
+<section id="必修2-違反の上限" class="level3">
+<h3>必修2　違反の上限</h3>
+<p>運営者の二つの要求を読み、必ず守る条件と、よりよい表を選ぶ基準に分ける。どの量を制約へ置き、どの量を目的へ置くかを自分で決め、二つの入力で確かめよう。</p>
+<section id="問題-2" class="level4">
+<h4>問題</h4>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 5人A〜Eの4日間の勤務を、勤務するなら1、休むなら0で決める。各日ちょうど2人、一人の勤務は合計2日以下。勤務可能性0の位置では勤務させない。各欄は左から1・2・3・4日目である。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th>勤務可能性（1〜4日）</th>
+<th>休み希望（1〜4日）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>1 1 0 1</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>B</td>
+<td>1 0 1 1</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>C</td>
+<td>0 1 1 1</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>D</td>
+<td>1 1 1 0</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>E</td>
+<td>1 1 1 1</td>
+<td>1 1 1 1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Eは全4日休みを希望し、他の人には希望がない。運営者の要求は「休み希望に反する勤務は、合計で今回許されたk回を超えないこと」「その範囲で、最も勤務が多い人と少ない人の日数差を、できるだけ小さくすること」である。</p>
+<p>k=0とk=1を別々に調べる。希望違反の合計をV、勤務0日の人も含む全員の勤務日数の最大と最小の差をFと呼ぶ。</p>
+</div>
+</section>
+<section id="作業-1" class="level4">
+<h4>作業</h4>
+<p>モデルの <code class="sourceCode minizinc">work[p,d]</code> は勤務の有無、<code class="sourceCode minizinc">available[p,d]</code> は勤務可能性、<code class="sourceCode minizinc">request[p,d]</code> は休み希望を表す。添字は <code class="sourceCode minizinc">PEOPLE<span class="op">=</span><span class="dv">1</span><span class="op">..</span><span class="dv">5</span></code> がA〜E、<code class="sourceCode minizinc">DAYS<span class="op">=</span><span class="dv">1</span><span class="op">..</span><span class="dv">4</span></code> が日1〜4である。<code class="sourceCode minizinc">load[p]</code> は人pの勤務日数、<code>violations</code> は希望違反の合計V、<code>spread</code> は日数差Fを表す。</p>
+<p><a href="../../downloads/session-08/capped-start.mzn" data-code-preview="../../previews/session-08/capped-start.mzn.json">capped-start.mzn</a>、<a href="../../downloads/session-08/metrics-core.mzn" data-code-preview="../../previews/session-08/metrics-core.mzn.json">metrics-core.mzn</a>、<a href="../../downloads/session-08/roster-core.mzn" data-code-preview="../../previews/session-08/roster-core.mzn.json">roster-core.mzn</a>を使う。V・各人の日数・Fの定義は完成している。上の表と人数・日数上限には <a href="../../downloads/session-08/request-demo.dzn" data-code-preview="../../previews/session-08/request-demo.dzn.json">request-demo.dzn</a> を使う。</p>
+<ol type="1">
+<li><strong>作業1：</strong> 二つの要求について「これを満たさない表は拒否する」「許された表同士で、こちらを比べる」のどちらかをメモし、対応する量と理由を書く。k回より少ない違反も許されるか考える。</li>
+<li><strong>作業2：</strong> メモに従って制約と<code class="sourceCode minizinc"><span class="kw">solve</span></code>を記述する。重みを付けて足す方法で要求を必ず守れるかも検討する。</li>
+<li><a href="../../downloads/session-08/cap-0.dzn" data-code-preview="../../previews/session-08/cap-0.dzn.json">cap-0.dzn</a>と<a href="../../downloads/session-08/cap-1.dzn" data-code-preview="../../previews/session-08/cap-1.dzn.json">cap-1.dzn</a>を一つずつ使って実行する。二つの上限入力を同時に読み込まない。</li>
+</ol>
+<figure class="code"><figcaption>capped-start.mzn</figcaption>
+<div class="sourceCode" id="cb6"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業1): 二つの要求を、必ず守る条件と比べる量に分けてメモする。</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業2): メモに従って制約とsolveを書く。</span></span></code></pre></div>
+</figure>
+<p>出発ファイルには上限制約と目的をまだ入れていない。実行前に「Eの希望は全日」「今回のk」を入力から確認し、自分が書いた制約・目的のそれぞれが、どちらの要求を表すか説明する。</p>
+</section>
+<section id="自己確認-1" class="level4">
+<h4>自己確認</h4>
+<p>k=0では最小F=2、指標対は(0,2)。k=1では最小F=1、指標対は(1,1)になる。次の二表は基本勤務条件を満たすので、追加した上限と目的の違いに集中して確認できる。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 15%" />
+<col style="width: 15%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 15%" />
+<col style="width: 15%" />
+</colgroup>
+<thead>
+<tr>
+<th>表（1〜4日目の担当者）</th>
+<th>日数A〜E</th>
+<th style="text-align: right;">V</th>
+<th style="text-align: right;">F</th>
+<th>k=0</th>
+<th>k=1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AB／AD／CD／BC</td>
+<td>2,2,2,2,0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td>実行可能・最適</td>
+<td>実行可能・最適でない</td>
+</tr>
+<tr>
+<td>AB／AC／BD／CE</td>
+<td>2,2,2,1,1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td>上限違反</td>
+<td>実行可能・最適</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>k=1は「違反を必ず1回起こす」ことではない。V=0の表も条件を満たすが、F=1の表があるので最適ではない。一方、k=0でV=1の表を通す実装は、最適性を比べる前に上限制約を確かめる必要がある。</p>
+<details class="hint"><summary>ヒントを開く：要求を二つに分ける</summary><div class="hint-body">
+<p>「k回を超えない」は拒否の基準、「その範囲で日数差を小さく」は比較の基準である。重み付きの和を小さくしても、超えてはいけない回数を直接指定したことにはならない。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：制約と目的の式</summary><div class="hint-body">
+<p>拒否するのはVがkを超えた表なので<code class="sourceCode minizinc"><span class="kw">constraint</span> violations <span class="op">&lt;=</span> k;</code>と書く。その中で小さくするのはFなので<code class="sourceCode minizinc"><span class="kw">solve</span> <span class="kw">minimize</span> spread;</code>とする。<code>solve</code>はこの一つだけにする。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：最適値の理由</summary><div class="hint-body">
+<p>総勤務8は5人へ均等に分けられないのでF≥1。さらにk=0ではEが0日、他の4人が各2日となりF=2。k=1では上の二つ目の表がF=1を達成する。</p>
+</div></details>
+</section>
+</section>
+</section>
+<section id="発展" class="level2 sec-advanced">
+<h2 class="sec-advanced">6. 発展</h2>
+<p>ここからは、出力を別の方法で確かめたり、比較する指標を変えたりする。<a href="../../advanced/preferences-challenges/index.html">発展ページ</a>に各問題の入力と出発ファイルがあり、前の発展の完成を前提にしない。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>問題</th>
+<th>広げる内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../advanced/preferences-challenges/index.html#recalculate">発展1　出力からの独立した再計算</a></td>
+<td>Pythonで日数・V・Fと上限を独立に再計算する</td>
+</tr>
+<tr>
+<td><a href="../../advanced/preferences-challenges/index.html#individual">発展2　個人の最大違反と合計</a></td>
+<td>合計違反と、一人の最大違反の最小化を比較する</td>
+</tr>
+<tr>
+<td><a href="../../advanced/preferences-challenges/index.html#frontier">発展3　支配されない候補と重みの限界</a></td>
+<td>指標対を統合し、支配されない候補と重み付き和の限界を調べる</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="振り返り" class="level2 sec-review">
+<h2 class="sec-review">7. 振り返り</h2>
+<p>同じ表でも希望入力が変わればVが変わり、同じVとFでも重みが変わればJが変わる。入力、集計、目的のどこを変えたのかをたどり、次の点を自分の言葉で説明してみよう。</p>
+<ul>
+<li>勤務不可能と休み希望を同じ禁止条件にすると、どの選択を失うか。</li>
+<li>最大・最小を取る前に勤務0日の人を除くと、Fの意味がどう変わるか。</li>
+<li>k=1でV=0・F=2の表は、なぜ実行可能だが最適ではないのか。</li>
+</ul>
+<p>第09回は、既習の命題論理とPythonの基本から、真偽値の選択へ進む。今回のPython発展や検査器の完成には依存しない。今回はまず、<a href="#演習">必修2</a>で制約と目的の役割を言い分けられるかを確認しよう。</p>
+</section>
+<section id="参照" class="level2 unnumbered sec-reference">
+<h2 class="unnumbered sec-reference">参照</h2>
+<p>入力の組や実行の区切りに迷ったら、<a href="../../guides/preferences-check/index.html">確認手引き</a>の一覧へ戻る。本文中の記号と配布モデルの名前は次のように対応し、同じ表から順に計算できる。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>記号・名前</th>
+<th>意味</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>available</code>／<code>request</code></td>
+<td>勤務可能性／休み希望という別の入力</td>
+</tr>
+<tr>
+<td>L／<code>load</code></td>
+<td>一人ごとの勤務日数の配列</td>
+</tr>
+<tr>
+<td>V／<code>violations</code></td>
+<td>希望位置で勤務した回数の合計</td>
+</tr>
+<tr>
+<td>F／<code>spread</code></td>
+<td>全員の日数の最大と最小の差</td>
+</tr>
+<tr>
+<td>J／<code>objective</code></td>
+<td>重み付きの評価値</td>
+</tr>
+<tr>
+<td><code class="sourceCode minizinc"><span class="fu">max</span>(load)</code>／<code class="sourceCode minizinc"><span class="fu">min</span>(load)</code></td>
+<td>配列内の最大値／最小値</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>重みを上限だと思う、希望を勤務不可へ書き換える、最大化と最大値の式を取り違える、古い<code class="sourceCode minizinc"><span class="kw">solve</span></code>を残す、といった点を確認する。数式だけでなく、その式がどの表を許し、何を比べるかで読み直すと原因を見つけやすい。</p>
+<p>MiniZincの配列・集計・目的指定は<a href="https://docs.minizinc.dev/en/stable/modelling2.html">公式チュートリアル</a>と<a href="https://docs.minizinc.dev/en/stable/modelling.html">モデルと最適化の説明</a>で確認できる。今回の操作に必要なファイル一覧は手引きにまとめてある。</p>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../sessions/07-schedule/index.html">← 第07回</a> · <a href="../../index.html">講義一覧</a> · <a href="../../sessions/09-sat/index.html">第09回 →</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

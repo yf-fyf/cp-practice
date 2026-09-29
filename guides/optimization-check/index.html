@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第06回の最適化の実行と確認 - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 手引き</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第06回の最適化の実行と確認</h1>
+    <nav class="session-nav" aria-label="第06回の講義資料"><a href="../../sessions/06-optimization/index.html">通常講義</a><a href="../../advanced/optimization-challenges/index.html">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#配布物と入力">配布物と入力</a>
+      </li>
+      <li><a href="#終了状態">終了状態</a>
+      </li>
+      <li><a href="#全最適解と二段階法">全最適解と二段階法</a>
+      </li>
+      <li><a href="#個数の検査">個数の検査</a>
+      </li>
+      <li><a href="#複数入力をpythonで比較">複数入力をPythonで比較</a>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p><a href="../../sessions/06-optimization/index.html">本文</a>／<a href="../../advanced/optimization-challenges/index.html">発展</a></p>
+<p>モデルと入力を同じフォルダーに保存し、Gecodeで実行する。複数ファイルを読み込むモデルは、読み込むファイルも一緒に必要になる。入力が違う結果や、最適化の途中の解を取り違えないようにしよう。</p>
+</header>
+<section id="配布物と入力" class="level2">
+<h2>配布物と入力</h2>
+<p>MiniZinc IDEで<code>.mzn</code>を開き、Gecodeを選んで実行する。データを尋ねられたら、対応する<code>.dzn</code>を指定する。環境が未準備なら授業内で教員と確認し、<a href="https://www.minizinc.org/downloads/">公式ダウンロード</a>からIDEを含む環境を用意する。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>作業</th>
+<th>モデル</th>
+<th>入力</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4人の割当の復習</td>
+<td><a href="../../downloads/session-06/assignment-base.mzn" data-code-preview="../../previews/session-06/assignment-base.mzn.json">assignment-base.mzn</a></td>
+<td><a href="../../downloads/session-06/base.dzn" data-code-preview="../../previews/session-06/base.dzn.json">base.dzn</a></td>
+</tr>
+<tr>
+<td>合計の最小化</td>
+<td><a href="../../downloads/session-06/cost-demo.mzn" data-code-preview="../../previews/session-06/cost-demo.mzn.json">cost-demo.mzn</a></td>
+<td><a href="../../downloads/session-06/cost-base.dzn" data-code-preview="../../previews/session-06/cost-base.dzn.json">cost-base.dzn</a></td>
+</tr>
+<tr>
+<td>必修1</td>
+<td><a href="../../downloads/session-06/cost-start.mzn" data-code-preview="../../previews/session-06/cost-start.mzn.json">cost-start.mzn</a>を編集</td>
+<td><a href="../../downloads/session-06/cost-practice.dzn" data-code-preview="../../previews/session-06/cost-practice.dzn.json">cost-practice.dzn</a></td>
+</tr>
+<tr>
+<td>個数の短い例</td>
+<td><a href="../../downloads/session-06/quantity-demo.mzn" data-code-preview="../../previews/session-06/quantity-demo.mzn.json">quantity-demo.mzn</a></td>
+<td>不要</td>
+</tr>
+<tr>
+<td>必修2</td>
+<td><a href="../../downloads/session-06/kits-start.mzn" data-code-preview="../../previews/session-06/kits-start.mzn.json">kits-start.mzn</a>を編集</td>
+<td><a href="../../downloads/session-06/kits.dzn" data-code-preview="../../previews/session-06/kits.dzn.json">kits.dzn</a></td>
+</tr>
+<tr>
+<td>発展用の完成キット</td>
+<td><a href="../../downloads/session-06/kits-base.mzn" data-code-preview="../../previews/session-06/kits-base.mzn.json">kits-base.mzn</a></td>
+<td>kits.dznまたは<a href="../../downloads/session-06/kits-lex.dzn" data-code-preview="../../previews/session-06/kits-lex.dzn.json">kits-lex.dzn</a></td>
+</tr>
+<tr>
+<td>全最適な割当</td>
+<td><a href="../../downloads/session-06/optimal-start.mzn" data-code-preview="../../previews/session-06/optimal-start.mzn.json">optimal-start.mzn</a>を編集</td>
+<td>cost-base.dznまたは<a href="../../downloads/session-06/cost-zero.dzn" data-code-preview="../../previews/session-06/cost-zero.dzn.json">cost-zero.dzn</a>、<a href="../../downloads/session-06/best-start.dzn" data-code-preview="../../previews/session-06/best-start.dzn.json">最適値</a></td>
+</tr>
+<tr>
+<td>既知の一解の除外</td>
+<td><a href="../../downloads/session-06/exclude-start.mzn" data-code-preview="../../previews/session-06/exclude-start.mzn.json">exclude-start.mzn</a>を編集</td>
+<td>不満度入力・最適値・<a href="../../downloads/session-06/first.dzn" data-code-preview="../../previews/session-06/first.dzn.json">first.dzn</a></td>
+</tr>
+<tr>
+<td>二段階法の第二段階</td>
+<td><a href="../../downloads/session-06/lex-start.mzn" data-code-preview="../../previews/session-06/lex-start.mzn.json">lex-start.mzn</a>を編集</td>
+<td>kits-lex.dzn、最適値</td>
+</tr>
+<tr>
+<td>重み付き法</td>
+<td><a href="../../downloads/session-06/weighted-start.mzn" data-code-preview="../../previews/session-06/weighted-start.mzn.json">weighted-start.mzn</a>を編集</td>
+<td>kits-lex.dzn、<a href="../../downloads/session-06/weight-start.dzn" data-code-preview="../../previews/session-06/weight-start.dzn.json">重み</a></td>
+</tr>
+<tr>
+<td>ナップサック</td>
+<td><a href="../../downloads/session-06/knapsack-start.mzn" data-code-preview="../../previews/session-06/knapsack-start.mzn.json">knapsack-start.mzn</a>を編集</td>
+<td><a href="../../downloads/session-06/knapsack-7.dzn" data-code-preview="../../previews/session-06/knapsack-7.dzn.json">容量7</a>／<a href="../../downloads/session-06/knapsack-6.dzn" data-code-preview="../../previews/session-06/knapsack-6.dzn.json">容量6</a></td>
+</tr>
+<tr>
+<td>ケーキ</td>
+<td><a href="../../downloads/session-06/cakes-start.mzn" data-code-preview="../../previews/session-06/cakes-start.mzn.json">cakes-start.mzn</a>を編集</td>
+<td><a href="../../downloads/session-06/cakes.dzn" data-code-preview="../../previews/session-06/cakes.dzn.json">cakes.dzn</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>読み込み用は<a href="../../downloads/session-06/assignment-core.mzn" data-code-preview="../../previews/session-06/assignment-core.mzn.json">assignment-core.mzn</a>、<a href="../../downloads/session-06/cost-core.mzn" data-code-preview="../../previews/session-06/cost-core.mzn.json">cost-core.mzn</a>、<a href="../../downloads/session-06/kits-core.mzn" data-code-preview="../../previews/session-06/kits-core.mzn.json">kits-core.mzn</a>。モデル中のincludeが必要とするファイルを揃える。coreには<code class="sourceCode minizinc"><span class="kw">solve</span></code>がなく、実行する側で問題の種類を指定する。</p>
+<p><a href="https://play.minizinc.dev/">MiniZinc Playground</a>で一つの入力欄にまとめる場合は、自作ファイルのincludeを、そのファイルの内容で置き換える。さらに読み込むファイルがあれば同様に展開し、最後へ入力データを一度ずつ貼る。変数・入力・<code class="sourceCode minizinc"><span class="kw">solve</span></code>の二重定義を避ける。</p>
+</section>
+<section id="終了状態" class="level2">
+<h2>終了状態</h2>
+<p>最適化は「候補が出たこと」と「これよりよい解がないと確認したこと」を区別する。インストールしたMiniZincとGecodeでは、例えば次の実行で割当表・合計5・解の区切り・最適終了の区切りが出る。</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode cost-demo.mzn cost-base.dzn</span></code></pre></div>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>表示・状態</th>
+<th>読み方</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>----------</code></td>
+<td>一つの解が表示された</td>
+</tr>
+<tr>
+<td>最適化の最後の<code>==========</code></td>
+<td>最適性まで確認して終了した</td>
+</tr>
+<tr>
+<td><code>=====UNSATISFIABLE=====</code></td>
+<td>条件を満たす解が存在しない</td>
+</tr>
+<tr>
+<td><code>UNKNOWN</code>・時間切れ・手動停止</td>
+<td>最適性や解なしが確定したとは限らない</td>
+</tr>
+<tr>
+<td>構文エラー・未宣言の名前</td>
+<td>モデルが未完成か、記法・ファイルの組合せに誤りがある</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>途中で候補が表示されていれば、その候補の実行可能性と目的値は確認できる。目的値が期待値と同じでも、入力を誤って固定した問題を解いていないかも確かめよう。最適化の途中の候補の列を、すべての最適解として数えない。</p>
+</section>
+<section id="全最適解と二段階法" class="level2">
+<h2>全最適解と二段階法</h2>
+<p>最適値を得たら、次のモデルでその値を等式として固定する。充足問題に戻して全解を求めるか、第一目的の値を保ったまま第二目的を最適化する。</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode <span class="at">--all-solutions</span> optimal-start.mzn cost-base.dzn best-start.dzn</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode lex-start.mzn kits-lex.dzn best-start.dzn</span></code></pre></div>
+<p><code>best-start.dzn</code>の値は、今扱っている問題の第一段階で確認した最適値へ変更する。不満度とキットでは同じ<code>best</code>という名前でも意味が異なる。入力を交換したら第一段階もやり直す。</p>
+<p>全解列挙では最後の<code>==========</code>まで終了したことを確かめる。この場合の記号は、目的値を固定した充足問題の全解を列挙し終えたことを表す。</p>
+</section>
+<section id="個数の検査" class="level2">
+<h2>個数の検査</h2>
+<p>特定の個数を調べるには、編集したモデルへ一時的な固定制約を加える。例えばu=3、v=3の検査なら次を追加し、<code class="sourceCode minizinc"><span class="kw">solve</span></code>を<code class="sourceCode minizinc"><span class="kw">solve</span> <span class="kw">satisfy</span>;</code>へ置き換える。検査後は元のモデルから再開する。</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> u <span class="op">=</span> <span class="dv">3</span>;</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> v <span class="op">=</span> <span class="dv">3</span>;</span></code></pre></div>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>個数</th>
+<th>元のキット条件での意味</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2, 3</td>
+<td>実行可能、材料7・時間8・得点18</td>
+</tr>
+<tr>
+<td>3, 3</td>
+<td>材料も時間も9で拒否</td>
+</tr>
+<tr>
+<td>4, 1</td>
+<td>材料9だけが超過し拒否</td>
+</tr>
+<tr>
+<td>1, 4</td>
+<td>時間9だけが超過し拒否</td>
+</tr>
+<tr>
+<td>0, 0</td>
+<td>実行可能だが、元の最適化では最適ではない</td>
+</tr>
+<tr>
+<td>−1, 0など</td>
+<td>個数の非負性に違反し拒否</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>負数を変数のデータ代入で直接指定すると、定義域外の入力エラーになる場合もある。上のような固定制約で検査した解なしと区別する。端数は整数個数の値にはならない。</p>
+<p>ケーキでは<code class="sourceCode minizinc">b<span class="op">=</span><span class="dv">3</span></code>・<code class="sourceCode minizinc">c<span class="op">=</span><span class="dv">2</span></code>の固定制約を加えると、バターだけが容量を超える。容量制約を削除して解が出るかを調べる場合は、検査用のコピーで行い、通常モデルへ誤った条件を残さない。</p>
+</section>
+<section id="複数入力をpythonで比較" class="level2">
+<h2>複数入力をPythonで比較</h2>
+<p><a href="../../downloads/session-06/lex-general-start.py" data-code-preview="../../previews/session-06/lex-general-start.py.json">lex-general-start.py</a>と<a href="../../downloads/session-06/solve_tools.py" data-code-preview="../../previews/session-06/solve_tools.py.json">solve_tools.py</a>を同じフォルダーへ置き、<a href="../../downloads/session-06/lex-cases.json" data-code-preview="../../previews/session-06/lex-cases.json.json">lex-cases.json</a>を指定する。Python標準ライブラリと、コマンドとして実行できるMiniZincが必要である。</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> lex-general-start.py lex-cases.json</span></code></pre></div>
+<p>この実行には同じ発展3で編集した<code>lex-start.mzn</code>・<code>weighted-start.mzn</code>と、完成した<code>kits-base.mzn</code>・<code>kits-core.mzn</code>が必要になる。<code>run</code>はMiniZincのJSON出力を読み、終了状態と解を返す。<code>optimum</code>は最適終了を確認できなければエラーにする。ここでの<code>_objective</code>はツールが付ける目的値の欄で、教材の新しい決定変数ではない。</p>
+<p>不満度のJSONは<a href="../../downloads/session-06/cost-base.json" data-code-preview="../../previews/session-06/cost-base.json.json">基本</a>・<a href="../../downloads/session-06/cost-practice.json" data-code-preview="../../previews/session-06/cost-practice.json.json">変更</a>・<a href="../../downloads/session-06/cost-zero.json" data-code-preview="../../previews/session-06/cost-zero.json.json">全0</a>も用意している。各人の不満度をPythonで独立に足す場合に使える。通常のMiniZinc実行では対応する<code>.dzn</code>を指定する。</p>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../index.html">講義一覧</a> · <a href="../../sessions/06-optimization/index.html">第06回の本文へ</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

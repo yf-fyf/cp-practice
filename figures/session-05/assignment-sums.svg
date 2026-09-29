@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="402.667" height="301.333" viewBox="0 0 302 226" role="img" aria-labelledby="title desc">
+<title id="title">割当表の行と列を集計する</title><desc id="desc">AとBは講座1、Cは講座2、Dは講座3を選ぶ。各行の和は1、列の和は2・1・1。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#556b7c"/></marker></defs>
+<g font-family="sans-serif" font-size="12" fill="#243443" text-anchor="middle">
+<text x="124" y="17">講座</text><text x="82" y="37">1</text><text x="124" y="37">2</text><text x="166" y="37">3</text>
+<text x="27" y="63">A</text><text x="27" y="92">B</text><text x="27" y="121">C</text><text x="27" y="150">D</text>
+<rect x="60" y="44" width="127" height="116" fill="#f4f6f8" stroke="#81909d"/>
+<path d="M 102 44 V 160 M 145 44 V 160 M 60 73 H 187 M 60 102 H 187 M 60 131 H 187" fill="none" stroke="#c7cfd6"/>
+<g fill="#e4efea"><rect x="61" y="45" width="40" height="27"/><rect x="61" y="74" width="40" height="27"/><rect x="103" y="103" width="41" height="27"/><rect x="146" y="132" width="40" height="27"/></g>
+<text x="82" y="63">1</text><text x="124" y="63">0</text><text x="166" y="63">0</text>
+<text x="82" y="92">1</text><text x="124" y="92">0</text><text x="166" y="92">0</text>
+<text x="82" y="121">0</text><text x="124" y="121">1</text><text x="166" y="121">0</text>
+<text x="82" y="150">0</text><text x="124" y="150">0</text><text x="166" y="150">1</text>
+<g stroke="#556b7c" marker-end="url(#arrow)"><path d="M 193 58 H 219"/><path d="M 193 87 H 219"/><path d="M 193 116 H 219"/><path d="M 193 145 H 219"/><path d="M 82 166 V 183"/><path d="M 124 166 V 183"/><path d="M 166 166 V 183"/></g>
+<text x="249" y="37">選択数</text><text x="241" y="63">1</text><text x="241" y="92">1</text><text x="241" y="121">1</text><text x="241" y="150">1</text>
+<text x="82" y="201">2</text><text x="124" y="201">1</text><text x="166" y="201">1</text><text x="244" y="201">参加人数</text>
+<text x="125" y="223">各列の人数 ≤ その講座の定員</text>
+</g></svg>

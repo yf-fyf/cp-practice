@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第02回　MiniZincで小さな数独を解く - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+<script defer="" src="../../assets/katex/katex.min.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+</script>
+<link rel="stylesheet" href="../../assets/katex/katex.min.css" />
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 通常講義</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第02回　MiniZincで小さな数独を解く</h1>
+    <nav class="session-nav" aria-label="第02回の講義資料"><a href="../../sessions/02-minizinc/index.html" aria-current="page">通常講義</a><a href="../../advanced/sudoku-challenges/index.html">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#目標">目標</a>
+      </li>
+      <li><a href="#問題">1. 問題</a>
+      </li>
+      <li><a href="#定式化">2. 定式化</a>
+      <ul>
+      <li><a href="#入力と決定変数">入力と決定変数</a></li>
+      <li><a href="#値の範囲と重複禁止">値の範囲と重複禁止</a></li>
+      </ul>
+      </li>
+      <li><a href="#解説例">3. 解説例</a>
+      <ul>
+      <li><a href="#手順1-二つの未知整数">手順1　二つの未知整数</a></li>
+      <li><a href="#手順2-入力と決定変数">手順2　入力と決定変数</a></li>
+      <li><a href="#手順3-初期値の保持">手順3　初期値の保持</a></li>
+      <li><a href="#手順4-重複禁止の範囲">手順4　重複禁止の範囲</a></li>
+      </ul>
+      </li>
+      <li><a href="#結果">4. 結果</a>
+      </li>
+      <li><a href="#演習">5. 演習</a>
+      <ul>
+      <li><a href="#必修1-別の初期配置">必修1　別の初期配置</a></li>
+      <li><a href="#必修2-主対角線の条件">必修2　主対角線の条件</a></li>
+      </ul>
+      </li>
+      <li><a href="#発展">6. 発展</a>
+      </li>
+      <li><a href="#振り返り">7. 振り返り</a>
+      </li>
+      <li><a href="#参照">参照</a>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p>4×4の数独を題材に、「完成した盤面が満たす条件」をMiniZincで書く。最初から分かっている数字と、これから決める数字を分け、行・列・ブロックの重複を禁止して答えを求める。</p>
+</header>
+<section id="目標" class="level2 unnumbered sec-goal">
+<h2 class="unnumbered sec-goal">目標</h2>
+<p>この回では、盤面のルールとプログラムの各部分を対応させる。実行できたら、出力の数字を元の条件と照合し、次の三つを説明できるようになろう。</p>
+<ul>
+<li>入力・決定変数・定義域を区別できる。</li>
+<li>対象のマスを選び、重複禁止の条件をMiniZincで書ける。</li>
+<li>制約を一つ追加し、受け入れる盤面が変わることを確かめられる。</li>
+</ul>
+<p>MiniZincは初めて使うものとして説明する。第01回のPrologの構文や演習の完成は前提にしない。<a href="../../guides/minizinc-start/index.html">実行の手引き</a>を使って、環境操作から授業内で始める。完成した<a href="../../downloads/session-02/sudoku4-demo.mzn" data-code-preview="../../previews/session-02/sudoku4-demo.mzn.json">解説例</a>と各演習の出発ファイルを配るので、写し取りや前の作業が途中でも再開できる。</p>
+<p>説明・操作・実演に55分、<a href="#演習">5. 演習</a>に40分、振り返りに5分を使う。必修1は15分、必修2は20分、残りは確認の目安である。通常の演習に提出・宿題・完了報告はなく、教員の完了承認も待たない。発展は選んで取り組む。</p>
+</section>
+<section id="問題" class="level2 sec-problem">
+<h2 class="sec-problem">1. 問題</h2>
+<p>まず、盤面のルールを確認しよう。点は空欄、太い区切りに相当する縦線・横線は2×2のブロックを表す。完成したときに、どの範囲で数字が異なればよいだろう。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">盤面と条件</span> 次の空欄を埋めた4×4の完成盤面を一つ求める。</p>
+<p><span class="math display">
+\begin{array}{cc|cc}
+1&amp;\cdot&amp;\cdot&amp;4\\
+\cdot&amp;4&amp;\cdot&amp;2\\\hline
+2&amp;\cdot&amp;4&amp;\cdot\\
+\cdot&amp;3&amp;\cdot&amp;1
+\end{array}
+</span></p>
+<p>各マスは1〜4。初めからある数字は変えない。各行・各列・四つの2×2ブロックには、それぞれ1〜4が一度ずつ現れる。ブロックは行1〜2／3〜4と列1〜2／3〜4を組み合わせた四領域とする。</p>
+</div>
+<p>上から1行目、左から1列目と数える。1行2列の空欄では、同じ行の1・4と同じ列の3・4を避けると2だけが残る。人が解くときは、このように候補を絞る。今回は、マスを埋める順番ではなく、どの完成盤面でも守る条件を記述する。</p>
+</section>
+<section id="定式化" class="level2 sec-model">
+<h2 class="sec-model">2. 定式化</h2>
+<p>問題の条件を、入力・未知の値・それらを結ぶ制約へ写す。この区別を先に付けておくと、初期配置を変えても、同じ数独のモデルを再利用できる。</p>
+<section id="入力と決定変数" class="level3">
+<h3>入力と決定変数</h3>
+<p>行番号を <span class="math inline">r</span>、列番号を <span class="math inline">c</span> とし、どちらも1〜4とする。入力 <span class="math inline">g_{r,c}</span> は、そのマスの初期値である。空欄は0で表す。完成盤面の数字は、決定変数 <span class="math inline">x_{r,c}</span> で表す。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>対象</th>
+<th>値の範囲</th>
+<th>MiniZincの名前</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>入力 <span class="math inline">g_{r,c}</span></td>
+<td>0〜4。0は空欄の印</td>
+<td><code class="sourceCode minizinc">given[r,c]</code></td>
+</tr>
+<tr>
+<td>決定変数 <span class="math inline">x_{r,c}</span></td>
+<td>1〜4</td>
+<td><code class="sourceCode minizinc">grid[r,c]</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>第01回のPrologの変数も、この回の決定変数も、条件に合う値を求める位置を表す。この数独では、16マスそれぞれに有限の値の範囲を宣言し、全マスの条件を同時に満たす完成盤面を求める。Prologの規則の引数とMiniZincの配列要素は、同じ記法ではない。</p>
+<p>決定変数が取り得る値の集合を<strong>定義域</strong>と呼ぶ。ここでは16個すべての変数の定義域が <span class="math inline">\{1,2,3,4\}</span> である。入力が0のマスも、解では1〜4のいずれかになる。0を解の数字として許したり、空欄を0に固定したりしない。</p>
+</section>
+<section id="値の範囲と重複禁止" class="level3">
+<h3>値の範囲と重複禁止</h3>
+<p>互いに異なることを<strong>全相異なり</strong>と呼び、数式では <span class="math inline">\operatorname{AllDifferent}</span> と書く。四つの値が1〜4の範囲にあり、互いに異なれば、1〜4が一度ずつ現れる。</p>
+<p>すべての <span class="math inline">r,c\in\{1,2,3,4\}</span> について <span class="math inline">x_{r,c}\in\{1,2,3,4\}</span> とする。初期値があるマスには、<span class="math inline">g_{r,c}&gt;0</span> のとき <span class="math inline">x_{r,c}=g_{r,c}</span> を課す。</p>
+<p>各行・各列には、次の条件を課す。</p>
+<p><span class="math display">
+\begin{aligned}
+\operatorname{AllDifferent}(x_{r,1},x_{r,2},x_{r,3},x_{r,4})&amp;\quad(r=1,2,3,4),\\
+\operatorname{AllDifferent}(x_{1,c},x_{2,c},x_{3,c},x_{4,c})&amp;\quad(c=1,2,3,4).
+\end{aligned}
+</span></p>
+<p>四つのブロックにも、それぞれの四マスの全相異なりを課す。例えば左上は <span class="math inline">\operatorname{AllDifferent}(x_{1,1},x_{1,2},x_{2,1},x_{2,2})</span> である。</p>
+<p>合計が10という条件だけでは、1・1・4・4も通ってしまう。今回は合計ではなく、対象の四マスを選んで重複を禁止する。盤面全体の16マスを一度に全相異なりにするのも、別の条件である。</p>
+</section>
+</section>
+<section id="解説例" class="level2 sec-demo">
+<h2 class="sec-demo">3. 解説例</h2>
+<p>ここは教員が実演する。短いモデルで実行操作を確かめてから、数独の入力・変数・制約を順に読む。配布ファイルの「手順1〜4」のコメントも、以下の区切りに対応する。</p>
+<section id="手順1-二つの未知整数" class="level3">
+<h3>手順1　二つの未知整数</h3>
+<p><a href="../../downloads/session-02/warmup.mzn" data-code-preview="../../previews/session-02/warmup.mzn.json">warmup.mzn</a>を<a href="../../guides/minizinc-start/index.html">実行の手引き</a>の方法で開く。まず一つ解を求め、表示された二つの整数が、値の範囲と両方の条件を満たすか調べよう。</p>
+<figure class="code"><figcaption>warmup.mzn</figcaption>
+<div class="sourceCode" id="cb1"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">var</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>: x;</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="dt">var</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>: y;</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> x <span class="op">&lt;</span> y;</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> x <span class="op">+</span> y <span class="op">=</span> <span class="dv">5</span>;</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">solve</span> <span class="kw">satisfy</span>;</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="kw">output</span> [<span class="st">&quot;x = &quot;</span> <span class="op">++</span> <span class="fu">show</span>(x) <span class="op">++</span> <span class="st">&quot;, y = &quot;</span> <span class="op">++</span> <span class="fu">show</span>(y) <span class="op">++</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>];</span></code></pre></div>
+</figure>
+<p><code class="sourceCode minizinc"><span class="dt">var</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>: x;</code> は、1〜4から値を決める変数の宣言である。一方、<code class="sourceCode minizinc"><span class="dt">int</span>: n <span class="op">=</span> <span class="dv">4</span>;</code> なら、値4が与えられた整数の入力になる。<code class="sourceCode minizinc"><span class="kw">constraint</span></code> の後には満たす条件を書く。<code class="sourceCode minizinc">x <span class="op">+</span> y <span class="op">=</span> <span class="dv">5</span></code> の <code class="sourceCode minizinc"><span class="op">=</span></code> は等式であり、順に値を代入して更新する命令ではない。</p>
+<p>答えは <code>(x,y)=(1,4)</code> または <code>(2,3)</code> で、どちらでも正しい。<code class="sourceCode minizinc"><span class="kw">solve</span> <span class="kw">satisfy</span>;</code> は、すべての制約を満たす解を求める指定である。和の5を6に変えると <code>(2,4)</code> だけになる。変更後にもう一度実行し、式と結果の両方が変わったことを確認しよう。</p>
+</section>
+<section id="手順2-入力と決定変数" class="level3">
+<h3>手順2　入力と決定変数</h3>
+<p>数独では、マスごとに別の変数名を16個付ける代わりに、行と列を添字に持つ配列を使う。<a href="../../downloads/session-02/sudoku4.mzn" data-code-preview="../../previews/session-02/sudoku4.mzn.json">sudoku4.mzn</a>の宣言は次の二つである。</p>
+<figure class="code"><figcaption>sudoku4.mzn</figcaption>
+<div class="sourceCode" id="cb2"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dt">array</span>[<span class="dv">1</span><span class="op">..</span><span class="dv">4</span>, <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>] <span class="dt">of</span> <span class="dv">0</span><span class="op">..</span><span class="dv">4</span>: given;</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="dt">array</span>[<span class="dv">1</span><span class="op">..</span><span class="dv">4</span>, <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>] <span class="dt">of</span> <span class="dt">var</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>: grid;</span></code></pre></div>
+</figure>
+<p><code class="sourceCode minizinc"><span class="dt">array</span>[<span class="dv">1</span><span class="op">..</span><span class="dv">4</span>, <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>]</code> の前半が行、後半が列の範囲である。<code class="sourceCode minizinc">grid[<span class="dv">1</span>,<span class="dv">2</span>]</code> は1行2列の決定変数になる。<code>given</code> には <code>var</code> がなく、値は入力ファイルで与える。今回の配列の添字は0からではなく1から始まる。</p>
+<figure class="code"><figcaption>demo.dzn</figcaption>
+<div class="sourceCode" id="cb3"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>given <span class="op">=</span> [| <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">4</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a> | <span class="dv">0</span>, <span class="dv">4</span>, <span class="dv">0</span>, <span class="dv">2</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a> | <span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">4</span>, <span class="dv">0</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a> | <span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">0</span>, <span class="dv">1</span> |];</span></code></pre></div>
+</figure>
+<p><code class="sourceCode minizinc">[|</code> と <code class="sourceCode minizinc">|]</code> が二次元配列の始まりと終わりで、途中の <code class="sourceCode minizinc">|</code> が行を区切る。モデルは <code>.mzn</code>、入力は <code>.dzn</code> に置き、実行時に組み合わせる。最初は両方をまとめた<a href="../../downloads/session-02/sudoku4-demo.mzn" data-code-preview="../../previews/session-02/sudoku4-demo.mzn.json">一ファイル版</a>を使ってもよい。</p>
+</section>
+<section id="手順3-初期値の保持" class="level3">
+<h3>手順3　初期値の保持</h3>
+<p>初期値のあるマスだけを、その数字に固定する。例えば1行1列なら <code class="sourceCode minizinc"><span class="kw">constraint</span> grid[<span class="dv">1</span>,<span class="dv">1</span>] <span class="op">=</span> <span class="dv">1</span>;</code> である。入力を交換できるように、配布モデルでは次の形でまとめる。</p>
+<figure class="code"><figcaption>sudoku4.mzn</figcaption>
+<div class="sourceCode" id="cb4"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">forall</span>(r <span class="op">in</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>, c <span class="op">in</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span> <span class="kw">where</span> given[r,c] <span class="op">&gt;</span> <span class="dv">0</span>)(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    grid[r,c] <span class="op">=</span> given[r,c]</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>);</span></code></pre></div>
+</figure>
+<p><code class="sourceCode minizinc">forall</code> は「指定したすべてについて」と読む。<code>r,c</code> の組を選び、<code class="sourceCode minizinc"><span class="kw">where</span> given[r,c] <span class="op">&gt;</span> <span class="dv">0</span></code> により、入力が0でないマスだけを対象にする。その各マスで括弧内の等式を満たす。空欄では等式を作らないので、<code>grid</code> の値を1〜4から決められる。</p>
+<p>ここでの <code class="sourceCode minizinc"><span class="kw">where</span></code> は、すでに分かっている入力から対象を選んでいる。解を出してから数字を選別する処理ではない。制約を実行順の繰り返しと捉えず、必要な等式をまとめて表したものとして読もう。</p>
+</section>
+<section id="手順4-重複禁止の範囲" class="level3">
+<h3>手順4　重複禁止の範囲</h3>
+<p>まず1行目の四つのマスを、そのまま列挙して全相異なりを課す。<code class="sourceCode minizinc">alldifferent</code> を使うため、モデルの先頭には <code class="sourceCode minizinc"><span class="kw">include</span> <span class="st">&quot;alldifferent.mzn&quot;</span>;</code> を置いている。</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">alldifferent</span>([grid[<span class="dv">1</span>,<span class="dv">1</span>], grid[<span class="dv">1</span>,<span class="dv">2</span>], grid[<span class="dv">1</span>,<span class="dv">3</span>], grid[<span class="dv">1</span>,<span class="dv">4</span>]]);</span></code></pre></div>
+<p>四つの式は列番号だけが変わっている。<code class="sourceCode minizinc">[grid[<span class="dv">1</span>,c] | c <span class="op">in</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>]</code> という<strong>内包記法</strong>は、この四つを並べた配列と同じ意味になる。縦棒の右で列番号を選び、左に並べる要素を書く。</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">alldifferent</span>([grid[<span class="dv">1</span>,c] | c <span class="op">in</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>]);</span></code></pre></div>
+<p>さらに、行番号も1・2・3・4のすべてに広げる。次の上段では、外側の <code class="sourceCode minizinc">forall</code> が行を選び、内側の配列がその行の四マスを集める。下段の列の条件では、固定する添字と動かす添字が入れ替わる。</p>
+<figure class="code"><figcaption>sudoku4.mzn</figcaption>
+<div class="sourceCode" id="cb7"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">forall</span>(r <span class="op">in</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>)(<span class="fu">alldifferent</span>([grid[r,c] | c <span class="op">in</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>]));</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">forall</span>(c <span class="op">in</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>)(<span class="fu">alldifferent</span>([grid[r,c] | r <span class="op">in</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>]));</span></code></pre></div>
+</figure>
+<p>ブロックは、左上・右上・左下・右下の四つを具体的に書く。各行の添字を盤面上で指して、同じ2×2領域の四マスになっているか確認しよう。隣へ一マスずつずらした領域を追加する必要はない。</p>
+<figure class="code"><figcaption>sudoku4.mzn</figcaption>
+<div class="sourceCode" id="cb8"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">alldifferent</span>([grid[<span class="dv">1</span>,<span class="dv">1</span>], grid[<span class="dv">1</span>,<span class="dv">2</span>], grid[<span class="dv">2</span>,<span class="dv">1</span>], grid[<span class="dv">2</span>,<span class="dv">2</span>]]);</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">alldifferent</span>([grid[<span class="dv">1</span>,<span class="dv">3</span>], grid[<span class="dv">1</span>,<span class="dv">4</span>], grid[<span class="dv">2</span>,<span class="dv">3</span>], grid[<span class="dv">2</span>,<span class="dv">4</span>]]);</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">alldifferent</span>([grid[<span class="dv">3</span>,<span class="dv">1</span>], grid[<span class="dv">3</span>,<span class="dv">2</span>], grid[<span class="dv">4</span>,<span class="dv">1</span>], grid[<span class="dv">4</span>,<span class="dv">2</span>]]);</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">alldifferent</span>([grid[<span class="dv">3</span>,<span class="dv">3</span>], grid[<span class="dv">3</span>,<span class="dv">4</span>], grid[<span class="dv">4</span>,<span class="dv">3</span>], grid[<span class="dv">4</span>,<span class="dv">4</span>]]);</span></code></pre></div>
+</figure>
+<p>これで条件が揃った。配布済みの <code class="sourceCode minizinc"><span class="kw">solve</span> <span class="kw">satisfy</span>;</code> と <code>output</code> はそのまま使い、<code>demo.dzn</code> を入力として実行する。四行に整える表示コードを自作することは、今回の作業に含めない。</p>
+</section>
+</section>
+<section id="結果" class="level2 sec-result">
+<h2 class="sec-result">4. 結果</h2>
+<p>解説例の入力を使うと、次の完成盤面が得られる。出力を眺めるだけでなく、<a href="#問題">問題</a>のルールへ戻り、制約の各部分が結果のどこに現れているか確かめよう。</p>
+<pre class="text"><code>1 2 3 4
+3 4 1 2
+2 1 4 3
+4 3 2 1</code></pre>
+<p>値はすべて1〜4で、入力の数字は保持されている。各行・各列を読むと1〜4が一度ずつ現れ、四つのブロックも同じ条件を満たす。例えば左上は1・2・3・4、右下は4・3・2・1である。</p>
+<div class="callout callout-check" role="note">
+<p><span class="callout-label">自己確認</span> 入力のあるマス、行、列、ブロックを一つずつ選び、出力とモデルの対応箇所を指して確認する。出力が例と一致していても、行や列の条件を一つ書き忘れていないかコードも読む。</p>
+</div>
+<p>変数・定義域・制約から、すべての条件を満たす値を求める問題を<strong>制約充足問題（CSP）</strong>と呼ぶ。Gecodeのような制約ソルバーは、制約から候補を減らす<strong>伝播</strong>と、候補を仮に選んで場合分けする<strong>探索</strong>を組み合わせる。第03回では、この二つを小さな盤面で手で追う。</p>
+<p>今回の出力は最終的な解であり、ソルバーがどの順にマスを決めたかの記録ではない。また、一つ表示されたことだけでは解の一意性も分からない。別の解があるかを調べる方法は、発展で扱う。</p>
+</section>
+<section id="演習" class="level2 sec-exercise">
+<h2 class="sec-exercise">5. 演習</h2>
+<p>ここからは各自でモデルを書く。必修1では基本の数独を別入力で解き、必修2では対象のマスを選んで制約を追加する。操作に迷ったら<a href="../../guides/minizinc-start/index.html">実行の手引き</a>、構文を確認したければ<a href="#解説例">解説例</a>へ戻ろう。</p>
+<section id="必修1-別の初期配置" class="level3">
+<h3>必修1　別の初期配置</h3>
+<p>変えるのは最初から与えられる数字であり、数独のルールは同じである。出発ファイルには入力の宣言と表示が入っているので、決定変数と条件を補って解こう。</p>
+<section id="問題-1" class="level4">
+<h4>問題</h4>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 次の4×4盤面の0を空欄として埋め、完成盤面を一つ求める。行は上から、列は左から1〜4と数え、各マスの数字を1〜4とする。0以外の初期値は保持する。各行・各列、および行1〜2／3〜4と列1〜2／3〜4で区切った四つの2×2ブロックの数字を、それぞれ互いに異ならせる。</p>
+<p><span class="math display">
+\begin{array}{cc|cc}
+4&amp;3&amp;0&amp;0\\
+2&amp;0&amp;0&amp;3\\\hline
+0&amp;0&amp;1&amp;0\\
+0&amp;0&amp;0&amp;4
+\end{array}
+</span></p>
+</div>
+</section>
+<section id="作業" class="level4">
+<h4>作業</h4>
+<p><a href="../../downloads/session-02/practice-start.mzn" data-code-preview="../../previews/session-02/practice-start.mzn.json">practice-start.mzn</a>は入力の宣言と表示が入ったモデル、<a href="../../downloads/session-02/practice.dzn" data-code-preview="../../previews/session-02/practice.dzn.json">practice.dzn</a>はこの問題の初期配置である。入力の <code class="sourceCode minizinc">given[r,c]</code> はr行c列の初期値を表す。完成盤面の同じマスの数字を求める変数を <code class="sourceCode minizinc">grid[r,c]</code> とする。</p>
+<p>モデルの二つのコメントに対応する宣言と制約を書き、入力ファイルと組み合わせてGecodeで実行する。</p>
+<figure class="code"><figcaption>practice-start.mzn</figcaption>
+<div class="sourceCode" id="cb10"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業1): 決定変数gridを宣言し、初期値を保持する。</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業2): 各行・各列・四つのブロックの重複を禁止する。</span></span></code></pre></div>
+</figure>
+<p>作業1では、入力の0と、解に入る数字の範囲を区別する。作業2では、行・列・ブロックのどのマスを集めるかを確かめる。解説例を参照してよいが、入力の数字を一つずつコードへ埋め込む必要はない。</p>
+</section>
+<section id="自己確認" class="level4">
+<h4>自己確認</h4>
+<p>次の解が得られたら、初期値・値の範囲・行・列・ブロックを照合する。その後、モデルを保って入力を交換し、重複のある初期値を誤って通さないか確かめよう。</p>
+<pre class="text"><code>4 3 2 1
+2 1 4 3
+3 4 1 2
+1 2 3 4</code></pre>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>確認用の入力</th>
+<th>与えた二つの1</th>
+<th>正しいモデルの結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../downloads/session-02/check-BR.dzn" data-code-preview="../../previews/session-02/check-BR.dzn.json">行の重複</a></td>
+<td>(1,1)と(1,3)</td>
+<td>解なし</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-02/check-BC.dzn" data-code-preview="../../previews/session-02/check-BC.dzn.json">列の重複</a></td>
+<td>(1,1)と(3,1)</td>
+<td>解なし</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-02/check-BB.dzn" data-code-preview="../../previews/session-02/check-BB.dzn.json">ブロックの重複</a></td>
+<td>(1,1)と(2,2)</td>
+<td>解なし</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>残りのマスはすべて空欄である。「解なし」は <code>UNSATISFIABLE</code> の表示で確認する。エラーや、時間切れの <code>UNKNOWN</code> は別の結果だ。行・列・ブロックを取り違えた場合は、どの入力を通してしまうかが手掛かりになる。</p>
+<details class="hint"><summary>ヒントを開く：入力と未知の値を分ける</summary><div class="hint-body">
+<p>0は入力の空欄の印で、完成盤面に使う数字ではない。16マスそれぞれにどの数字を許すかを先に決める。行・列・ブロックは一つずつ選び、その四マスの位置を書いてから、動かす添字を考えよう。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：確認例・宣言と対象のマス</summary><div class="hint-body">
+<p>決定変数の宣言は <code class="sourceCode minizinc"><span class="dt">array</span>[<span class="dv">1</span><span class="op">..</span><span class="dv">4</span>, <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>] <span class="dt">of</span> <span class="dt">var</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>: grid;</code> となる。初期値の保持では、<code class="sourceCode minizinc">given[r,c]</code> が0より大きい位置だけで <code class="sourceCode minizinc">grid[r,c]</code> をその値に等しくする。<code class="sourceCode minizinc">alldifferent</code> は、指定した配列の値をすべて互いに異ならせる。まず一行分を具体的に書き、行番号を動かす部分と列番号を動かす部分を分けよう。</p>
+</div></details>
+</section>
+</section>
+<section id="必修2-主対角線の条件" class="level3">
+<h3>必修2　主対角線の条件</h3>
+<p>4×4の数独に、「左上から右下へ並ぶ四マスにも同じ数字を使わない」というルールを加える。出発モデルには行・列・ブロックの条件が入っているので、追加する条件の対象を自分で選ぼう。</p>
+<section id="問題-2" class="level4">
+<h4>問題</h4>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 次の0を空欄として埋め、条件をすべて満たす完成盤面を一つ求める。行は上から、列は左から、それぞれ1〜4と数える。</p>
+<p><span class="math display">
+\begin{array}{cc|cc}
+1&amp;2&amp;0&amp;0\\
+0&amp;0&amp;1&amp;0\\\hline
+0&amp;3&amp;0&amp;0\\
+0&amp;0&amp;0&amp;3
+\end{array}
+</span></p>
+<ul>
+<li>各マスに入れる数字は1〜4。0以外の初期値は変えない。</li>
+<li>各行と各列には、それぞれ1〜4を一度ずつ入れる。</li>
+<li>縦線と横線で区切った四つの2×2ブロックにも、それぞれ1〜4を一度ずつ入れる。各ブロックは、行1〜2または行3〜4と、列1〜2または列3〜4を組み合わせた領域である。</li>
+<li>左上から右下へ並ぶ四マスを<strong>主対角線</strong>と呼ぶ。この四マスの数字も互いに異ならせる。右上から左下の対角線には追加の条件を課さない。</li>
+</ul>
+</div>
+</section>
+<section id="作業-1" class="level4">
+<h4>作業</h4>
+<p>モデルのファイルと、初期配置を与える入力ファイルを一つずつ使う。次の二ファイルをダウンロードして作業を始めよう。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>ファイル</th>
+<th>入っているもの</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../downloads/session-02/diagonal-start.mzn" data-code-preview="../../previews/session-02/diagonal-start.mzn.json">diagonal-start.mzn</a></td>
+<td>変数の宣言、初期値の保持、行・列・四ブロックの条件、解を求める指定と表示。主対角線の条件は未記入</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-02/diagonal.dzn" data-code-preview="../../previews/session-02/diagonal.dzn.json">diagonal.dzn</a></td>
+<td>この問題の初期配置。上の盤面を <code>given</code> に与える入力</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code class="sourceCode minizinc">given[r,c]</code> はr行c列の初期値で、0は空欄を表す。<code class="sourceCode minizinc">grid[r,c]</code> は同じマスに入れる数字を求める決定変数で、値は1〜4である。例えば <code class="sourceCode minizinc">grid[<span class="dv">1</span>,<span class="dv">2</span>]</code> は、上から1行目・左から2列目のマスを表す。</p>
+<p>まず二ファイルを組み合わせてGecodeで実行し、主対角線の条件を加える前の解を見る。その後、<code>diagonal-start.mzn</code> の次の二作業に取り組む。</p>
+<figure class="code"><figcaption>diagonal-start.mzn</figcaption>
+<div class="sourceCode" id="cb12"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業1): 左上から右下の四つのマスを添字で選ぶ。</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業2): 選んだマスの重複を禁止する。</span></span></code></pre></div>
+</figure>
+<p><code class="sourceCode minizinc">alldifferent</code> は、渡した配列の値をすべて互いに異ならせる制約である。作業1では主対角線の四マスを行・列の番号で書き出す。作業2ではその四マスの <code>grid</code> を配列に並べ、<code class="sourceCode minizinc">alldifferent</code> に渡す制約を一つ書く。対象の四マスを選ぶのが、この問題で自分で考える部分である。</p>
+<p>まず具体的に四つを列挙する書き方でよい。慣れたら、行番号と列番号の対応を利用して内包記法に短くしてみよう。保存して同じ入力で再実行する。編集・実行の操作は<a href="../../guides/minizinc-start/index.html">実行の手引き</a>で確認できる。</p>
+</section>
+<section id="自己確認-1" class="level4">
+<h4>自己確認</h4>
+<p>次の盤面では、基本の数独の条件に加え、主対角線が1・4・2・3になっている。自分の出力でも、この四マスを同じ順で拾って確認しよう。</p>
+<pre class="text"><code>1 2 3 4
+3 4 1 2
+4 3 2 1
+2 1 4 3</code></pre>
+<p>添字の選択は出力とは別に確認する。行・列の番号を実際に展開すると <code>(1,1), (2,2), (3,3), (4,4)</code> になるか、自分の式と照合しよう。この4×4数独では、反対の対角線を全相異なりにしても同じ解集合になるため、入力を変えて解くだけでは選んだ向きを識別できない。</p>
+<p>追加前のモデルには2解、追加後には1解ある。ただし追加前に、偶然この正しい盤面が最初に出ることもある。表示が変わらなかったことだけでは、追加条件の有無を判定できない。</p>
+<p>最後に、条件に合わない盤面を拒否するかも確かめる。モデルはそのままにして、入力の <code>diagonal.dzn</code> を次の<a href="../../downloads/session-02/demo.dzn" data-code-preview="../../previews/session-02/demo.dzn.json">demo.dzn</a>へ交換する。二つの初期配置を同時に指定しない。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">確認用の入力</span> 0は空欄で、0以外の数字を保持する。</p>
+<p><span class="math display">
+\begin{array}{cc|cc}
+1&amp;0&amp;0&amp;4\\
+0&amp;4&amp;0&amp;2\\\hline
+2&amp;0&amp;4&amp;0\\
+0&amp;3&amp;0&amp;1
+\end{array}
+</span></p>
+</div>
+<p>この入力は、行・列・ブロックの条件だけなら解けるが、主対角線の条件を加えると <code>UNSATISFIABLE</code>（解なし）になる。主対角線の初期値が1・4・4・1と重複しているためである。エラーや、探索が終わっていない <code>UNKNOWN</code> は、解なしとは区別する。</p>
+<details class="hint"><summary>ヒントを開く：盤面上で対象をたどる</summary><div class="hint-body">
+<p>左上から一段下がるとき、右へ何列進むかを確かめる。四マスそれぞれの行番号と列番号を書き、同じ行を横に進む場合との違いを比べよう。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：確認例・対角線の添字</summary><div class="hint-body">
+<p>主対角線は <code>(1,1)</code>・<code>(2,2)</code>・<code>(3,3)</code>・<code>(4,4)</code> である。行番号と列番号に同じ値を使う。四つを列挙した配列でも、<code class="sourceCode minizinc">[grid[i,i] | i <span class="op">in</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>]</code> でも同じ対象になる。</p>
+</div></details>
+</section>
+</section>
+</section>
+<section id="発展" class="level2 sec-advanced">
+<h2 class="sec-advanced">6. 発展</h2>
+<p>条件の追加、別解の探索、手掛かりの設計へ広げる。各問題は独立した出発ファイルと条件を持つので、番号順に終える必要はない。別題材を試したければ、配色を選ぼう。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>題材</th>
+<th>考えること</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../advanced/sudoku-challenges/index.html#inequality">発展1　不等号付き数独</a></td>
+<td>三組のマスの大小関係を加える</td>
+</tr>
+<tr>
+<td><a href="../../advanced/sudoku-challenges/index.html#second">発展2　既知の解の除外</a></td>
+<td>少なくとも一マスが異なる条件</td>
+</tr>
+<tr>
+<td><a href="../../advanced/sudoku-challenges/index.html#clues">発展3　手掛かりの削減</a></td>
+<td>一意性と最小性の根拠</td>
+</tr>
+<tr>
+<td><a href="../../advanced/sudoku-challenges/index.html#kinki">選択M02　近畿の三色塗り分け</a></td>
+<td>変数を地域に、制約を隣接する組に対応させる</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="振り返り" class="level2 sec-review">
+<h2 class="sec-review">7. 振り返り</h2>
+<p>書いたコードを見ながら、次の問いに短く答えよう。構文の名前を挙げるだけでなく、実際のマスや出力を一つ選んで説明すると、条件との対応を確かめやすい。</p>
+<ol type="1">
+<li>入力の0は何を表すか。なぜ <code>grid</code> の定義域には0を含めないか。</li>
+<li>行の制約では、どの添字を固定し、どの添字を動かしているか。</li>
+<li>主対角線の条件を加えたモデルで、解説例の入力が解なしになるのはなぜか。</li>
+</ol>
+<p>第03回は、基本の4×4数独を使って候補を減らし、場合分けした状態を戻す過程を追う。必要な盤面と完成モデルは改めて配る。主対角線や発展の完成は、次回の前提にしない。</p>
+</section>
+<section id="参照" class="level2 unnumbered sec-reference">
+<h2 class="unnumbered sec-reference">参照</h2>
+<p>記法や実行操作を確かめたいときは、ここから必要な箇所へ戻る。モデルには条件、入力には与えられた数字を置くという区別を保つと、ファイルの役割も見分けやすい。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>記法・ファイル</th>
+<th>役割</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code class="sourceCode minizinc"><span class="dt">var</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span></code></td>
+<td>値を決める変数と、その定義域</td>
+</tr>
+<tr>
+<td><code class="sourceCode minizinc"><span class="kw">constraint</span></code> / <code class="sourceCode minizinc"><span class="kw">solve</span> <span class="kw">satisfy</span></code></td>
+<td>満たす条件／すべて満たす解の要求</td>
+</tr>
+<tr>
+<td><code class="sourceCode minizinc">alldifferent</code></td>
+<td>指定した配列の値を互いに異ならせる</td>
+</tr>
+<tr>
+<td><code class="sourceCode minizinc">[grid[r,c] | c <span class="op">in</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>]</code></td>
+<td>行rの四マスを集める内包記法</td>
+</tr>
+<tr>
+<td><code class="sourceCode minizinc">forall</code> / <code>where</code></td>
+<td>全対象への条件／ここでは入力による対象選択</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-02/sudoku4.mzn" data-code-preview="../../previews/session-02/sudoku4.mzn.json">数独の完成モデル</a>・<a href="../../downloads/session-02/demo.dzn" data-code-preview="../../previews/session-02/demo.dzn.json">入力</a></td>
+<td>解説例の分離版</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-02/sudoku4-demo.mzn" data-code-preview="../../previews/session-02/sudoku4-demo.mzn.json">入力込みの完成例</a></td>
+<td>一ファイルで操作を確かめる版</td>
+</tr>
+<tr>
+<td><a href="../../guides/minizinc-start/index.html">実行の手引き</a></td>
+<td>Run、入力の交換、結果の読み方</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>セミコロン <code class="sourceCode minizinc">;</code> の抜けは構文エラー、入力の未指定はデータの不足であり、問題の解なしとは区別する。<code>given</code> を二つの入力ファイルから同時に与えない。初期配置を交換するときは、前の <code>.dzn</code> を外してから実行する。</p>
+<p>記法の公式説明は<a href="https://docs.minizinc.dev/en/stable/modelling.html">MiniZinc Handbookの基本モデル</a>と<a href="https://docs.minizinc.dev/en/stable/modelling2.html">配列・全相異なり</a>にある。読む範囲は、この回で使った整数・配列・制約の部分でよい。</p>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../sessions/01-prolog/index.html">← 第01回</a> · <a href="../../index.html">講義一覧</a> · <a href="../../sessions/03-search/index.html">第03回 →</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

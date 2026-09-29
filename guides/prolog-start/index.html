@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prologの実行の手引き - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 手引き</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">Prologの実行の手引き</h1>
+    <nav class="session-nav" aria-label="第01回の講義資料"><a href="../../sessions/01-prolog/index.html">通常講義</a><a href="../../advanced/prolog-challenges/index.html">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#ファイルと問い合わせの場所">ファイルと問い合わせの場所</a>
+      </li>
+      <li><a href="#次の答えと終了">次の答えと終了</a>
+      </li>
+      <li><a href="#編集と再実行">編集と再実行</a>
+      </li>
+      <li><a href="#エラーの見分け方">エラーの見分け方</a>
+      </li>
+      <li><a href="#ブラウザを使う場合">ブラウザを使う場合</a>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p><a href="../../sessions/01-prolog/index.html">第01回</a>のファイルを読み込み、問い合わせを実行するための操作をまとめる。授業では教員が用意したSWI-Prologの環境から始める。手元で起動できない場合は授業内で教員と確認し、まず実演と本文の確認例を使って条件を読む。</p>
+</header>
+<section id="ファイルと問い合わせの場所" class="level2">
+<h2>ファイルと問い合わせの場所</h2>
+<p>プログラムはテキストエディタで <code>.pl</code> ファイルへ書き、問い合わせはSWI-Prologの入力欄へ書く。まず<a href="../../downloads/session-01/event-basic.pl" data-code-preview="../../previews/session-01/event-basic.pl.json">event-basic.pl</a>を保存し、そのファイルのあるフォルダーで端末を開いて次を実行する。</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">swipl</span> <span class="at">-q</span> <span class="at">-s</span> event-basic.pl</span></code></pre></div>
+<p><code class="sourceCode prolog"><span class="fu">?-</span></code> が出たらPrologの問い合わせを入力できる。たとえば <code class="sourceCode prolog">available(aki<span class="kw">,</span>tue)<span class="kw">.</span></code> と入力してEnterを押す。ここで <code>swipl ...</code> をもう一度入力するのではなく、読み込んだ事実や規則へ質問する。</p>
+<pre class="text"><code>?- available(aki, tue).
+true.
+
+?- available(chi, tue).
+false.</code></pre>
+<p>プログラムの末尾にある <code class="sourceCode prolog"><span class="co">/** &lt;examples&gt; ... */</span></code> は問い合わせの見本を並べたコメントであり、読み込んだだけでは実行されない。見本を一つずつ入力する。先頭の <code class="sourceCode prolog"><span class="fu">?-</span></code> は入力欄の目印なので、自分で重ねて入力しない。</p>
+</section>
+<section id="次の答えと終了" class="level2">
+<h2>次の答えと終了</h2>
+<p><code class="sourceCode prolog">can_work(<span class="dt">P</span><span class="kw">,</span>tue)<span class="kw">.</span></code> のような問い合わせには複数の答えがある。追加の答えを待つ状態になったら <code class="sourceCode prolog"><span class="kw">;</span></code> を押して次を求める。途中で答えを見るのを終えるときはEnterを押す。これらはSWI-Prologの標準の問い合わせ操作である。<a href="https://www.swi-prolog.org/pldoc/man?section=execquery">公式の操作説明</a></p>
+<p><code>false</code> は、最初から答えがない場合にも、追加の答えがもうない場合にも現れる。答えの末尾が <code class="sourceCode prolog"><span class="al">.</span></code> になって終わる場合もある。どの表示で終わるかより、それまでに得た答えを全部集めて本文の集合と比べよう。</p>
+<p>処理が長く続いている場合はCtrl+Cで中断メニューを開き、<code>a</code> で問い合わせを中止する。入力できる <code class="sourceCode prolog"><span class="fu">?-</span></code> に戻ってから <code>halt.</code> を実行すると、Prologを終了して端末へ戻る。</p>
+</section>
+<section id="編集と再実行" class="level2">
+<h2>編集と再実行</h2>
+<p>エディタでファイルを書き換えたら保存し、Prologで <code class="sourceCode prolog">make<span class="kw">.</span></code> を実行して再読み込みする。その後、同じ問い合わせをもう一度入力する。画面に残っている古い答えは自動的には更新されない。</p>
+<pre class="text"><code>?- make.
+?- can_work(P, D).</code></pre>
+<p>必修1など別のファイルへ移るときは、いったん <code class="sourceCode prolog">halt<span class="kw">.</span></code> で終了し、<code>swipl -q -s help-start.pl</code> のように指定し直す。この教材の配布物にはそれぞれ全事実を入れてあるので、複数のファイルを同じPrologへ重ねて読み込む必要はない。</p>
+</section>
+<section id="エラーの見分け方" class="level2">
+<h2>エラーの見分け方</h2>
+<p>答えがないことと、プログラムを正しく実行できなかったことを区別しよう。次の表で原因を一つずつ確かめてから、保存・再読み込み・再実行の順にやり直す。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>表示や状況</th>
+<th>確かめるところ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Syntax error</code></td>
+<td>括弧、<code class="sourceCode prolog"><span class="kw">,</span></code>、<code class="sourceCode prolog"><span class="kw">:-</span></code>、末尾の <code>.</code> が正しいか</td>
+</tr>
+<tr>
+<td><code>Unknown procedure</code></td>
+<td>述語名と引数の数が合っているか。演習の規則をまだ書いていないか</td>
+</tr>
+<tr>
+<td><code>Singleton variables</code> の警告</td>
+<td>変数の綴りが一か所だけ違わないか。同じ曜日のつもりで別名にしていないか</td>
+</tr>
+<tr>
+<td>入力後も続きを待っている</td>
+<td>問い合わせの末尾に <code class="sourceCode prolog"><span class="al">.</span></code> を書いたか</td>
+</tr>
+<tr>
+<td>編集前と同じ答えになる</td>
+<td>正しいファイルを保存し、<code class="sourceCode prolog">make<span class="kw">.</span></code> で読み直したか</td>
+</tr>
+<tr>
+<td>エラーはないが答えがない</td>
+<td>条件が厳しすぎないか。人と曜日の引数を逆にしていないか</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>出発ファイルの <code>TODO(作業N)</code> はコメントである。コメントを書き換えるだけでなく、その下へ実行できる規則を書く。未定義のまま問い合わせたときのエラーを、条件を満たす答えがないという確認結果にはしない。</p>
+</section>
+<section id="ブラウザを使う場合" class="level2">
+<h2>ブラウザを使う場合</h2>
+<p>教員と確認して<a href="https://swish.swi-prolog.org/">SWISH</a>を使う場合は、左のプログラム欄へ配布 <code>.pl</code> の全内容、右下の問い合わせ欄へ質問を一つ入れ、<code>Run!</code> で実行する。変更後も再度 <code>Run!</code> を押す。実行のためのサービス上への保存は必要ない。<a href="https://swish.swi-prolog.org/help/help.html">SWISH公式ヘルプ</a></p>
+<p>SWISHでは端末用の起動コマンドや <code class="sourceCode prolog">make<span class="kw">.</span></code> を入力しない。画面の操作はローカルのSWI-Prologと異なるので、授業で使う場合は教員の実演に合わせる。どちらの環境でも、規則と問い合わせの内容、および確認すべき答えの集合は共通である。</p>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../index.html">講義一覧</a> · <a href="../../sessions/01-prolog/index.html">第01回の本文へ</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

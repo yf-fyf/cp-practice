@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第08回の発展　指標を検査し、選び方を比べる - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+<script defer="" src="../../assets/katex/katex.min.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+</script>
+<link rel="stylesheet" href="../../assets/katex/katex.min.css" />
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 発展</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第08回の発展　指標を検査し、選び方を比べる</h1>
+    <nav class="session-nav" aria-label="第08回の講義資料"><a href="../../sessions/08-preferences/index.html">通常講義</a><a href="../../advanced/preferences-challenges/index.html" aria-current="page">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#recalculate">発展1　出力からの独立した再計算</a>
+      <ul>
+      <li><a href="#条件と確認用の表">条件と確認用の表</a></li>
+      <li><a href="#再計算する関数">再計算する関数</a></li>
+      </ul>
+      </li>
+      <li><a href="#individual">発展2　個人の最大違反と合計</a>
+      <ul>
+      <li><a href="#条件と比較用の希望">条件と比較用の希望</a></li>
+      <li><a href="#二つの最小化">二つの最小化</a></li>
+      <li><a href="#第一目的を維持する比較">第一目的を維持する比較</a></li>
+      </ul>
+      </li>
+      <li><a href="#frontier">発展3　支配されない候補と重みの限界</a>
+      <ul>
+      <li><a href="#条件と列挙結果">条件と列挙結果</a></li>
+      <li><a href="#同じ値の統合と支配">同じ値の統合と支配</a></li>
+      <li><a href="#重みで選べない候補">重みで選べない候補</a></li>
+      </ul>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p><a href="../../sessions/08-preferences/index.html">第08回の本文</a>で扱った勤務表を使い、出力の再計算、個人の最大違反、支配されない候補の列挙へ進む。各問題に入力と必要な完成部分を用意してあり、前の発展や第06回の発展の完成は不要である。</p>
+<p>ファイルの組合せと実行方法は<a href="../../guides/preferences-check/index.html">確認手引き</a>で確認できる。表が条件を満たすこと、指標の計算が合うこと、その目的について最適であることを分けて調べよう。</p>
+</header>
+<section id="recalculate" class="level2">
+<h2>発展1　出力からの独立した再計算</h2>
+<p>ソルバーと別のPythonプログラムで日数・希望違反・日数差を求める。入力はすでに配列になっているので、最適化やMiniZincの出力文字列の解析ではなく、表を走査する計算に集中できる。</p>
+<section id="条件と確認用の表" class="level3">
+<h3>条件と確認用の表</h3>
+<p>5人A〜E、4日間の0/1勤務表を扱う。各日ちょうど2人、一人合計2日以下、勤務可能性0では勤務させない。各欄は1〜4日目の順で、希望1は休みたいこと、希望0は休み希望なしを表す。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th>勤務可能性</th>
+<th>元の休み希望</th>
+<th>比較する休み希望</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>1 1 0 1</td>
+<td>0 0 0 0</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>B</td>
+<td>1 0 1 1</td>
+<td>0 0 0 0</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>C</td>
+<td>0 1 1 1</td>
+<td>0 0 0 0</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>D</td>
+<td>1 1 1 0</td>
+<td>0 0 0 0</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>E</td>
+<td>1 1 1 1</td>
+<td>1 1 1 1</td>
+<td>0 0 0 1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><a href="../../downloads/session-08/request-demo.json" data-code-preview="../../previews/session-08/request-demo.json.json">request-demo.json</a>と<a href="../../downloads/session-08/request-practice.json" data-code-preview="../../previews/session-08/request-practice.json.json">request-practice.json</a>に二つの入力、<a href="../../downloads/session-08/examples.json" data-code-preview="../../previews/session-08/examples.json.json">examples.json</a>に確認用の勤務表を配列で用意した。Pythonでは勤務の有無を <code class="sourceCode python">work[p][d]</code> と書き、勤務なら1、休みなら0とする。p・dとも0から数え、行0〜4がA〜E、列0〜3が日1〜4である。<code>data</code> は希望入力のJSONを読んだ辞書で、<code>available</code> が勤務可能性、<code>request</code> が休み希望の5行×4列表、<code>required</code> が各日2人、<code>max_days</code> が各人2日以下を表す。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>名前</th>
+<th>日ごとの担当者（1〜4日）</th>
+<th>日数A〜E</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S0</td>
+<td>AB／AD／CD／BC</td>
+<td>2,2,2,2,0</td>
+</tr>
+<tr>
+<td>S1</td>
+<td>AB／AC／BD／CE</td>
+<td>2,2,2,1,1</td>
+</tr>
+<tr>
+<td>P1</td>
+<td>AB／AE／CD／BC</td>
+<td>2,2,2,1,1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>各人の日数をL、希望位置で勤務した回数の合計をV、勤務0日の人も含む全員の日数の最大と最小の差をFとする。kを指定したときだけV≤kも確認する。これは指標と条件の検査で、最適化は行わない。</p>
+</section>
+<section id="再計算する関数" class="level3">
+<h3>再計算する関数</h3>
+<p><a href="../../downloads/session-08/recalculate-start.py" data-code-preview="../../previews/session-08/recalculate-start.py.json">recalculate-start.py</a>と<a href="../../downloads/session-08/roster_io.py" data-code-preview="../../previews/session-08/roster_io.py.json">roster_io.py</a>を使う。後者はJSONを読む処理と、表の大きさ・0/1・勤務可能性・各日人数・各人上限の基本検査を提供する。</p>
+<ol type="1">
+<li><strong>作業1：</strong> <code class="sourceCode python">recalculate(work, data, k<span class="op">=</span><span class="va">None</span>)</code>で全員の日数<code>load</code>を求め、希望と勤務からV、全員の日数からFを計算する。</li>
+<li><strong>作業2：</strong> kが指定され、V&gt;kなら<code>errors</code>へ<code class="sourceCode python"><span class="co">&#39;cap&#39;</span></code>を追加する。<code>valid</code>、<code>errors</code>、<code>load</code>、<code>V</code>、<code>F</code>を持つ辞書を返す。</li>
+<li>二つの希望入力でS0・S1・P1を調べ、さらに元の希望でk=0とk=1を試す。基本検査に失敗した表は、提供済みの分岐で<code class="sourceCode python">valid<span class="op">=</span><span class="va">False</span></code>と原因を返す。</li>
+</ol>
+<p>kの未指定は<code class="sourceCode python"><span class="va">None</span></code>である。<code class="sourceCode python"><span class="cf">if</span> k:</code>と書くとk=0の場合を飛ばしてしまうので、0という上限も検査の対象に含めよう。<code>valid</code> は <code>errors</code> が空のときだけ <code class="sourceCode python"><span class="va">True</span></code> にする。例えば元の希望・S0・k=0では、戻り値は次の形になる。</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>{<span class="st">&quot;valid&quot;</span>: <span class="va">True</span>, <span class="st">&quot;errors&quot;</span>: [], <span class="st">&quot;load&quot;</span>: [<span class="dv">2</span>,<span class="dv">2</span>,<span class="dv">2</span>,<span class="dv">2</span>,<span class="dv">0</span>], <span class="st">&quot;V&quot;</span>: <span class="dv">0</span>, <span class="st">&quot;F&quot;</span>: <span class="dv">2</span>}</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> recalculate-start.py request-demo.json examples.json <span class="at">--k</span> 0</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> recalculate-start.py request-practice.json examples.json</span></code></pre></div>
+<details class="hint"><summary>ヒントを開く：和と最大・最小の対象</summary><div class="hint-body">
+<p>日数は行ごとに足す。Vは全セルの<code class="sourceCode python">work[p][d]<span class="op">*</span>data[<span class="st">&#39;request&#39;</span>][p][d]</code>を足す。Fは全員の日数に対する<code class="sourceCode python"><span class="bu">max</span>(load)<span class="op">-</span><span class="bu">min</span>(load)</code>で、勤務0日の行も残す。kが指定されたかは<code class="sourceCode python">k <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></code>で調べる。</p>
+</div></details>
+<p>元の希望ならS0は(V,F)=(0,2)、S1とP1は(1,1)。比較する希望ならS0は(0,2)、S1は(1,1)、P1は(0,1)になる。同じ勤務表の希望入力だけを変えても、日数とFは変わらない。</p>
+<p>元の希望でS1はk=0を破り、k=1を満たす。S0はどちらも満たすが、k=1でFを最小にする問題では最適ではない。検査が通ることだけでは、よりよい別表がないことの証明にはならない。</p>
+</section>
+</section>
+<section id="individual" class="level2">
+<h2>発展2　個人の最大違反と合計</h2>
+<p>希望違反の合計を小さくすると、一人へ違反が集中する場合がある。各人の違反を経由して、その中の最大を小さくする目的と比べる。今回は勤務日数の差ではなく、希望違反の分布を見る。</p>
+<section id="条件と比較用の希望" class="level3">
+<h3>条件と比較用の希望</h3>
+<p>5人A〜E、4日間、各日ちょうど2人、一人合計2日以下、勤務可能性0では勤務させない。勤務するなら1、休むなら0で、以下の各欄は1〜4日目の順。希望1の位置で勤務すると、その人の違反を1回数える。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th>勤務可能性</th>
+<th>比較用の休み希望</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>1 1 0 1</td>
+<td>1 1 0 1</td>
+</tr>
+<tr>
+<td>B</td>
+<td>1 0 1 1</td>
+<td>0 0 1 1</td>
+</tr>
+<tr>
+<td>C</td>
+<td>0 1 1 1</td>
+<td>0 1 0 0</td>
+</tr>
+<tr>
+<td>D</td>
+<td>1 1 1 0</td>
+<td>1 1 1 0</td>
+</tr>
+<tr>
+<td>E</td>
+<td>1 1 1 1</td>
+<td>1 1 0 0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>入力は<a href="../../downloads/session-08/request-individual.dzn" data-code-preview="../../previews/session-08/request-individual.dzn.json">request-individual.dzn</a>。人pが日dに勤務するかを <span class="math inline">x_{p,d}</span>、その位置に休み希望があるかを <span class="math inline">r_{p,d}</span> とし、それぞれ当てはまるなら1、当てはまらないなら0とする。個人の違反を <span class="math inline">v_p=\sum_d r_{p,d}x_{p,d}</span>、合計を <span class="math inline">V=\sum_p v_p</span>、一人の最大違反を <span class="math inline">M=\max_p v_p</span> とする。V最小化とM最小化を別々に行う。V≤k、日数差の最小化、重み付き目的は追加しない。</p>
+</section>
+<section id="二つの最小化" class="level3">
+<h3>二つの最小化</h3>
+<p><a href="../../downloads/session-08/individual-start.mzn" data-code-preview="../../previews/session-08/individual-start.mzn.json">individual-start.mzn</a>、<a href="../../downloads/session-08/metrics-core.mzn" data-code-preview="../../previews/session-08/metrics-core.mzn.json">metrics-core.mzn</a>、<a href="../../downloads/session-08/roster-core.mzn" data-code-preview="../../previews/session-08/roster-core.mzn.json">roster-core.mzn</a>を使う。モデルでは <code class="sourceCode minizinc">work[p,d]</code> が <span class="math inline">x_{p,d}</span>、<code class="sourceCode minizinc">request[p,d]</code> が <span class="math inline">r_{p,d}</span>、<code class="sourceCode minizinc">available[p,d]</code> が勤務可能性、<code class="sourceCode minizinc">load[p]</code> が勤務日数である。<code class="sourceCode minizinc">PEOPLE<span class="op">=</span><span class="dv">1</span><span class="op">..</span><span class="dv">5</span></code> がA〜E、<code class="sourceCode minizinc">DAYS<span class="op">=</span><span class="dv">1</span><span class="op">..</span><span class="dv">4</span></code> が日1〜4に対応する。Vと日数の計算は完成している。個人の違反配列と、何を最小化するかを追加する。</p>
+<ol type="1">
+<li><strong>作業1：</strong> <code class="sourceCode minizinc">personal[p]</code>で個人の違反を定義し、<code class="sourceCode minizinc">worst<span class="op">=</span><span class="fu">max</span>(personal)</code>でMを定義する。最大を取る前に、人ごとの合計を作る。</li>
+<li><strong>作業2：</strong> Vを表す<code>violations</code>の最小化を実行し、次にMを表す<code>worst</code>の最小化へ<code class="sourceCode minizinc"><span class="kw">solve</span></code>を切り替えて実行する。一つの実行に<code class="sourceCode minizinc"><span class="kw">solve</span></code>は一つとする。</li>
+<li>表から各人の違反を再計算する。Mが同じ表は、合計Vも同じかを調べる。</li>
+</ol>
+<p><code class="sourceCode minizinc"><span class="fu">max</span>(personal)</code>は全員の個人違反の中から最大値を取る式である。個人の違反は勤務日数以下なので、0〜日数という範囲で宣言できる。出力の足場は<code>personal</code>と<code>worst</code>を表示する。</p>
+<details class="hint"><summary>ヒントを開く：集計を二段にする</summary><div class="hint-body">
+<p>人pを固定し、日について希望と勤務の積を足して<code class="sourceCode minizinc">personal[p]</code>へ結び付ける。これを全員分定義してから、配列全体へ<code>max</code>を適用する。合計VをそのままMの代わりにしない。</p>
+</div></details>
+<p>Vの最小値は3で、その最適表ではM=2。例AB／AD／CE／CEでは、個人違反は(2,0,0,1,0)となる。Mの最小値は1で、例AB／CD／BE／CEの個人違反は(1,1,1,1,0)、合計V=4となる。</p>
+<p>Mだけを最小にした最適表にはV=5のものもある。最大違反が1なら、V=4の表とV=5の表をこの目的だけでは区別しない。全表を比べたい場合は、<a href="../../downloads/session-08/all-rosters.json" data-code-preview="../../previews/session-08/all-rosters.json.json">all-rosters.json</a>と<a href="../../downloads/session-08/request-individual.json" data-code-preview="../../previews/session-08/request-individual.json.json">request-individual.json</a>を<a href="../../downloads/session-08/roster_io.py" data-code-preview="../../previews/session-08/roster_io.py.json">roster_io.py</a>の<code>read_json</code>で読める。</p>
+</section>
+<section id="第一目的を維持する比較" class="level3">
+<h3>第一目的を維持する比較</h3>
+<p>最大違反を最小にした後、その値を保ったまま合計も小さくしたい場合は、二段階に分ける。第一段階の最適値を制約へ移せば、第二段階で目的を切り替えても、最初の改善を失わずに済む。</p>
+<p>完成した<a href="../../downloads/session-08/individual-core.mzn" data-code-preview="../../previews/session-08/individual-core.mzn.json">individual-core.mzn</a>と<a href="../../downloads/session-08/second-stage-start.mzn" data-code-preview="../../previews/session-08/second-stage-start.mzn.json">second-stage-start.mzn</a>を使う。前者には個人の違反とMの定義まであり、<code class="sourceCode minizinc"><span class="kw">solve</span></code>はない。<a href="../../downloads/session-08/best-worst.dzn" data-code-preview="../../previews/session-08/best-worst.dzn.json">best-worst.dzn</a>に第一段階で確認した値1を入れてある。先に挙げた <code>metrics-core.mzn</code>・<code>roster-core.mzn</code> も同じフォルダーに置き、次の組合せで実行する。</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode second-stage-start.mzn request-individual.dzn best-worst.dzn</span></code></pre></div>
+<ul>
+<li><strong>作業1：</strong> <code>worst</code>を入力<code>best_worst</code>へ固定する。</li>
+<li><strong>作業2：</strong> 合計<code>violations</code>を最小化する。</li>
+</ul>
+<p>最適値はM=1を保ったV=4になる。まず合計Vを最小化する順序とは異なることを、各人の違反で説明しよう。第一段階と第二段階では同じ希望入力を使い、入力を変えた場合は最初から最適値を求め直す。</p>
+<p>さらに<a href="../../downloads/session-08/request-all.dzn" data-code-preview="../../previews/session-08/request-all.dzn.json">request-all.dzn</a>と<a href="../../downloads/session-08/request-all.json" data-code-preview="../../previews/session-08/request-all.json.json">JSON版</a>は、全員が全4日を休み希望にした比較入力である。このときV=8、M=2で一定となる。日数(2,2,2,2,0)と(2,2,2,1,1)を、最大違反だけでは区別できない理由も考えよう。</p>
+</section>
+</section>
+<section id="frontier" class="level2">
+<h2>発展3　支配されない候補と重みの限界</h2>
+<p>一つの重みで選ぶ前に、二つの指標でどんな選択肢があるかを整理する。同じ指標対の勤務表をまとめ、別の候補に両指標で劣るものを除く。指標の再計算は提供するので、発展1の完成は不要である。</p>
+<section id="条件と列挙結果" class="level3">
+<h3>条件と列挙結果</h3>
+<p>5人A〜E、4日間、各日ちょうど2人、一人合計2日以下、勤務可能性0では勤務させない。勤務するなら1、休むなら0で、各欄は1〜4日目の順。希望1の位置で勤務した回数の合計Vと、勤務0日の人も含む全員の日数の最大・最小の差Fを比べる。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th>勤務可能性</th>
+<th>休み希望</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>1 1 0 1</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>B</td>
+<td>1 0 1 1</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>C</td>
+<td>0 1 1 1</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>D</td>
+<td>1 1 1 0</td>
+<td>0 0 0 0</td>
+</tr>
+<tr>
+<td>E</td>
+<td>1 1 1 1</td>
+<td>1 1 1 1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><a href="../../downloads/session-08/request-demo.json" data-code-preview="../../previews/session-08/request-demo.json.json">request-demo.json</a>を使い、V≤kは加えない。<a href="../../downloads/session-08/all-rosters.json" data-code-preview="../../previews/session-08/all-rosters.json.json">all-rosters.json</a>には基本条件を満たすすべての393表を用意した。各表は5行×4列の配列で、行がA〜E、列が日1〜4、各セルは勤務なら1、休みなら0である。再生成方法は手引きにあり、列挙のプログラムを書くことは今回の作業に含めない。</p>
+</section>
+<section id="同じ値の統合と支配" class="level3">
+<h3>同じ値の統合と支配</h3>
+<p>指標はどちらも小さいほどよい。候補bが候補aに<strong>支配される</strong>とは、aの両指標がb以下で、少なくとも一方が厳密に小さいことである。同じ指標対の別表どうしは、この定義では支配にならない。</p>
+<p><a href="../../downloads/session-08/frontier-start.py" data-code-preview="../../previews/session-08/frontier-start.py.json">frontier-start.py</a>、<a href="../../downloads/session-08/metric_values.py" data-code-preview="../../previews/session-08/metric_values.py.json">metric_values.py</a>、<a href="../../downloads/session-08/roster_io.py" data-code-preview="../../previews/session-08/roster_io.py.json">roster_io.py</a>を使う。<code class="sourceCode python">values(work, data)</code>は基本条件を確認して(V,F)を返す完成関数であり、<code>work</code> は勤務表の配列、<code>data</code> は <code>request-demo.json</code> を読んだ辞書である。Pythonの添字は0から数える。ここでは完成関数の結果を使って候補を整理する。</p>
+<ol type="1">
+<li><strong>作業1：</strong> 同じ(V,F)を持つ表をまとめ、指標対ごとに代表表を一つ残す。</li>
+<li><strong>作業2：</strong> 他の指標対に支配されるものを除き、<code>(指標対, 代表表)</code>のリストを返す。</li>
+<li>代表表が元の基本条件を満たし、再計算した指標対と一致することを確かめる。</li>
+</ol>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> frontier-start.py request-demo.json all-rosters.json</span></code></pre></div>
+<details class="hint"><summary>ヒントを開く：同点と厳密な改善</summary><div class="hint-body">
+<p>辞書のキーを(V,F)にすれば同じ値をまとめられる。支配の判定には「両方以下」に加え「どちらかが小さい」が必要である。後者を省くと、同点の候補が互いに消えてしまう。</p>
+</div></details>
+<p>残る指標対は(0,2)と(1,1)である。代表表そのものは複数から選べるので、特定の表との完全一致は求めない。このような支配されない候補をPareto最適な候補と呼ぶ。</p>
+</section>
+<section id="重みで選べない候補" class="level3">
+<h3>重みで選べない候補</h3>
+<p>重みを変えれば支配されない候補をすべて選べるか、別の小例で考える。次の三点は抽象的な二指標の候補であり、上の勤務表から得られた値ではない。この区別を保って比較しよう。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>候補</th>
+<th style="text-align: right;">第一指標</th>
+<th style="text-align: right;">第二指標</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>X</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr>
+<td>Y</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td>Z</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>どちらも小さいほどよく、三点とも互いに支配されない。正の重みα・βで第一指標×α+第二指標×βを最小化する。中央YがXとZの両方以下になるための不等式を作り、同時に満たせるか調べる。</p>
+<details class="hint"><summary>ヒントを開く：中央と両端の比較</summary><div class="hint-body">
+<p>YがX以下なら2α+2β≤3β、YがZ以下なら2α+2β≤3α。整理すると2α≤βかつ2β≤αが必要になる。両方の式とα&gt;0を使うと、どこに矛盾が生じるだろうか。</p>
+</div></details>
+<p>作った二つの不等式から、正の重みでYを選べるか結論しよう。何通りかの重みを試した結果と、すべての正の重みに対する根拠を区別する。結論を書いてから次の確認例を開く。</p>
+<details class="hint"><summary>確認例を開く：二つの不等式の帰結</summary><div class="hint-body">
+<p>二つを合わせると4α≤αとなり、α&gt;0に反する。したがってYは支配されていないのに、どの正の重みでも最小にならない。</p>
+</div></details>
+</section>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../index.html">講義一覧</a> · <a href="../../sessions/08-preferences/index.html">第08回の本文へ</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,36 @@
+/* ホーム専用。講義カード・科目案内・手引きの表示。 */
+:root { --ink:#262626; --muted:#666; --brand:#583B66; --tint:#F7F3F9; --line:#EEE6F2; --link:#0B57B0; --measure:48rem; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { margin:0; background:#fff; color:var(--ink); font:16px/1.75 "Hiragino Kaku Gothic ProN","Noto Sans CJK JP","Noto Sans JP","Yu Gothic",sans-serif; }
+a { color:var(--link); text-underline-offset:3px; }
+a:focus-visible { outline:3px solid var(--brand); outline-offset:4px; }
+main { box-sizing:content-box; max-width:var(--measure); margin:auto; padding:32px var(--page-gutter) 56px; }
+h1,h2,p,ul,ol { margin:0; }
+.year { color:var(--muted); font-size:14px; }
+h1 { font-size:30px; line-height:1.5; margin-top:8px; letter-spacing:.015em; }
+.intro { margin-top:12px; }
+.start { display:inline-block; margin-top:12px; }
+section { margin-top:40px; scroll-margin-top:calc(var(--topbar-h) + 24px); }
+h2 { font-size:22px; line-height:1.5; font-weight:700; }
+.lesson-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; padding:0; margin-top:16px; list-style:none; }
+.lesson-card { display:flex; flex-direction:column; justify-content:center; gap:4px; height:100%; min-height:104px; padding:16px 20px; background:var(--tint); border:1px solid var(--line); border-radius:6px; text-decoration:none; color:var(--brand); }
+.lesson-card:hover { background:var(--line); border-color:var(--brand); }
+.number { font-size:14px; }
+.title { font-size:18px; line-height:1.6; font-weight:700; }
+#project p, #guides p { margin-top:12px; }
+.guide-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:24px; row-gap:12px; padding:0; margin-top:16px; list-style:none; }
+.guide-list li { display:flex; flex-direction:column; }
+.guide-list span { color:var(--muted); font-size:13px; }
+footer { border-top:1px solid var(--line); padding:24px 16px; text-align:center; color:var(--muted); font-size:13px; }
+footer p+p { margin-top:4px; }
+@media(max-width:600px) {
+ main { padding:24px var(--page-gutter) 40px; }
+ h1 { font-size:26px; }
+ h2 { font-size:21px; }
+ .lesson-grid,.guide-list { grid-template-columns:1fr; }
+ .lesson-card { min-height:96px; padding:16px 20px; }
+ .title { font-size:17px; }
+ section { margin-top:32px; }
+}
+@media print { .topbar,footer { display:none; } main { max-width:none; } .lesson-card { break-inside:avoid; } }

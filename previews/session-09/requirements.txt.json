@@ -1,0 +1,1 @@
+{"name": "requirements.txt", "language": "plaintext", "label": "テキスト", "code": "z3-solver==5.1.0.0\n", "lines": ["z3-solver==5.1.0.0"]}

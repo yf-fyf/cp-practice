@@ -1,0 +1,44 @@
+[
+  {
+    "name": "valid",
+    "digits": [
+      9,
+      5,
+      6,
+      7,
+      1,
+      0,
+      8,
+      2
+    ],
+    "valid": true
+  },
+  {
+    "name": "leading-zero",
+    "digits": [
+      2,
+      8,
+      1,
+      7,
+      0,
+      3,
+      6,
+      5
+    ],
+    "valid": false
+  },
+  {
+    "name": "repeated",
+    "digits": [
+      9,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "valid": false
+  }
+]

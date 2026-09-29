@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第02回の発展　数独の条件と別の題材 - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+<script defer="" src="../../assets/katex/katex.min.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+</script>
+<link rel="stylesheet" href="../../assets/katex/katex.min.css" />
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 発展</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第02回の発展　数独の条件と別の題材</h1>
+    <nav class="session-nav" aria-label="第02回の講義資料"><a href="../../sessions/02-minizinc/index.html">通常講義</a><a href="../../advanced/sudoku-challenges/index.html" aria-current="page">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#inequality">発展1　不等号付き数独</a>
+      </li>
+      <li><a href="#second">発展2　既知の解の除外</a>
+      <ul>
+      <li><a href="#問題と入力">問題と入力</a></li>
+      <li><a href="#出発ファイルと作業">出発ファイルと作業</a></li>
+      <li><a href="#自分の答えの確認">自分の答えの確認</a></li>
+      </ul>
+      </li>
+      <li><a href="#clues">発展3　手掛かりの削減</a>
+      </li>
+      <li><a href="#kinki">選択M02　近畿の三色塗り分け</a>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p>条件を増やす、別解を探す、問題を作るという三つの方向へ広げる。数独とは別の題材を試したければ、近畿の三色塗り分けを選べる。<a href="../../sessions/02-minizinc/index.html">第02回の本文</a>から独立して始められるよう、各問に条件と出発点を示す。</p>
+</header>
+<section id="inequality" class="level2">
+<h2>発展1　不等号付き数独</h2>
+<p>基本の数独へ、指定された二マスの大小関係を加える。主対角線の条件は使わず、空盤面から始める。数独の重複禁止と、不等号がそれぞれ何を制限するかを比べよう。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 4×4盤面の全マスを1〜4とする。行は上から、列は左から1〜4と数え、r行c列の数字を <span class="math inline">x_{r,c}</span>（プログラムでは <code class="sourceCode minizinc">grid[r,c]</code>）で表す。全相異なりとは、対象の数字がすべて互いに異なることである。初期値はなく、全マスが空欄である。各行・各列と、行1〜2／3〜4・列1〜2／3〜4で区切った四つの2×2ブロックは、それぞれ全相異なりとする。さらに次の三条件を満たす盤面を一つ求める。</p>
+<p><span class="math display">x_{1,1}&lt;x_{1,2},\qquad x_{2,2}&gt;x_{3,2},\qquad x_{3,3}&gt;x_{3,4}.</span></p>
+</div>
+<p><a href="../../downloads/session-02/inequality-start.mzn" data-code-preview="../../previews/session-02/inequality-start.mzn.json">inequality-start.mzn</a>には基本モデルが入っている。<a href="../../downloads/session-02/empty.dzn" data-code-preview="../../previews/session-02/empty.dzn.json">empty.dzn</a>を入力にし、<code>TODO(作業1)</code> に三つの不等号を書く。例えば <code>(2,2)</code> と <code>(3,2)</code> は、同じ列にある上下のマスである。</p>
+<p>出力が得られたら三つの比較を別々に確かめる。次は成立する一例で、これ以外の盤面でも条件を満たせばよい。すべての解を列挙する作業は必須にしない。</p>
+<pre class="text"><code>1 2 3 4
+3 4 1 2
+2 1 4 3
+4 3 2 1</code></pre>
+<p>この例では、三つの比較が順に1&lt;2、4&gt;1、4&gt;3となる。基本条件も照合できたら、入力を<a href="../../downloads/session-02/practice.dzn" data-code-preview="../../previews/session-02/practice.dzn.json">practice.dzn</a>へ交換し、0以外の初期値を保持する条件も使う。この入力は次の盤面で、0は空欄である。</p>
+<pre class="text"><code>4 3 0 0
+2 0 0 3
+0 0 1 0
+0 0 0 4</code></pre>
+<p>今度は解なしになる。初期値から決まる盤面のどの比較が合わないか説明しよう。</p>
+<details class="hint"><summary>ヒントを開く：不等号の向き</summary><div class="hint-body">
+<p><code class="sourceCode minizinc">grid[r,c]</code> がr行c列のマスを表す。左側のマス、比較記号、右側のマスを一組として書く。第一条件の <code class="sourceCode minizinc"><span class="op">&lt;</span></code> と、後の二条件の <code class="sourceCode minizinc"><span class="op">&gt;</span></code> の向きを揃えてしまわないようにする。</p>
+</div></details>
+</section>
+<section id="second" class="level2">
+<h2>発展2　既知の解の除外</h2>
+<p>4×4数独の完成盤面を一つ知っているとする。それをもう一度答えとして出すのではなく、条件を満たす別の完成盤面を探したい。既知の盤面だけを除外する条件を書き、別解がある場合とない場合を確かめよう。</p>
+<section id="問題と入力" class="level3">
+<h3>問題と入力</h3>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> まずは全16マスが空欄の盤面から始め、次のルールで数字を入れる。行は上から、列は左から、それぞれ1〜4と数える。</p>
+<ul>
+<li>各マスに入れる数字は1〜4。</li>
+<li>各行と各列には、それぞれ1〜4を一度ずつ入れる。</li>
+<li>四つの2×2ブロックにも、それぞれ1〜4を一度ずつ入れる。各ブロックは、行1〜2または行3〜4と、列1〜2または列3〜4を組み合わせた領域である。</li>
+<li>主対角線の重複禁止や、マス同士の大小関係は条件に加えない。</li>
+</ul>
+<p>次の盤面は、このルールを満たす既知の解である。これと<strong>少なくとも一マスで数字が異なる完成盤面を一つ</strong>求める。同じ数字のままのマスがあってもよい。違いは同じ位置のマス同士、つまり行も列も同じマスで比べる。</p>
+<p><span class="math display">
+\begin{array}{cc|cc}
+1&amp;2&amp;3&amp;4\\
+3&amp;4&amp;1&amp;2\\\hline
+2&amp;1&amp;4&amp;3\\
+4&amp;3&amp;2&amp;1
+\end{array}
+</span></p>
+<p>この既知の盤面は比較するための入力であり、その16個の数字に答えを固定するものではない。</p>
+</div>
+</section>
+<section id="出発ファイルと作業" class="level3">
+<h3>出発ファイルと作業</h3>
+<p>次の三ファイルを組み合わせて使う。モデルと初期配置に加え、比較用の完成盤面を別の入力として渡す。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>ファイル</th>
+<th>入っているもの</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../downloads/session-02/second-start.mzn" data-code-preview="../../previews/session-02/second-start.mzn.json">second-start.mzn</a></td>
+<td>数独の変数・条件・表示と、比較用の入力の宣言。既知の解を除外する条件は未記入</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-02/empty.dzn" data-code-preview="../../previews/session-02/empty.dzn.json">empty.dzn</a></td>
+<td>全16マスが空欄という初期配置。<code>given</code> の全要素が0</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-02/first.dzn" data-code-preview="../../previews/session-02/first.dzn.json">first.dzn</a></td>
+<td>問題に示した既知の完成盤面。<code>first</code> に与える比較用の数字</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code class="sourceCode minizinc">given[r,c]</code> はr行c列の初期値で、0は空欄を表す。<code class="sourceCode minizinc">grid[r,c]</code> はそのマスに入れる数字を求める決定変数、<code class="sourceCode minizinc">first[r,c]</code> は同じ位置にある既知の解の数字である。出発モデルには、値を1〜4にする宣言、行・列・ブロックの条件、0以外の初期値を保持する条件がすでに入っている。</p>
+<p><code>second-start.mzn</code> の <code>TODO(作業1)</code> に、既知の盤面と少なくとも一マスが異なるという条件を書く。<code>given</code>・<code>grid</code>・<code>first</code> のうち、どの二つを比べるか、その違いをどのマスで要求するかを考えよう。</p>
+<p>記述には <code class="sourceCode minizinc">exists</code> を使える。これは「指定した対象の中に、括弧内の条件を満たすものが少なくとも一つある」を表す。例えば、四要素の配列a・bについて <code class="sourceCode minizinc"><span class="fu">exists</span>(i <span class="op">in</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>)(a[i] <span class="op">!=</span> b[i])</code> は、同じ位置で比べた値が少なくとも一要素で異なるという条件になる。<code class="sourceCode minizinc"><span class="op">!=</span></code> は不一致を表す。今回の盤面は二次元なので、行と列の組を対象にする。</p>
+<p>保存したモデルに <code>empty.dzn</code> と <code>first.dzn</code> の両方を指定し、Gecodeで実行する。ファイルの指定や実行操作に迷ったら<a href="../../guides/minizinc-start/index.html">実行の手引き</a>を利用できる。</p>
+</section>
+<section id="自分の答えの確認" class="level3">
+<h3>自分の答えの確認</h3>
+<p>出力の各行・各列・四ブロックに1〜4が一度ずつ現れるかを確かめ、問題に示した既知の盤面と違うマスを一つ指し示そう。完成盤面は複数あり、条件を満たせばどれでもよい。</p>
+<p>次に、別解がない場合を調べる。比較用の <code>first.dzn</code> はそのままにして、初期配置の <code>empty.dzn</code> だけを次の<a href="../../downloads/session-02/demo.dzn" data-code-preview="../../previews/session-02/demo.dzn.json">demo.dzn</a>へ交換する。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">確認用の入力</span> 0は空欄で、0以外の数字を保持する。行・列・ブロックのルールは、この問題に示したものを使う。</p>
+<p><span class="math display">
+\begin{array}{cc|cc}
+1&amp;0&amp;0&amp;4\\
+0&amp;4&amp;0&amp;2\\\hline
+2&amp;0&amp;4&amp;0\\
+0&amp;3&amp;0&amp;1
+\end{array}
+</span></p>
+</div>
+<p>まず、問題に示した既知の完成盤面が、この初期値と行・列・ブロックの条件をすべて満たすことを確認する。続いて、除外条件を書いたモデルを <code>demo.dzn</code> と <code>first.dzn</code> で実行する。結果は <code>UNSATISFIABLE</code>（解なし）となる。元の条件を満たす解が一つあることと、その解を除くと別の解がないことを合わせて、この初期配置の解は一意だと判断できる。エラーや探索未完了の <code>UNKNOWN</code> は、別解なしを示すものではない。</p>
+<p>追加条件の意味も読み直そう。<code>forall</code> は「指定した対象のすべてで成り立つ」を表す。これで全マスを異ならせると、既知の解と同じ数字を一部に残した別解まで除いてしまう。全解を数えて調べたい場合、初期配置が全空欄の数独には完成盤面が288個あり、正しい除外条件では指定の1個だけが減って287個になる。<a href="../../guides/minizinc-start/index.html#全解と一意性">全解の確認方法</a>は任意の追加確認に利用できる。</p>
+<details class="hint"><summary>ヒントを開く：一マス以上の違い</summary><div class="hint-body">
+<p><code class="sourceCode minizinc"><span class="fu">exists</span>(r <span class="op">in</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>, c <span class="op">in</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>)(<span class="op">..</span>.)</code> の括弧内へ、同じ位置の二つの値が異なる式を書く。<code>first</code> を <code>given</code> に置き換えると、比較する対象が初期値になってしまう。</p>
+</div></details>
+</section>
+</section>
+<section id="clues" class="level2">
+<h2>発展3　手掛かりの削減</h2>
+<p>完成盤面の数字をいくつ残せば、その盤面に一意に決まるだろう。「一意」とは、初期値と数独の条件に合う完成盤面がちょうど一つだけ存在することである。発展2を終えていなくても、基本モデルの全解を表示する方法で、別解の有無を確認できる。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">設計するもの</span> 目標の完成盤面は次のとおり。行は上から、列は左から1〜4と数える。この16個の数字の一部を残し、残りを0（空欄）にした初期配置を作る。</p>
+<p><span class="math display">
+\begin{array}{cc|cc}
+1&amp;2&amp;3&amp;4\\
+3&amp;4&amp;1&amp;2\\\hline
+2&amp;1&amp;4&amp;3\\
+4&amp;3&amp;2&amp;1
+\end{array}
+</span></p>
+<p>解の条件は、全マスが1〜4、0以外の初期値を保持、各行・各列・四つの2×2ブロックの数字が、それぞれすべて互いに異なること。ブロックは行1〜2／3〜4と列1〜2／3〜4で区切る。主対角線や不等号は使わない。解がこの盤面だけになる初期配置で、残す数字をできるだけ減らす。</p>
+</div>
+<p><a href="../../downloads/session-02/sudoku4.mzn" data-code-preview="../../previews/session-02/sudoku4.mzn.json">sudoku4.mzn</a>と、完成盤面を初期値にした<a href="../../downloads/session-02/complete.dzn" data-code-preview="../../previews/session-02/complete.dzn.json">complete.dzn</a>から始める。モデル中の <code class="sourceCode minizinc">given[r,c]</code> はr行c列の初期値、<code class="sourceCode minizinc">grid[r,c]</code> はその位置の解の数字を表す。入力の <code>given</code> の値を編集し、モデルの条件はそのまま使う。</p>
+<p>入力を <code>candidate.dzn</code> という名前で保存し、一つの数字を0へ変える。基本モデルを全解表示で実行し、解が一つのままなら削除を採用し、別解があれば元に戻す。</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode <span class="at">--all-solutions</span> sudoku4.mzn candidate.dzn</span></code></pre></div>
+<p>一解だけを求める通常の実行では、一意性を判断できない。全解の探索が完了し、完成盤面が一つだけ表示されたことを確認する。途中停止・時間切れを「別解なし」と読まない。操作の詳細は<a href="../../guides/minizinc-start/index.html#全解と一意性">全解と一意性</a>にある。</p>
+<p>確認用の<a href="../../downloads/session-02/minimal.dzn" data-code-preview="../../previews/session-02/minimal.dzn.json">minimal.dzn</a>は、(1,1)=1、(2,4)=2、(3,3)=4、(4,2)=3の四つだけを残した入力で、一意に決まる。最後の(4,2)=3を消した<a href="../../downloads/session-02/check-G2.dzn" data-code-preview="../../previews/session-02/check-G2.dzn.json">check-G2.dzn</a>では3解になり、うち2個が目標とは異なる盤面になる。</p>
+<p>一つずつ試す手順で「これ以上どれか一つを消すと一意でなくなる」配置ができても、別の位置の組ならもっと少なくできるかもしれない。そこで、削除順を変えて結果を比べる、同じ個数の別配置を調べる、より少ない個数では不可能な根拠を探す、のどれかへ進もう。</p>
+<details class="hint"><summary>ヒントを開く：最小性の調べ方</summary><div class="hint-body">
+<p>この4×4基本問題の完成盤面は全288個である。例えば三つの位置を固定して、各完成盤面がその三位置に持つ数字の組で分類する。同じ組に二盤面以上が対応するなら、その手掛かりでは一意にならない。この確認をすべての位置の選び方へ広げると、下限を調べられる。</p>
+</div></details>
+</section>
+<section id="kinki" class="level2">
+<h2>選択M02　近畿の三色塗り分け</h2>
+<p>選択M02では、変数を数独のマスから地域へ置き換える。目安は10〜15分で、他の発展と選んで取り組む。図の地理的な位置ではなく、線で結んだ地域の組を条件にする。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">地域と隣接</span> 地域は京都K・大阪O・兵庫H・滋賀S・奈良N・和歌山W・三重M。各地域に1・2・3のいずれかの色を割り当て、次の12辺の両端は異なる色にする。隣接しない地域には同じ色を使ってよい。色名の入替えは異なる割当として数える。</p>
+<p><code>K-H, K-O, K-N, K-S, K-M,</code><br />
+<code>H-O, O-N, O-W, S-M, N-W, N-M, W-M</code></p>
+</div>
+<figure>
+<img src="../../figures/session-02/kinki.svg" alt="近畿の7地域と、色を異ならせる12組。配置は地理的な位置を表さない。" />
+<figcaption aria-hidden="true">近畿の7地域と、色を異ならせる12組。配置は地理的な位置を表さない。</figcaption>
+</figure>
+<p>本問の正式な入力は辺の一覧である。<a href="../../downloads/session-02/kinki-start.mzn" data-code-preview="../../previews/session-02/kinki-start.mzn.json">kinki-start.mzn</a>には色数 <code class="sourceCode minizinc"><span class="dt">int</span>: nc <span class="op">=</span> <span class="dv">3</span>;</code> と表示部分が入っている。作業1で地域ごとに <code class="sourceCode minizinc"><span class="dt">var</span> <span class="dv">1</span><span class="op">..</span>nc</code> の変数を宣言し、作業2で辺ごとに <code class="sourceCode minizinc"><span class="op">!=</span></code> の条件を書く。例えばAとBが隣接する場合の形は <code class="sourceCode minizinc"><span class="kw">constraint</span> A <span class="op">!=</span> B;</code> となる。</p>
+<p>出力の順序は <code>(K,O,H,S,N,W,M)</code> で、<code>(1,2,3,3,3,1,2)</code> は正しい一例である。全12辺を照合しよう。全体を <code>alldifferent</code> にすると、隣接しない地域にも別の色を要求してしまう。</p>
+<p>次に色数を2へ変えると、解なしになる。K・O・Nの三地域だけを見て、その理由を説明しよう。また、正しい例のHを1へ変えると、K-Hの条件だけを破る。自分のモデルにこの辺があるかも確認できる。</p>
+<p>比較としてオーストラリアを試す場合は、<a href="../../downloads/session-02/australia-start.mzn" data-code-preview="../../previews/session-02/australia-start.mzn.json">australia-start.mzn</a>から新しく始める。地域名と辺は次の入力へ丸ごと交換する。同じ色数と「辺の両端を異ならせる」規則を用いる。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">比較の入力</span> 地域は <code>(WA,NT,SA,Q,NSW,V,T)</code>、色は各地域1〜3。辺は次の9本である。Tには辺がないが、Tにも1〜3の色を割り当てる。</p>
+<p><code>WA-NT, WA-SA, NT-SA, NT-Q, SA-Q,</code><br />
+<code>SA-NSW, SA-V, Q-NSW, NSW-V</code></p>
+</div>
+<p><code>(1,2,3,1,2,1,1)</code> が成立する例である。Tだけを2や3へ変えても条件を満たす。色を区別して全解を数えると近畿は6解、豪州は18解で、どちらも2色では解なしになる。全列挙は比較を深めたい場合だけ行えばよい。</p>
+<details class="hint"><summary>ヒントを開く：辺ごとの条件</summary><div class="hint-body">
+<p>一地域につき一変数でよい。図の線を一つ選び、その両端の変数を <code class="sourceCode minizinc"><span class="op">!=</span></code> で結ぶ。先に全地域の変数を宣言してから、辺の一覧へ印を付けながら条件を書くと、同じ辺の重複や欠落を見つけやすい。</p>
+</div></details>
+<p>オーストラリアの題材は<a href="https://docs.minizinc.dev/en/stable/modelling.html#our-first-example">MiniZinc Handbookの配色例</a>でも扱われている。ここでは数独との共通点を、変数・定義域・制約の三つで説明してみよう。</p>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../index.html">講義一覧</a> · <a href="../../sessions/02-minizinc/index.html">第02回の本文へ</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

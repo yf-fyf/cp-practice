@@ -1,0 +1,368 @@
+/*
+  講義ページのスタイルシート。
+
+  [サイト設計](../design/site-design.md)の実装。
+  区切りの手段は1階層に1つだけ割り当てる。
+    ページ（h1）      サイズと余白
+    節（h2）          面（帯）＋番号＋64pxの余白
+    項（h3）          余白＋サイズ＋色
+    小見出し（h4）    太字のラベル
+    部品（callout）   左罫3px
+    まとまり          全周の枠（ブロック）
+    コード            全周の枠＋地色
+    表                水平の罫
+  左罫を持つのは部品と帯だけである。
+
+  地色は「レベル」を示す。対象そのもの——教材が与える場面・与件・入力・コード・
+  出力——は地色を持ち、それについての語り——要点・問い・自己確認・注意・ヒント——は
+  左罫だけで地色を持たない。コードと出力がもともと地色を持っていたので、場面と与件を
+  同じ地色にそろえると、この規則がページ全体で一貫する。色は増えない。
+  節の帯の地色だけは例外で、これはレベルではなく構造の標識である。
+
+  全周の枠は「まとまりの境界」を意味する。地色があればコード、白地なら節や演習の
+  まとまりで、この2つは地色で見分ける。ブロックにするのは、読み下す対象ではなく
+  それ自体でまとまる単位だけ——目標・参照・演習の必修Nの4か所に限る。帯は節の
+  始まりしか示さないので、終わりまで示したい単位にだけ枠を足す（設計案の§4.6）。
+
+  余白は上方向だけに付ける。上下の両方に付けると、隣り合う要素で二重に効く場合が
+  ある。上方向だけにすると、要素間の実効ギャップが「後ろの要素のトークン」1つに
+  決まり、設計値と生成物をそのまま突き合わせられる（設計案の B02）。
+
+  幅は1種類だけにする。帯・地の文・表・コード・図をすべて同じ48remに置き、
+  ページの中に広い列と狭い列を混在させない。設計案の初版は本文42rem・コードと表
+  54remの2列だったが、帯と地の文の左端が96pxずれて読みにくかった。
+*/
+
+:root {
+  /* 色：1色1意味。リテラル色はこのブロックの外に書かない。 */
+  --ink:      #262626;   /* 本文・h1                      対白 15.13 */
+  --muted:    #666666;   /* 補助情報                      対白  5.74 */
+  --brand:    #583B66;   /* 構造：帯・見出し・節番号      対白  9.41 */
+  --sec-bg:   #EEE6F2;   /* 節見出しの帯の地              対白  1.22 */
+  --act:      #A33328;   /* 手を動かす：自己確認・ヒント  対白  6.86 */
+  --ask:      #8A5A00;   /* 考える・答える：問い          対白  5.93 */
+  --warn:     #B8390E;   /* 誤り・注意                    対白  5.79 */
+  --link:     #0B57B0;   /* リンク                        対白  6.99 */
+  --code-bg:  #F4F4F4;   /* コードの面                    対白  1.10 */
+  --rule:     #BDBDBD;   /* コードの枠・表の罫            対白  1.88 */
+
+  /* 本文内の余白：4pxグリッドの7トークン。ページ左右は共通の --page-gutter。 */
+  --s1:  4px;   /* li */
+  --s2:  8px;   /* 部品内の段落、小見出しの直後 */
+  --s3: 12px;   /* 部品と帯の上下 padding */
+  --s4: 16px;   /* 段落 */
+  --s5: 24px;   /* 部品・コード・表・図・h4 */
+  --s6: 40px;   /* h3 */
+  --s7: 64px;   /* h2 */
+
+  /* 幅：帯も地の文も表もコードも図も、すべてこの1種類。
+     48rem は幅1280pxの窓で本文が画面の60%を占める。48全角字／コード92桁。 */
+  --measure: 48rem;
+
+  /* ヘッダーの高さ --topbar-h は共通の site-header.css で定義する。 */
+}
+
+/* ---- 基本 ---- */
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+a { color: var(--link); }
+
+/* 余白は上だけに付ける。下方向は既定で0にそろえる。 */
+h1, h2, h3, h4, p, ul, ol, li, pre, figure, table,
+.callout, details.hint, .table-scroll, header.lead { margin-bottom: 0; }
+
+/* S段（14.4px）：補助情報とラベル。本文より小さいものはすべてここに集める。 */
+.breadcrumb, .toc-list, .callout-label,
+figcaption, table, .pager, .sitefoot { font-size: 0.9rem; }
+
+/* ---- 外枠 ---- */
+
+.layout {
+  max-width: var(--measure);
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 var(--page-gutter) var(--s7);
+}
+
+.breadcrumb { color: var(--muted); margin-top: var(--s4); }
+
+.page-title {
+  margin-top: var(--s5);
+  font-size: 1.875rem;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.pager { margin-top: var(--s7); color: var(--muted); }
+.sitefoot { margin-top: var(--s5); color: var(--muted); }
+
+/* ---- 目次：折り畳み。閉じているあいだはヒントと同じ形の操作子にする ----
+   記号と枠の語彙はヒントと共通で、色だけが違う。目次は移動のための構造なので
+   --brand、ヒントは手を動かす助けなので --act を使う。 */
+
+.toc {
+  margin-top: var(--s5);
+  color: var(--muted);
+  scroll-margin-top: var(--topbar-h);
+}
+.toc > summary {
+  display: inline-block;
+  padding: var(--s1) var(--s3);
+  border: 1px solid var(--brand);
+  border-radius: 4px;
+  color: var(--brand);
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.toc > summary::-webkit-details-marker { display: none; }
+.toc > summary::before { content: "＋"; display: inline-block; width: 1.2em; }
+.toc > summary::after { content: "を開く"; }
+.toc[open] > summary {
+  padding-left: 0;
+  padding-right: 0;
+  border: 0;
+}
+.toc[open] > summary::before { content: "−"; }
+.toc[open] > summary::after { content: "を閉じる"; }
+.toc > summary:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.toc-list, .toc-list ul { list-style: none; }
+.toc-list { padding-left: 0; margin-top: var(--s2); }
+.toc-list ul { padding-left: var(--s4); }
+.toc-list li { margin-top: var(--s1); }
+
+/* ---- 幅：単一列。広い内容はその要素の中で横スクロールさせる ---- */
+
+/* 現在地：目次から飛んだ先が固定ヘッダと帯に隠れないようにする */
+section.level2 { scroll-margin-top: var(--topbar-h); }
+section.level3, section.level4 { scroll-margin-top: calc(var(--topbar-h) + 3rem); }
+
+section:target > h3 {
+  text-decoration: underline 2px var(--brand);
+  text-underline-offset: var(--s2);
+}
+
+/* ---- リード ---- */
+
+header.lead > *:first-child { margin-top: var(--s5); }
+
+/* ---- 見出し：節は面、項は余白とサイズと色、小見出しはラベル ---- */
+
+section.level2 > h2 {
+  position: sticky;
+  top: var(--topbar-h);
+  z-index: 2;
+  margin-top: var(--s7);
+  padding: var(--s2) var(--s4);
+  background: var(--sec-bg);
+  border-left: 5px solid var(--brand);
+  color: var(--brand);
+  font-size: 1.5rem;
+  line-height: 1.25;
+}
+
+h3 {
+  margin-top: var(--s6);
+  color: var(--brand);
+  font-size: 1.2rem;
+  line-height: 1.25;
+}
+
+h4 {
+  margin-top: var(--s5);
+  color: var(--brand);
+  line-height: 1.25;
+}
+h4 + p { margin-top: var(--s2); }
+
+/* ---- 本文 ---- */
+
+p { margin-top: var(--s4); }
+ul, ol { margin-top: var(--s4); padding-left: var(--s5); }
+li { margin-top: var(--s1); }
+
+/* ---- 部品：左罫だけ。全周の枠も帯も持たせない ---- */
+
+.callout {
+  margin-top: var(--s5);
+  padding-top: var(--s3);
+  padding-bottom: var(--s3);
+  padding-left: var(--s4);
+  padding-right: var(--s4);
+  border-left: 3px solid var(--brand);
+}
+
+/* 対象レベルの器。教材が与えるものは地色を持つ。コードと出力と同じ地色で、
+   同じ理由（どちらも対象そのもの）による。 */
+.callout-scenario,
+.callout-given { background: var(--code-bg); }
+.callout > *:first-child { margin-top: 0; }
+.callout p { margin-top: var(--s2); }
+.callout-label { font-weight: 700; color: var(--brand); }
+
+.callout-ask { border-left-color: var(--ask); }
+.callout-ask .callout-label { color: var(--ask); }
+.callout-check { border-left-color: var(--act); }
+.callout-check .callout-label { color: var(--act); }
+.callout-caution { border-left-color: var(--warn); }
+.callout-caution .callout-label { color: var(--warn); }
+
+/* ヒント：閉じているあいだは押せる操作子、開くと本体になる。
+   操作子は内容の階層に属さないので、ここの枠は「まとまりの境界」ではなく
+   「押せる」ことを示すために使う。開くと枠は消え、本体の左罫に変わるので、
+   ページに残る枠の数は増えない。 */
+details.hint { margin-top: var(--s4); }
+details.hint > summary {
+  display: inline-block;
+  padding: var(--s1) var(--s3);
+  border: 1px solid var(--act);
+  border-radius: 4px;
+  color: var(--act);
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+details.hint > summary::-webkit-details-marker { display: none; }
+details.hint > summary::before {
+  content: "＋";
+  display: inline-block;
+  width: 1.2em;
+}
+details.hint[open] > summary {
+  padding-left: 0;
+  padding-right: 0;
+  border: 0;
+}
+details.hint[open] > summary::before { content: "−"; }
+details.hint > summary:focus-visible { outline: 2px solid var(--act); outline-offset: 2px; }
+details.hint[open] {
+  padding-top: var(--s3);
+  padding-bottom: var(--s3);
+  padding-left: var(--s4);
+  border-left: 3px solid var(--act);
+}
+.hint-body > *:first-child { margin-top: var(--s2); }
+
+/* ---- コード：全周の枠を持つのはここだけ ---- */
+
+pre {
+  margin-top: var(--s5);
+  padding: var(--s3) var(--s4);
+  overflow-x: auto;
+  background: var(--code-bg);
+  border: 1px solid var(--rule);
+  line-height: 1.6;
+}
+code { font-size: 0.9em; }
+pre code { background: none; }
+:not(pre) > code { background: var(--code-bg); }
+
+figure.code { margin-top: var(--s5); }
+figure.code > pre,
+figure.code > .sourceCode > pre { margin-top: var(--s2); }
+figure.code > figcaption { color: var(--muted); }
+
+pre.error { border-left: 3px solid var(--warn); }
+
+/* ---- 表：水平の罫だけ。ヘッダに面を持たせない ---- */
+
+.table-scroll { margin-top: var(--s5); overflow-x: auto; }
+table { border-collapse: collapse; margin-top: 0; }
+th, td { padding: var(--s2) var(--s4); text-align: left; vertical-align: top; }
+th { border-bottom: 2px solid var(--rule); }
+td { border-bottom: 1px solid var(--rule); }
+
+/* ---- 図：中央寄せ。拡大は lesson-lightbox.css と .js が受け持つ ---- */
+
+figure {
+  margin-top: var(--s5);
+  margin-left: 0;
+  margin-right: 0;
+}
+/* 中央寄せにするのは図だけ。ファイル名つきのコードも figure なので、
+   figure 全体に掛けるとコードとファイル名まで中央へ寄ってしまう。 */
+figure:not(.code) { text-align: center; }
+figure img, .content img {
+  max-width: 100%;
+  height: auto;
+  /* 縦に長い図が画面いっぱいに伸びて本文を押し流すのを抑える。
+     SVGなので、拡大表示や単体で開いたときは元の解像度で読める。 */
+  max-height: 75vh;
+}
+figcaption { color: var(--muted); margin-top: var(--s2); }
+
+/* ---- 狭い画面：固定見出しをやめる ---- */
+
+@media (max-width: 48rem) {
+  section.level2 > h2 { position: static; }
+}
+
+/* ---- 印刷 ---- */
+
+@media print {
+  section.level2 > h2 { position: static; }
+  .topbar, .breadcrumb, .pager { display: none; }
+  details.hint { display: block; }
+  details.hint > .hint-body { display: block; }
+  body { font-size: 10.5pt; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow: visible; }
+}
+
+/* ---- 数式：長い式は本文列の中で横にスクロールさせる ---- */
+
+.katex-display { margin-top: var(--s5); overflow-x: auto; overflow-y: hidden; }
+
+/* ---- ブロック：まとまりの範囲を全周の枠で示す ---- */
+
+/* 目標と参照。読み下す対象ではなく、それ自体でまとまる節。
+   帯をブロックの上端へ密着させるため、ここだけ position: static にする。 */
+section.sec-goal,
+section.sec-reference {
+  margin-top: var(--s7);
+  padding-left: var(--s4);
+  padding-right: var(--s4);
+  padding-bottom: var(--s4);
+  border: 2px solid var(--brand);
+  border-radius: 4px;
+}
+section.sec-goal > h2,
+section.sec-reference > h2 {
+  position: static;
+  margin-top: 0;
+  margin-left: calc(-1 * var(--s4));
+  margin-right: calc(-1 * var(--s4));
+  padding-top: var(--s2);
+  padding-bottom: var(--s2);
+  border-left: 0;
+  border-radius: 2px 2px 0 0;
+  background: var(--brand);
+  color: var(--sec-bg);
+}
+/* 演習の必修N。作業のまとまりを囲む。帯は作らず、節の帯と競合させない。 */
+section.sec-exercise > section.level3 {
+  margin-top: var(--s6);
+  padding-left: var(--s4);
+  padding-right: var(--s4);
+  padding-bottom: var(--s4);
+  border: 1px solid var(--act);
+  border-radius: 4px;
+}
+section.sec-exercise > section.level3 > h3 {
+  margin-top: var(--s4);
+  color: var(--act);
+}
+
+@media print {
+  section.sec-goal > h2, section.sec-reference > h2 { position: static; }
+  section.sec-goal, section.sec-reference,
+  section.sec-exercise > section.level3 { break-inside: avoid; }
+}

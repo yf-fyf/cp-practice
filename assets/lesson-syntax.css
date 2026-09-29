@@ -1,0 +1,49 @@
+/* Pandoc / Skylighting のトークンに付ける共通配色。
+   ブロック・文中とも code.sourceCode へ限定し、出力やファイル名には掛けない。
+   A案：白地に濃い構文色。文字色は白地に対比7以上を確保する。
+   場面・与件の地色（--code-bg）とは独立させる。 */
+:root {
+  --syntax-bg:      #FFFFFF;
+  --syntax-ink:     #17212B;
+  --syntax-keyword: #003B70;
+  --syntax-name:    #703010;
+  --syntax-string:  #14532D;
+  --syntax-number:  #85232F;
+  --syntax-comment: #4B5563;
+}
+
+code.sourceCode {
+  color: var(--syntax-ink);
+  font-family: ui-monospace, "Noto Sans Mono", "DejaVu Sans Mono", monospace;
+  font-size: 1rem;
+  font-weight: 400;
+}
+pre.sourceCode,
+:not(pre) > code.sourceCode { background: var(--syntax-bg); }
+/* 長い式も本文列の中で折り返す。コードブロックは従来通り横スクロール。 */
+:not(pre) > code.sourceCode { overflow-wrap: anywhere; }
+code.sourceCode :is(.kw, .cf, .dt, .im) {
+  color: var(--syntax-keyword);
+  font-weight: 600;
+}
+code.sourceCode :is(.fu, .bu, .va, .at, .pp) { color: var(--syntax-name); }
+code.sourceCode :is(.st, .ch, .sc, .vs, .ss) { color: var(--syntax-string); }
+code.sourceCode :is(.dv, .bn, .fl, .cn) { color: var(--syntax-number); }
+code.sourceCode :is(.co, .cv, .an, .do) { color: var(--syntax-comment); }
+code.sourceCode .op { color: var(--syntax-ink); }
+code.sourceCode :is(.al, .er, .wa) { color: var(--syntax-number); }
+code.sourceCode :is(.ot, .in) { color: var(--syntax-ink); }
+code.sourceCode .ex { color: var(--syntax-name); }
+/* 組込みProlog定義は変数をdt、句の演算子をkwに分類する。 */
+code.sourceCode.prolog .dt { color: var(--syntax-name); font-weight: 400; }
+code.sourceCode.prolog :is(.kw, .fu) { color: var(--syntax-ink); font-weight: 400; }
+
+/* Pandoc の行アンカーはコード本文に文字を追加しない。 */
+code.sourceCode > span > a:first-child { color: inherit; text-decoration: none; }
+
+@media print {
+  code.sourceCode { font-size: 1em; }
+  /* 色を印刷しない設定でも読めるよう、全トークンを本文色へ戻す。 */
+  code.sourceCode, code.sourceCode span[class],
+  code.sourceCode.prolog span[class] { color: var(--ink); }
+}

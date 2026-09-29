@@ -1,0 +1,1 @@
+{"name": "kits-base.mzn", "language": "minizinc", "label": "MiniZinc", "code": "include \"kits-core.mzn\";\nsolve maximize score;\n", "lines": ["<span class=\"kw\">include</span> <span class=\"st\">&quot;kits-core.mzn&quot;</span>;", "<span class=\"kw\">solve</span> <span class=\"kw\">maximize</span> score;"]}

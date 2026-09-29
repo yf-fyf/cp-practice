@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第01回の発展・選択演習 - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 発展</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第01回の発展・選択演習</h1>
+    <nav class="session-nav" aria-label="第01回の講義資料"><a href="../../sessions/01-prolog/index.html">通常講義</a><a href="../../advanced/prolog-challenges/index.html" aria-current="page">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#family">選択P01　家系図</a>
+      <ul>
+      <li><a href="#問題と入力">問題と入力</a></li>
+      <li><a href="#作業と手掛かり">作業と手掛かり</a></li>
+      <li><a href="#自分の答えの確認">自分の答えの確認</a></li>
+      </ul>
+      </li>
+      <li><a href="#distinct">発展1　別人での役割分担</a>
+      <ul>
+      <li><a href="#問題と出発点">問題と出発点</a></li>
+      <li><a href="#新しい記法と作業">新しい記法と作業</a></li>
+      <li><a href="#自分の答えの確認-1">自分の答えの確認</a></li>
+      </ul>
+      </li>
+      <li><a href="#reach">発展2　一辺以上の到達</a>
+      <ul>
+      <li><a href="#問題と入力-1">問題と入力</a></li>
+      <li><a href="#再帰の読み方と作業">再帰の読み方と作業</a></li>
+      <li><a href="#自分の答えの確認-2">自分の答えの確認</a></li>
+      </ul>
+      </li>
+      <li><a href="#paths">発展3　再訪しない経路</a>
+      <ul>
+      <li><a href="#問題と入力-2">問題と入力</a></li>
+      <li><a href="#リストと訪問済み">リストと訪問済み</a></li>
+      <li><a href="#作業と停止の根拠">作業と停止の根拠</a></li>
+      <li><a href="#自分の答えと一般化">自分の答えと一般化</a></li>
+      </ul>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p>予定と技能の関係を深める問題、家系図へ移す問題、再帰と経路を調べる問題を用意した。順番に全部解く必要はなく、関心に合うものを選べる。各問題の出発ファイルは独立しており、別の演習が未完でも始められる。<a href="../../sessions/01-prolog/index.html">第01回の本文</a>と<a href="../../guides/prolog-start/index.html">実行の手引き</a>へ戻れる。</p>
+</header>
+<section id="family" class="level2">
+<h2>選択P01　家系図</h2>
+<p>親子関係を二段たどり、ある人の祖父母に当たる人を調べる。二つの親子関係を「中間の人」で結ぶ問題である。事実・規則・問い合わせの復習から取り組める別題材で、10〜15分を目安にした最初のおすすめである。</p>
+<section id="問題と入力" class="level3">
+<h3>問題と入力</h3>
+<p>架空の家系図を調べる。この問題では、<code class="sourceCode prolog">parent(<span class="dt">P</span><span class="kw">,</span><span class="dt">C</span>)</code> を「PはCの親」、<code class="sourceCode prolog">male(<span class="dt">P</span>)</code> と <code class="sourceCode prolog">female(<span class="dt">P</span>)</code> を人物の属性として与える。父は男性属性を持つ親、母は女性属性を持つ親として定義し、下記の全事実だけを使う。</p>
+<figure class="code"><figcaption>family-start.pl</figcaption>
+<div class="sourceCode" id="cb1"><pre class="sourceCode prolog"><code class="sourceCode prolog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">% 架空の家系図。この問題で使う属性と親子関係の全事実。</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>male(ren)<span class="kw">.</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>male(kai)<span class="kw">.</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>male(nao)<span class="kw">.</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>female(emi)<span class="kw">.</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>female(mio)<span class="kw">.</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>female(yui)<span class="kw">.</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">% parent(親, 子)。</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>parent(ren<span class="kw">,</span> kai)<span class="kw">.</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>parent(emi<span class="kw">,</span> kai)<span class="kw">.</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>parent(ren<span class="kw">,</span> mio)<span class="kw">.</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>parent(emi<span class="kw">,</span> mio)<span class="kw">.</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>parent(kai<span class="kw">,</span> nao)<span class="kw">.</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>parent(yui<span class="kw">,</span> nao)<span class="kw">.</span></span></code></pre></div>
+</figure>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">求める関係</span> <code class="sourceCode prolog">father(<span class="dt">P</span><span class="kw">,</span><span class="dt">C</span>)</code> と <code class="sourceCode prolog">mother(<span class="dt">P</span><span class="kw">,</span><span class="dt">C</span>)</code> を定義する。続いて <code class="sourceCode prolog">grandparent(<span class="dt">G</span><span class="kw">,</span><span class="dt">C</span>)</code> を、「Gの子であり、Cの親でもある人がいる」という関係として定義する。GからCへちょうど二段の親子関係をたどり、より遠い祖先は含めない。</p>
+</div>
+</section>
+<section id="作業と手掛かり" class="level3">
+<h3>作業と手掛かり</h3>
+<p><a href="../../downloads/session-01/family-start.pl" data-code-preview="../../previews/session-01/family-start.pl.json">family-start.pl</a>の <code>TODO(作業1)</code> に父と母、<code>TODO(作業2)</code> に祖父母の規則を書く。候補の名前を規則へ直接書き込まず、与えられた事実と変数から関係を導く。</p>
+<p><code class="sourceCode prolog">father(<span class="dt">P</span><span class="kw">,</span>mio)<span class="kw">.</span></code>、<code class="sourceCode prolog">mother(<span class="dt">P</span><span class="kw">,</span>nao)<span class="kw">.</span></code>、<code class="sourceCode prolog">grandparent(<span class="dt">G</span><span class="kw">,</span>nao)<span class="kw">.</span></code>、<code class="sourceCode prolog">grandparent(ren<span class="kw">,</span><span class="dt">C</span>)<span class="kw">.</span></code> を実行する。二段の関係で共有した変数は、答えの引数として外へ出す必要があるかも考えてみよう。</p>
+<details class="hint"><summary>ヒントを開く：親子の矢印の接点</summary><div class="hint-body">
+<p>Gから中間の人へ、中間の人からCへ、親→子の矢印を二本描く。その接点に同じ変数名を置く。二つの <code>parent</code> で、中間の人は異なる位置の引数になる。</p>
+</div></details>
+<p>作業1で止まった場合は、次の参照例から作業2へ進んでよい。必修1と同じく、属性を持つ人と関係に現れる人が一致するよう、両条件に同じ変数を使っている。</p>
+<details class="hint"><summary>ヒントを開く：父と母の参照例</summary><div class="hint-body">
+<p>父と母を導く部分は、次の二つの規則になる。これを出発点にして、祖父母の規則を考えてよい。</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode prolog"><code class="sourceCode prolog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>father(<span class="dt">P</span><span class="kw">,</span> <span class="dt">C</span>) <span class="kw">:-</span> male(<span class="dt">P</span>)<span class="kw">,</span> parent(<span class="dt">P</span><span class="kw">,</span> <span class="dt">C</span>)<span class="kw">.</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>mother(<span class="dt">P</span><span class="kw">,</span> <span class="dt">C</span>) <span class="kw">:-</span> female(<span class="dt">P</span>)<span class="kw">,</span> parent(<span class="dt">P</span><span class="kw">,</span> <span class="dt">C</span>)<span class="kw">.</span></span></code></pre></div>
+</div></details>
+</section>
+<section id="自分の答えの確認" class="level3">
+<h3>自分の答えの確認</h3>
+<p>問い合わせの答えは順に <code>ren</code>、<code>yui</code>、<code>ren</code> と <code>emi</code>、<code>nao</code> となる。最後の二つは、祖父母を求める向きと孫を求める向きを変えて、同じ関係を調べている。</p>
+<p><code class="sourceCode prolog">grandparent(kai<span class="kw">,</span>nao)<span class="kw">.</span></code> は成立しない。kaiはnaoの親であり、この入力にはkaiからnaoへ二段でつながる人がいないためである。祖父母の候補ごとに中間の人を指し示し、二本の事実で説明しよう。</p>
+</section>
+</section>
+<section id="distinct" class="level2">
+<h2>発展1　別人での役割分担</h2>
+<p>火曜と水曜のイベントで、受付と修理を異なる二人に頼みたい。予定と技能から役割分担の候補を求め、「同じ人が両方を担当してもよい」場合と比べよう。</p>
+<section id="問題と出発点" class="level3">
+<h3>問題と出発点</h3>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 候補は、架空の三人 <code>aki</code>・<code>ben</code>・<code>chi</code>。予定と技能は次の表がすべてである。火曜を <code>tue</code>、水曜を <code>wed</code> と書く。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th>参加できる曜日</th>
+<th>持っている技能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>aki</code></td>
+<td>火曜・水曜</td>
+<td>受付・修理</td>
+</tr>
+<tr>
+<td><code>ben</code></td>
+<td>火曜</td>
+<td>受付</td>
+</tr>
+<tr>
+<td><code>chi</code></td>
+<td>水曜</td>
+<td>修理</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>次の条件をすべて満たす候補の組を求める。</p>
+<ul>
+<li>受付候補は、その曜日に参加でき、受付技能を持つ。</li>
+<li>修理候補は、その曜日に参加でき、修理技能を持つ。</li>
+<li>両者の曜日は同じで、受付候補と修理候補は別人である。</li>
+</ul>
+<p>求める関係は <code class="sourceCode prolog">distinct_pair(<span class="dt">P</span><span class="kw">,</span><span class="dt">Q</span><span class="kw">,</span><span class="dt">D</span>)</code> とする。<code>P</code> は受付候補、<code>Q</code> は修理候補、<code>D</code> は共通の曜日を求める変数で、引数はこの順に並べる。二人の役割を入れ替えた組は区別する。</p>
+</div>
+<p><a href="../../downloads/session-01/distinct-start.pl" data-code-preview="../../previews/session-01/distinct-start.pl.json">distinct-start.pl</a>には、表の全入力と、完成した関係 <code class="sourceCode prolog">pair(<span class="dt">P</span><span class="kw">,</span><span class="dt">Q</span><span class="kw">,</span><span class="dt">D</span>)</code> が入っている。<code>pair</code> は「Pが曜日Dに受付へ対応でき、Qが同じ曜日Dに修理へ対応できる」を表す。予定と技能は確かめるが、同じ人の二役も許す。この関係を使って、別人という条件を追加しよう。必要な規則はファイル内に揃っており、このファイルだけで始められる。</p>
+</section>
+<section id="新しい記法と作業" class="level3">
+<h3>新しい記法と作業</h3>
+<p><code class="sourceCode prolog">dif(<span class="dt">P</span><span class="kw">,</span><span class="dt">Q</span>)</code> は、PとQが異なるという条件を表す。たとえば <code class="sourceCode prolog">dif(aki<span class="kw">,</span>ben)</code> は成立し、<code class="sourceCode prolog">dif(aki<span class="kw">,</span>aki)</code> は成立しない。未確定の変数にも異なるという条件を残せる記法である。<a href="https://www.swi-prolog.org/pldoc/doc_for?object=dif/2">SWI-Prolog公式の説明</a></p>
+<p><code>TODO(作業1)</code> に、<code>pair</code> と <code>dif</code> を組み合わせて <code class="sourceCode prolog">distinct_pair(<span class="dt">P</span><span class="kw">,</span><span class="dt">Q</span><span class="kw">,</span><span class="dt">D</span>)</code> を定義する規則を書く。提供された <code>pair</code> は残しておき、追加前と追加後の両方を問い合わせられるようにする。</p>
+<p>保存して読み込み直したら、問い合わせ欄で <code class="sourceCode prolog">pair(<span class="dt">P</span><span class="kw">,</span><span class="dt">Q</span><span class="kw">,</span><span class="dt">D</span>)<span class="kw">.</span></code> と <code class="sourceCode prolog">distinct_pair(<span class="dt">P</span><span class="kw">,</span><span class="dt">Q</span><span class="kw">,</span><span class="dt">D</span>)<span class="kw">.</span></code> をそれぞれ実行し、次の答えがなくなるまで調べる。どちらも受付候補・修理候補・曜日をすべて求める問い合わせである。続いて <code class="sourceCode prolog">distinct_pair(aki<span class="kw">,</span>aki<span class="kw">,</span>tue)<span class="kw">.</span></code> を実行し、火曜にakiを二役へ挙げる組が認められるか確かめよう。操作に迷ったら<a href="../../guides/prolog-start/index.html">実行の手引き</a>を利用できる。</p>
+</section>
+<section id="自分の答えの確認-1" class="level3">
+<h3>自分の答えの確認</h3>
+<p>二つの問い合わせの答えを、次の表と比べる。各組は受付候補・修理候補・曜日の順に読む。答えが表示される順番は問わない。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>問い合わせ</th>
+<th>答えの集合</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code class="sourceCode prolog">pair(<span class="dt">P</span><span class="kw">,</span><span class="dt">Q</span><span class="kw">,</span><span class="dt">D</span>)<span class="kw">.</span></code></td>
+<td><code>(aki,aki,tue)</code>、<code>(aki,aki,wed)</code>、<code>(aki,chi,wed)</code>、<code>(ben,aki,tue)</code></td>
+</tr>
+<tr>
+<td><code class="sourceCode prolog">distinct_pair(<span class="dt">P</span><span class="kw">,</span><span class="dt">Q</span><span class="kw">,</span><span class="dt">D</span>)<span class="kw">.</span></code></td>
+<td><code>(aki,chi,wed)</code>、<code>(ben,aki,tue)</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>akiを二役に使う火曜・水曜の二組だけが消える。<code class="sourceCode prolog">distinct_pair(aki<span class="kw">,</span>aki<span class="kw">,</span>tue)<span class="kw">.</span></code> は成立しない。残った二組についても、このブロックの予定と技能の表で、両者の曜日と役割に必要な技能を照合しよう。人名を入れ替えた組も成立するとは限らない。</p>
+<p><code>P</code> と <code>Q</code> を別の名前で書いたことと、<code class="sourceCode prolog">dif(<span class="dt">P</span><span class="kw">,</span><span class="dt">Q</span>)</code> を条件にしたことは違う。どちらが「別々に値を求める位置」で、どちらが「値が異なる要求」なのかを説明してみよう。</p>
+</section>
+</section>
+<section id="reach" class="level2">
+<h2>発展2　一辺以上の到達</h2>
+<p>別の題材として、一方通行の道をたどる。直接の道がなくても途中の場所を経由すれば着けることを、関係を使う規則で表してみる。ここからは再帰をこのページ内で学ぶ。</p>
+<section id="問題と入力-1" class="level3">
+<h3>問題と入力</h3>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 場所はa・b・c・dで、有向辺はa→b、a→c、b→d、c→dの四本だけとする。逆向きには進めない。一辺以上をたどってXからYへ到達できる関係 <code class="sourceCode prolog">reach(<span class="dt">X</span><span class="kw">,</span><span class="dt">Y</span>)</code> を定義する。</p>
+</div>
+<p><a href="../../downloads/session-01/reach-start.pl" data-code-preview="../../previews/session-01/reach-start.pl.json">reach-start.pl</a>には全入力がある。<code class="sourceCode prolog">edge(<span class="dt">X</span><span class="kw">,</span><span class="dt">Y</span>)</code> はXからYへの直接の辺であり、道の向きを入れ替えた別の事実を勝手に補わない。</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode prolog"><code class="sourceCode prolog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>edge(a<span class="kw">,</span> b)<span class="kw">.</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>edge(a<span class="kw">,</span> c)<span class="kw">.</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>edge(b<span class="kw">,</span> d)<span class="kw">.</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>edge(c<span class="kw">,</span> d)<span class="kw">.</span></span></code></pre></div>
+</section>
+<section id="再帰の読み方と作業" class="level3">
+<h3>再帰の読み方と作業</h3>
+<p>再帰とは、ある関係を定義する規則の中で、その関係自体を使うことである。たとえば「少なくとも一回乗り換えて進む」を考える前に、「直接進める場合」を用意すると、続きを短い問題へ分けていける。</p>
+<p>記法の小例として、次は「直接の親子関係」と「親から子へ一段進み、そこから祖先関係が続く場合」を書いている。<code>parent</code> の事実は親から子の順で、これは再帰の読み方を示す別の例である。</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode prolog"><code class="sourceCode prolog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>ancestor(<span class="dt">X</span><span class="kw">,</span> <span class="dt">Y</span>) <span class="kw">:-</span> parent(<span class="dt">X</span><span class="kw">,</span> <span class="dt">Y</span>)<span class="kw">.</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>ancestor(<span class="dt">X</span><span class="kw">,</span> <span class="dt">Y</span>) <span class="kw">:-</span> parent(<span class="dt">X</span><span class="kw">,</span> <span class="dt">Z</span>)<span class="kw">,</span> ancestor(<span class="dt">Z</span><span class="kw">,</span> <span class="dt">Y</span>)<span class="kw">.</span></span></code></pre></div>
+<p><code>reach-start.pl</code> の <code>TODO(作業1)</code> に、直接の場合と、最初の辺で中間の場所へ進む場合を書く。<code class="sourceCode prolog">reach(a<span class="kw">,</span><span class="dt">Y</span>)<span class="kw">.</span></code> の答えを最後まで求め、<code class="sourceCode prolog">reach(d<span class="kw">,</span><span class="dt">Y</span>)<span class="kw">.</span></code> でも確かめる。</p>
+<details class="hint"><summary>ヒントを開く：最初の一辺と残り</summary><div class="hint-body">
+<p>XからZへの直接の辺があり、ZからYへ到達できるなら、XからYへも到達できる。中間の場所Zを二つの条件で共有する。直接の場合の規則も必要になる。</p>
+</div></details>
+</section>
+<section id="自分の答えの確認-2" class="level3">
+<h3>自分の答えの確認</h3>
+<p>aからの到達先の集合はb・c・dである。ただしdにはa→b→dとa→c→dの二つの経路があるため、上の小例と同じ形の規則ではdが二度現れる。表示回数と到達先の種類の数を区別しよう。</p>
+<p>dから先の辺はないので、<code class="sourceCode prolog">reach(d<span class="kw">,</span><span class="dt">Y</span>)<span class="kw">.</span></code> は答えなしとなる。一辺以上という条件なので、移動せずにd自身にいることはこの関係の答えに含めない。この入力では辺をたどると先へ進み、同じ場所へ戻らないため、探索が有限で終わる。</p>
+</section>
+</section>
+<section id="paths" class="level2">
+<h2>発展3　再訪しない経路</h2>
+<p>一方通行の道でつながった場所をたどり、始点から終点までに通る場所の順序を求める。道には、たどり続けると出発した場所へ戻る循環がある。同じ場所を再訪しない条件を設計し、探索が終わる理由まで考えよう。</p>
+<section id="問題と入力-2" class="level3">
+<h3>問題と入力</h3>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 場所はa・b・c・d、有向辺はa→b、a→c、b→d、c→d、d→aの五本だけとする。<code class="sourceCode prolog">path(<span class="dt">Start</span><span class="kw">,</span><span class="dt">Goal</span><span class="kw">,</span><span class="dt">Path</span>)</code> は、具体的に指定した始点から終点へ辺の向きに進む経路を、場所のリストとして返す関係とする。</p>
+<p>同じ場所は一つの経路に二度含めず、始点・終点もこの条件の対象とする。始点と終点が同じときは、移動しない一要素のリストを一経路とする。たとえば <code class="sourceCode prolog">path(a<span class="kw">,</span>a<span class="kw">,</span><span class="dt">Path</span>)<span class="kw">.</span></code> は <code class="sourceCode prolog">[a]</code> を返し、一周して戻る経路を含めない。</p>
+</div>
+<p><a href="../../downloads/session-01/path-start.pl" data-code-preview="../../previews/session-01/path-start.pl.json">path-start.pl</a>に全入力と <code>TODO(作業1)</code> がある。ファイル中の <code class="sourceCode prolog">edge(<span class="dt">X</span><span class="kw">,</span><span class="dt">Y</span>)</code> は、場所Xから場所Yへ直接進める一方向の道を表す。逆向きの道は、別の辺が与えられている場合だけ使える。発展2の完成コードを必要とせず、以下の記法から始められる。問い合わせでは始点と終点を具体的な名前にし、経路の位置を変数にする。</p>
+</section>
+<section id="リストと訪問済み" class="level3">
+<h3>リストと訪問済み</h3>
+<p><code class="sourceCode prolog">[a,b,d]</code> は三つの要素を順に並べたリスト、<code class="sourceCode prolog">[]</code> は空のリストである。<code class="sourceCode prolog">[<span class="dt">H</span><span class="fu">|</span><span class="dt">T</span>]</code> は先頭Hと残りのリストTに分ける記法で、<code class="sourceCode prolog">[a,b,d]</code> と対応させるとHはa、Tは <code class="sourceCode prolog">[b,d]</code> になる。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>記法</th>
+<th>この演習で使う意味</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code class="sourceCode prolog">[<span class="dt">Next</span><span class="fu">|</span><span class="dt">Seen</span>]</code></td>
+<td>訪問済みリストSeenの先頭にNextを加える</td>
+</tr>
+<tr>
+<td><code class="sourceCode prolog">member(<span class="dt">X</span><span class="kw">,</span><span class="dt">Seen</span>)</code></td>
+<td>XがSeenの要素である</td>
+</tr>
+<tr>
+<td><code class="sourceCode prolog"><span class="kw">\+</span> member(<span class="dt">Next</span><span class="kw">,</span><span class="dt">Seen</span>)</code></td>
+<td>具体的なNextが、具体的な訪問済みリストSeenにない</td>
+</tr>
+<tr>
+<td><code class="sourceCode prolog">reverse(<span class="dt">Seen</span><span class="kw">,</span><span class="dt">Path</span>)</code></td>
+<td>Seenを逆順にしたリストがPathである</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code class="sourceCode prolog"><span class="kw">\+</span></code> は、続く問い合わせが成功しないことを調べる記法である。この演習では <code class="sourceCode prolog">edge(<span class="dt">Current</span><span class="kw">,</span><span class="dt">Next</span>)</code> で次の場所を具体的に決めてから、訪問済みかを調べる。未知のNextを先に <code class="sourceCode prolog"><span class="kw">\+</span> member(<span class="dt">Next</span><span class="kw">,</span><span class="dt">Seen</span>)</code> へ渡しても、未訪問の場所を列挙する意味にはならない。</p>
+<p>訪問済みを先頭への追加で保持すると、a→b→dをたどった時点のリストは <code class="sourceCode prolog">[d,b,a]</code> になる。経路として返すときは始点から終点の順に揃える必要がある。先頭への追加以外の管理方法を考えてもよい。</p>
+<p>補助関係へ途中のリストを渡す形を、小さい別例で確かめる。次はリストの要素を先頭へ積み、逆順にする関係である。</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode prolog"><code class="sourceCode prolog"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>rev_walk([]<span class="kw">,</span> <span class="dt">Acc</span><span class="kw">,</span> <span class="dt">Acc</span>)<span class="kw">.</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>rev_walk([<span class="dt">H</span><span class="fu">|</span><span class="dt">T</span>]<span class="kw">,</span> <span class="dt">Acc</span><span class="kw">,</span> <span class="dt">Result</span>) <span class="kw">:-</span> rev_walk(<span class="dt">T</span><span class="kw">,</span> [<span class="dt">H</span><span class="fu">|</span><span class="dt">Acc</span>]<span class="kw">,</span> <span class="dt">Result</span>)<span class="kw">.</span></span></code></pre></div>
+<p><code class="sourceCode prolog">rev_walk([a,b]<span class="kw">,</span>[]<span class="kw">,</span><span class="dt">R</span>)<span class="kw">.</span></code>を問い合わせると<code>R=[b,a]</code>になる。一つ目の規則は残りが空のとき、積んだリストと結果を同じものにする。二つ目は残りを先頭HとTに分け、HをAccの先頭へ加えて次の呼び出しへ渡す。途中の変数を代入で書き換えるのではなく、次の引数に別の値を渡している。経路では、この役割に現在地・訪問済み・返す経路を対応させる。</p>
+</section>
+<section id="作業と停止の根拠" class="level3">
+<h3>作業と停止の根拠</h3>
+<p>現在地・終点・訪問済み・返す経路の役割を決め、必要な補助関係を定義する。始点を訪問済みに入れて始め、「終点に着いた場合」と「未訪問の隣へ進む場合」を分けて書く。</p>
+<details class="hint"><summary>ヒントを開く：一歩ごとの更新</summary><div class="hint-body">
+<p>終点なら今の経路を返す。先へ進むなら辺を一つ選び、次の場所が未訪問であることを確かめ、訪問済みへ追加して続きを調べる。訪問済みは再帰呼び出しの引数へ渡す。</p>
+</div></details>
+<p>今回のグラフでは、訪問済みへ追加できる異なる場所は最大四つである。一般の有限グラフでも、再訪を禁じれば、一つの枝で進める回数に上限ができる。一歩ごとに何が増え、その上限がどこから来るかを説明しよう。</p>
+</section>
+<section id="自分の答えと一般化" class="level3">
+<h3>自分の答えと一般化</h3>
+<p><code class="sourceCode prolog">path(a<span class="kw">,</span>d<span class="kw">,</span><span class="dt">Path</span>)<span class="kw">.</span></code> の答えは <code class="sourceCode prolog">[a,b,d]</code> と <code class="sourceCode prolog">[a,c,d]</code> の二経路で、順番は問わない。各リストの隣り合う二要素に辺があり、始点・終点が合い、要素が重複していないことを確かめる。</p>
+<p>小さな別の有限グラフでも試そう。到達不能な組、自己ループ、二方向の辺、始点と終点が同じ場合を含め、Pythonなど別の方法で単純経路を全列挙して答えの集合を照合する。辺の同じ事実は重複して入力しないものとする。</p>
+<p>比較する到達関係 <code class="sourceCode prolog">reach(<span class="dt">X</span><span class="kw">,</span><span class="dt">Y</span>)</code> は、一辺以上の道をたどってXからYへ着けることを表す。次の規則を経路用のプログラムとは別に保存し、この問題に示した五本の辺を <code>edge</code> の事実として加えると試せる。</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode prolog"><code class="sourceCode prolog"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>reach(<span class="dt">X</span><span class="kw">,</span> <span class="dt">Y</span>) <span class="kw">:-</span> edge(<span class="dt">X</span><span class="kw">,</span> <span class="dt">Y</span>)<span class="kw">.</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>reach(<span class="dt">X</span><span class="kw">,</span> <span class="dt">Y</span>) <span class="kw">:-</span> edge(<span class="dt">X</span><span class="kw">,</span> <span class="dt">Z</span>)<span class="kw">,</span> reach(<span class="dt">Z</span><span class="kw">,</span> <span class="dt">Y</span>)<span class="kw">.</span></span></code></pre></div>
+<p>循環を含むグラフへこの単純な再帰だけを使うと、追加の答えを探し続けて終わらない場合がある。中断方法を確認してから試し、答えがまだ出ないことを「到達不能」と解釈しない。目標の順序を変えたときの違いも、具体例を固定して比較してみよう。</p>
+</section>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../index.html">講義一覧</a> · <a href="../../sessions/01-prolog/index.html">第01回の本文へ</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第01回　Prologで関係を書く - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+<script defer="" src="../../assets/katex/katex.min.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+</script>
+<link rel="stylesheet" href="../../assets/katex/katex.min.css" />
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 通常講義</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第01回　Prologで関係を書く</h1>
+    <nav class="session-nav" aria-label="第01回の講義資料"><a href="../../sessions/01-prolog/index.html" aria-current="page">通常講義</a><a href="../../advanced/prolog-challenges/index.html">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#目標">目標</a>
+      </li>
+      <li><a href="#問題">1. 問題</a>
+      </li>
+      <li><a href="#定式化">2. 定式化</a>
+      <ul>
+      <li><a href="#事実と引数">事実と引数</a></li>
+      <li><a href="#規則と問い合わせ">規則と問い合わせ</a></li>
+      </ul>
+      </li>
+      <li><a href="#解説例">3. 解説例</a>
+      <ul>
+      <li><a href="#手順1-予定と技能の事実">手順1　予定と技能の事実</a></li>
+      <li><a href="#手順2-受付の規則">手順2　受付の規則</a></li>
+      <li><a href="#手順3-問い合わせ">手順3　問い合わせ</a></li>
+      </ul>
+      </li>
+      <li><a href="#結果">4. 結果</a>
+      </li>
+      <li><a href="#演習">5. 演習</a>
+      <ul>
+      <li><a href="#必修1-修理の規則">必修1　修理の規則</a></li>
+      <li><a href="#必修2-同じ日の役割候補">必修2　同じ日の役割候補</a></li>
+      </ul>
+      </li>
+      <li><a href="#発展">6. 発展</a>
+      </li>
+      <li><a href="#振り返り">7. 振り返り</a>
+      </li>
+      <li><a href="#参照">参照</a>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p>イベントの受付と修理を題材に、参加できる曜日と持っている技能から、対応できる人を調べる。この科目で取り組む「条件を書いて答えを求める」プログラミングの入口として、Prologで関係を書き、質問の仕方を変えてみる。</p>
+</header>
+<section id="目標" class="level2 unnumbered sec-goal">
+<h2 class="unnumbered sec-goal">目標</h2>
+<p>この回では、同じプログラムへ異なる質問をして、条件と答えのつながりを確かめる。次の三つを、自分の書いた規則や問い合わせを指しながら説明できるようになろう。</p>
+<ul>
+<li>事実・規則・問い合わせを区別して書ける。</li>
+<li>人や曜日を未知にして、条件を満たす答えを求められる。</li>
+<li>二つの関係で共有する引数を選び、答えを元の事実と照合できる。</li>
+</ul>
+<p>Pythonの変数・条件分岐・反復は既習とする。Prologはこの回から始める。最初に<a href="../../guides/course-start/index.html">科目の進め方</a>を読み、<a href="../../guides/prolog-start/index.html">実行の手引き</a>でプログラムと問い合わせを入力する場所を確認する。環境準備は授業内で行い、授業外の必須作業にはしない。</p>
+<p>ガイダンス・操作説明・実演に60分、<a href="#演習">5. 演習</a>に35分、振り返りに5分を使う。必修1は約10分、必修2は約20分、残りは確認の目安である。演習は提出・宿題・完了報告を求めず、教員の完了承認も待たない。前の作業が未完でも、それぞれの出発ファイルから始められる。</p>
+<p>使うのは<a href="../../downloads/session-01/event-basic.pl" data-code-preview="../../previews/session-01/event-basic.pl.json">解説例</a>、<a href="../../downloads/session-01/help-start.pl" data-code-preview="../../previews/session-01/help-start.pl.json">必修1</a>、<a href="../../downloads/session-01/pair-start.pl" data-code-preview="../../previews/session-01/pair-start.pl.json">必修2</a>の三つのファイルである。実演を写し取れなくても、完成した解説例を読み込めば同じ問い合わせを試せる。</p>
+</section>
+<section id="問題" class="level2 sec-problem">
+<h2 class="sec-problem">1. 問題</h2>
+<p>はじめに、人が説明した場面から、今回調べる条件を取り出す。予定と技能はすでに分かっているものとして、両方を満たす候補を求めよう。</p>
+<div class="callout callout-scenario" role="note">
+<p><span class="callout-label">場面</span> 火曜と水曜に開くイベントで、受付や簡単な修理を頼める人を調べたい。候補の識別子は、架空の三人を表す <code>aki</code>・<code>ben</code>・<code>chi</code> である。受付を頼めるのは、その曜日に参加でき、かつ受付技能を持つ人とする。</p>
+</div>
+<p>調べるための材料を、次の表にまとめた。たとえば、技能があってもその日に参加できなければ候補に入らない。表に書かれた予定と技能だけを材料にして答える。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">予定と技能</span> 予定と技能の全入力は次のとおり。火曜を <code>tue</code>、水曜を <code>wed</code>、受付技能を <code>register</code>、修理技能を <code>repair</code> と書く。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th>参加できる曜日</th>
+<th>持っている技能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>aki</code></td>
+<td>火曜・水曜</td>
+<td>受付・修理</td>
+</tr>
+<tr>
+<td><code>ben</code></td>
+<td>火曜</td>
+<td>受付</td>
+</tr>
+<tr>
+<td><code>chi</code></td>
+<td>水曜</td>
+<td>修理</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>まず受付の候補を、人と曜日の組で全部求める。誰を実際に採用するか、何人を配置するか、候補をどの順に優先するかは、この問題の条件に含めていない。</p>
+</section>
+<section id="定式化" class="level2 sec-model">
+<h2 class="sec-model">2. 定式化</h2>
+<p>定式化とは、条件を計算機に渡せる形に写すことであり、この回ではその形をPrologの事実と規則で表す。日本語のどの部分を、どの引数へ対応させるかを決めよう。</p>
+<section id="事実と引数" class="level3">
+<h3>事実と引数</h3>
+<p>「akiは火曜に参加できる」を <code class="sourceCode prolog">available(aki<span class="kw">,</span> tue)<span class="kw">.</span></code> と書く。これが一つの<strong>事実</strong>である。<code>available</code> が関係の名前で、括弧の中の二つが<strong>引数</strong>になる。第1引数が人、第2引数が曜日という順序を、この教材全体で揃える。</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode prolog"><code class="sourceCode prolog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>available(aki<span class="kw">,</span> tue)<span class="kw">.</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>trained(aki<span class="kw">,</span> register)<span class="kw">.</span></span></code></pre></div>
+<p>2行目は「akiには受付技能がある」という事実である。<code>trained</code> の第2引数は曜日ではなく技能だ。このように関係を表す名前を<strong>述語</strong>と呼ぶ。<code class="sourceCode prolog">available<span class="fu">/</span><span class="dv">2</span></code> という書き方を見たら、引数を二つ取る述語 <code>available</code> の意味で、割り算ではない。</p>
+<p><code>aki</code> や <code>tue</code> のように小文字で始まる名前は、ここでは具体的な人や曜日を表す。大文字で始まる <code>P</code> や <code>D</code> は<strong>変数</strong>で、問い合わせの答えとして値を求めたい位置に置く。<code>P</code> は具体的な人の名前ではない。</p>
+</section>
+<section id="規則と問い合わせ" class="level3">
+<h3>規則と問い合わせ</h3>
+<p>受付の候補を表す関係に <code>can_work</code> と名付ける。「その日に参加できる」と「受付技能がある」の二条件から、この関係が成り立つという<strong>規則</strong>を書く。</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode prolog"><code class="sourceCode prolog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>can_work(<span class="dt">P</span><span class="kw">,</span> <span class="dt">D</span>) <span class="kw">:-</span> available(<span class="dt">P</span><span class="kw">,</span> <span class="dt">D</span>)<span class="kw">,</span> trained(<span class="dt">P</span><span class="kw">,</span> register)<span class="kw">.</span></span></code></pre></div>
+<p><code class="sourceCode prolog"><span class="kw">:-</span></code> は「右側の条件が成り立つなら左側も成り立つ」、右側の <code class="sourceCode prolog"><span class="kw">,</span></code> は「かつ」と読む。同じ規則の中で繰り返し現れる <code>P</code> は同じ人、<code>D</code> は同じ曜日を指す。参加する人と技能を持つ人が一致するように、両方へ同じ <code>P</code> を書いている。</p>
+<p>集合で短く書けば、受付候補は <span class="math inline">W=\{(p,d)\mid A(p,d)\land T(p,\mathrm{register})\}</span> となる。<span class="math inline">A</span> は参加可能、<span class="math inline">T</span> は技能の関係である。集合の中の <span class="math inline">p,d</span> は人と曜日を動かす記号で、規則の <code>P,D</code> に対応する。ここでは、この数式を覚える必要はない。</p>
+<div class="callout callout-point" role="note">
+<p><span class="callout-label">要点</span> 事実と規則はプログラムに書く。「火曜の受付候補は誰か」という問い合わせは、別の入力欄に <code class="sourceCode prolog">can_work(<span class="dt">P</span><span class="kw">,</span> tue)<span class="kw">.</span></code> と書く。求めたい位置だけを変数にすればよい。</p>
+</div>
+<p>変数はPythonで値を順に代入する箱とは使い方が違う。一つの答えでは、同じ変数の各出現へ同じ値が対応する。また、別の規則や、次に実行する別の問い合わせに同じ <code>P</code> と書いても、前の答えを記憶する名前にはならない。</p>
+</section>
+</section>
+<section id="解説例" class="level2 sec-demo">
+<h2 class="sec-demo">3. 解説例</h2>
+<p>ここは教員が実演する。予定と技能の入力、受付の条件、問い合わせの順に確かめる。ファイル内の「手順1〜3」のコメントも、以下の見出しに対応している。</p>
+<section id="手順1-予定と技能の事実" class="level3">
+<h3>手順1　予定と技能の事実</h3>
+<p><a href="../../downloads/session-01/event-basic.pl" data-code-preview="../../previews/session-01/event-basic.pl.json">event-basic.pl</a>を開き、次の全事実をプログラムの欄へ読み込む。表の一マスに曜日や技能が二つあれば、事実を二行に分ける。人・曜日・技能の綴りを揃え、各行の末尾にピリオドを付けよう。</p>
+<figure class="code"><figcaption>event-basic.pl</figcaption>
+<div class="sourceCode" id="cb3"><pre class="sourceCode prolog"><code class="sourceCode prolog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>available(aki<span class="kw">,</span> tue)<span class="kw">.</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>available(aki<span class="kw">,</span> wed)<span class="kw">.</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>available(ben<span class="kw">,</span> tue)<span class="kw">.</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>available(chi<span class="kw">,</span> wed)<span class="kw">.</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>trained(aki<span class="kw">,</span> register)<span class="kw">.</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>trained(aki<span class="kw">,</span> repair)<span class="kw">.</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>trained(ben<span class="kw">,</span> register)<span class="kw">.</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>trained(chi<span class="kw">,</span> repair)<span class="kw">.</span></span></code></pre></div>
+</figure>
+<p>問い合わせ欄で <code class="sourceCode prolog">available(aki<span class="kw">,</span> tue)<span class="kw">.</span></code> を実行すると成立し、<code class="sourceCode prolog">available(chi<span class="kw">,</span> tue)<span class="kw">.</span></code> では答えがない。続いて <code class="sourceCode prolog">available(<span class="dt">P</span><span class="kw">,</span> tue)<span class="kw">.</span></code> を実行すると、今度は <code>P</code> に入る名前を調べられる。<a href="../../guides/prolog-start/index.html">実行の手引き</a>の操作で次の答えまで見よう。</p>
+</section>
+<section id="手順2-受付の規則" class="level3">
+<h3>手順2　受付の規則</h3>
+<p>事実を直接問い合わせられたら、「参加可能」と「受付技能」を組み合わせる。完成ファイルには次の規則も入っているので、その右側の二条件と、元の表の二つの列を対応させよう。</p>
+<figure class="code"><figcaption>event-basic.pl</figcaption>
+<div class="sourceCode" id="cb4"><pre class="sourceCode prolog"><code class="sourceCode prolog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>can_work(<span class="dt">P</span><span class="kw">,</span> <span class="dt">D</span>) <span class="kw">:-</span> available(<span class="dt">P</span><span class="kw">,</span> <span class="dt">D</span>)<span class="kw">,</span> trained(<span class="dt">P</span><span class="kw">,</span> register)<span class="kw">.</span></span></code></pre></div>
+</figure>
+<p><code class="sourceCode prolog">can_work(<span class="dt">P</span><span class="kw">,</span> tue)<span class="kw">.</span></code> なら、<code>D</code> を <code>tue</code> にして二条件を満たす <code>P</code> を調べる。<code class="sourceCode prolog">can_work(aki<span class="kw">,</span> <span class="dt">D</span>)<span class="kw">.</span></code> なら、今度は人を <code>aki</code> に固定して曜日を調べる。問い合わせを変えても、規則そのものは書き直さない。</p>
+</section>
+<section id="手順3-問い合わせ" class="level3">
+<h3>手順3　問い合わせ</h3>
+<p>次の三つを、一つずつ問い合わせ欄へ入れて実行する。コード中の <code class="sourceCode prolog"><span class="fu">?-</span></code> は問い合わせを表す目印であり、すでに入力欄に表示されている場合は自分で付け足さない。</p>
+<pre class="text"><code>?- can_work(P, tue).
+?- can_work(aki, D).
+?- can_work(P, D).</code></pre>
+<p>同じ日の参加者を二つの役割の候補として並べるには、<code class="sourceCode prolog">available(<span class="dt">P</span><span class="kw">,</span> <span class="dt">D</span>)<span class="kw">,</span> available(<span class="dt">Q</span><span class="kw">,</span> <span class="dt">D</span>)<span class="kw">.</span></code> とも問い合わせられる。この段階では技能の条件を付けていないので、受付と修理の組そのものではない。まず人と曜日の変数をどう共有しているかに注目する。</p>
+<div class="callout callout-ask" role="note">
+<p><span class="callout-label">問い</span> 二つの <code>available</code> で曜日を同じ <code>D</code> にするのはなぜだろう。人を表す <code>P</code> と <code>Q</code> も同じ変数にしたら、候補はどう変わるだろうか。</p>
+</div>
+<p>二つの条件に同じ <code>D</code> が現れると、どちらも同じ曜日で成り立つ必要がある。<code>P</code> と <code>Q</code> は役割ごとに値を求める位置なので別の変数にする。ただし、別の変数名を書いたことだけでは、別人という条件にはならない。</p>
+<p>Pythonで受付候補の全列挙を書くと、<a href="../../downloads/session-01/event-compare.py" data-code-preview="../../previews/session-01/event-compare.py.json">比較用ファイル</a>では予定の組を反復し、その人が受付技能を持つかを調べている。次の抜粋で使う <code>available</code> と <code>trained</code> は、同じ事実を組のリストにしたものである。</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> person, day <span class="kw">in</span> available:</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (person, <span class="st">&quot;register&quot;</span>) <span class="kw">in</span> trained:</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(person, day)</span></code></pre></div>
+<p>Prologでは、成立する関係を規則に書き、問い合わせを受けた処理系が答えを探す。ここで比べたいのは、反復を明示する記述と関係を定義する記述である。どんな規則でも探索が必ず終わる、という意味ではない。</p>
+</section>
+</section>
+<section id="結果" class="level2 sec-result">
+<h2 class="sec-result">4. 結果</h2>
+<p>問い合わせごとに、答えが人だけなのか、曜日だけなのか、人と曜日の組なのかを見る。表示の順番に合わせるのではなく、求めた答えを全部集めたときに何が含まれるかを確かめよう。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>問い合わせ</th>
+<th>答えの集合</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code class="sourceCode prolog">can_work(<span class="dt">P</span><span class="kw">,</span> tue)<span class="kw">.</span></code></td>
+<td><code>P=aki</code>、<code>P=ben</code></td>
+</tr>
+<tr>
+<td><code class="sourceCode prolog">can_work(aki<span class="kw">,</span> <span class="dt">D</span>)<span class="kw">.</span></code></td>
+<td><code>D=tue</code>、<code>D=wed</code></td>
+</tr>
+<tr>
+<td><code class="sourceCode prolog">can_work(<span class="dt">P</span><span class="kw">,</span> <span class="dt">D</span>)<span class="kw">.</span></code></td>
+<td><code>(aki,tue)</code>、<code>(aki,wed)</code>、<code>(ben,tue)</code></td>
+</tr>
+<tr>
+<td><code class="sourceCode prolog">can_work(chi<span class="kw">,</span> <span class="dt">D</span>)<span class="kw">.</span></code></td>
+<td>答えなし</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>たとえば <code>(ben,tue)</code> は、<code class="sourceCode prolog">available(ben<span class="kw">,</span>tue)</code> と <code class="sourceCode prolog">trained(ben<span class="kw">,</span>register)</code> の両方が事実にあるので受付候補になる。<code>chi</code> は水曜に参加できるが受付技能がないため、受付の問い合わせには現れない。</p>
+<div class="callout callout-check" role="note">
+<p><span class="callout-label">自己確認</span> 三組それぞれについて、予定の事実と受付技能の事実を一つずつ指せるか確認しよう。最初の一答だけで止めず、ほかの答えがなくなるところまで調べる。</p>
+</div>
+<p>答えの後に <code>false</code> が出る場合は、それ以上の答えが見つからなかったという意味で、すでに得た答えが取り消されるわけではない。最初から答えがない場合と、綴りや構文の誤りでエラーが出る場合も区別する。今回は全事実を与えているので、答えなしを表の条件と照合できる。</p>
+</section>
+<section id="演習" class="level2 sec-exercise">
+<h2 class="sec-exercise">5. 演習</h2>
+<p>必修1では技能の指定を変え、必修2では二つの候補関係を同じ曜日で結ぶ。<a href="#定式化">2. 定式化</a>の読み方と<a href="#解説例">3. 解説例</a>の問い合わせを、必要に応じて引きながら進めよう。</p>
+<section id="必修1-修理の規則" class="level3">
+<h3>必修1　修理の規則</h3>
+<p>受付の規則と同じ考え方を、修理の候補へ移してみる。出発ファイルには予定・技能の全事実と受付の完成規則があり、修理の規則を書く場所だけがコメントになっている。</p>
+<section id="問題-1" class="level4">
+<h4>問題</h4>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 候補は架空の三人で、予定と技能は次の表がすべてである。火曜を <code>tue</code>、水曜を <code>wed</code> と書く。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th>参加できる曜日</th>
+<th>持っている技能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>aki</code></td>
+<td>火曜・水曜</td>
+<td>受付・修理</td>
+</tr>
+<tr>
+<td><code>ben</code></td>
+<td>火曜</td>
+<td>受付</td>
+</tr>
+<tr>
+<td><code>chi</code></td>
+<td>水曜</td>
+<td>修理</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>その曜日に参加でき、かつ修理技能がある人と曜日の関係 <code class="sourceCode prolog">can_help(<span class="dt">P</span><span class="kw">,</span><span class="dt">D</span>)</code> を定義する。第1引数は人、第2引数は曜日とする。</p>
+</div>
+</section>
+<section id="作業" class="level4">
+<h4>作業</h4>
+<p><a href="../../downloads/session-01/help-start.pl" data-code-preview="../../previews/session-01/help-start.pl.json">help-start.pl</a>には表の全入力がある。<code class="sourceCode prolog">available(<span class="dt">P</span><span class="kw">,</span><span class="dt">D</span>)</code> は人Pが曜日Dに参加できること、<code class="sourceCode prolog">trained(<span class="dt">P</span><span class="kw">,</span><span class="dt">S</span>)</code> は人Pが技能Sを持つことを表す。技能名は受付が <code>register</code>、修理が <code>repair</code> である。</p>
+<p><code>TODO(作業1)</code> に、条件を満たす <code class="sourceCode prolog">can_help(<span class="dt">P</span><span class="kw">,</span><span class="dt">D</span>)</code> の規則を書く。候補の答えを事実として列挙するのでなく、与えられた予定と技能から求められる形にする。</p>
+<figure class="code"><figcaption>help-start.pl</figcaption>
+<div class="sourceCode" id="cb7"><pre class="sourceCode prolog"><code class="sourceCode prolog"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">% 必修1　修理の規則</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">% </span><span class="al">TODO</span><span class="co">(作業1): can_help(P, D) の規則をここへ書く。</span></span></code></pre></div>
+</figure>
+<p>書いたら保存して読み込み直し、<code class="sourceCode prolog">can_help(<span class="dt">P</span><span class="kw">,</span><span class="dt">D</span>)<span class="kw">.</span></code> と <code class="sourceCode prolog">can_help(ben<span class="kw">,</span><span class="dt">D</span>)<span class="kw">.</span></code> を実行する。出発ファイルのコメントだけでは新しい述語は定義されないので、未記入のまま問い合わせると未定義のエラーになる。</p>
+</section>
+<section id="自己確認" class="level4">
+<h4>自己確認</h4>
+<p>答えをすべて見たうえで、次の集合と比べる。人と曜日の組の順番は問わないが、余分な組が入っていないかと、必要な組が抜けていないかの両方を確認しよう。</p>
+<p><code class="sourceCode prolog">can_help(<span class="dt">P</span><span class="kw">,</span><span class="dt">D</span>)<span class="kw">.</span></code> の答えは <code>(aki,tue)</code>、<code>(aki,wed)</code>、<code>(chi,wed)</code> の三組である。<code class="sourceCode prolog">can_help(ben<span class="kw">,</span><span class="dt">D</span>)<span class="kw">.</span></code> は答えなしとなる。benについて、参加できる日があることと修理技能があることを区別できているか確かめる。</p>
+<details class="hint"><summary>ヒントを開く：修理に必要な二条件</summary><div class="hint-body">
+<p><code>available</code> の第2引数は曜日、<code>trained</code> の第2引数は技能である。技能を表す名前は <code>repair</code>。二つの条件で、技能を持つ人と参加する人が同じになるように書く。</p>
+</div></details>
+</section>
+</section>
+<section id="必修2-同じ日の役割候補" class="level3">
+<h3>必修2　同じ日の役割候補</h3>
+<p>火曜と水曜に開くイベントで、受付を頼める人と修理を頼める人を、曜日ごとに組み合わせたい。それぞれの役割を担当できる条件を確かめ、候補の組をすべて求めよう。</p>
+<section id="問題-2" class="level4">
+<h4>問題</h4>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 候補は、架空の三人 <code>aki</code>・<code>ben</code>・<code>chi</code>。予定と技能は次の表がすべてである。曜日は火曜を <code>tue</code>、水曜を <code>wed</code> と書く。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th>参加できる曜日</th>
+<th>持っている技能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>aki</code></td>
+<td>火曜・水曜</td>
+<td>受付・修理</td>
+</tr>
+<tr>
+<td><code>ben</code></td>
+<td>火曜</td>
+<td>受付</td>
+</tr>
+<tr>
+<td><code>chi</code></td>
+<td>水曜</td>
+<td>修理</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>求める組は、次の条件をすべて満たすものとする。</p>
+<ul>
+<li>受付候補は、その曜日に参加でき、受付技能を持つ。</li>
+<li>修理候補は、その曜日に参加でき、修理技能を持つ。</li>
+<li>両者の曜日は同じとする。同じ人を受付候補と修理候補の両方に挙げてもよい。</li>
+</ul>
+<p>この条件を満たす関係を <code class="sourceCode prolog">pair(<span class="dt">P</span><span class="kw">,</span><span class="dt">Q</span><span class="kw">,</span><span class="dt">D</span>)</code> として定義する。<code>P</code> は受付候補、<code>Q</code> は修理候補、<code>D</code> は共通の曜日を求める変数で、引数はこの順に並べる。受付と修理の役割を入れ替えた組は区別する。ここで求めるのは役割ごとの候補の組であり、実際に誰を同時勤務へ配置するかは決めない。</p>
+</div>
+</section>
+<section id="作業-1" class="level4">
+<h4>作業</h4>
+<p><a href="../../downloads/session-01/pair-start.pl" data-code-preview="../../previews/session-01/pair-start.pl.json">pair-start.pl</a>を開く。このファイルには表の全入力と、次の二つの関係の完成した規則が入っている。そのまま利用できるので、別の演習で書いたプログラムを移す必要はない。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>利用できる関係</th>
+<th>引数の順序と意味</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>can_work(人, 曜日)</code></td>
+<td>その人がその曜日に参加でき、受付技能を持つ</td>
+</tr>
+<tr>
+<td><code>can_help(人, 曜日)</code></td>
+<td>その人がその曜日に参加でき、修理技能を持つ</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code>TODO(作業2)</code> に、この二つの関係を組み合わせて <code class="sourceCode prolog">pair(<span class="dt">P</span><span class="kw">,</span><span class="dt">Q</span><span class="kw">,</span><span class="dt">D</span>)</code> を定義する規則を書く。受付の人・修理の人・曜日のどこを同じ変数にするかは、自分で決める。</p>
+<figure class="code"><figcaption>pair-start.pl</figcaption>
+<div class="sourceCode" id="cb8"><pre class="sourceCode prolog"><code class="sourceCode prolog"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">% 必修2　同じ日の役割候補</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co">% </span><span class="al">TODO</span><span class="co">(作業2): pair(P, Q, D) の規則をここへ書く。</span></span></code></pre></div>
+</figure>
+<p>書いたファイルを保存して読み込み直し、問い合わせ欄で <code class="sourceCode prolog">pair(<span class="dt">P</span><span class="kw">,</span><span class="dt">Q</span><span class="kw">,</span><span class="dt">D</span>)<span class="kw">.</span></code> を実行する。これは受付候補・修理候補・曜日のすべてを求める問い合わせである。答えを一つ見て止めず、次の答えがなくなるまで調べよう。</p>
+<p>続いて <code class="sourceCode prolog">pair(ben<span class="kw">,</span><span class="dt">Q</span><span class="kw">,</span><span class="dt">D</span>)<span class="kw">.</span></code> で受付候補をbenに固定した組、<code class="sourceCode prolog">pair(<span class="dt">P</span><span class="kw">,</span><span class="dt">Q</span><span class="kw">,</span>wed)<span class="kw">.</span></code> で水曜に対応できる組を調べる。問い合わせを変えても規則は書き直さない。読み込みや次の答えを表示する操作に迷ったら、<a href="../../guides/prolog-start/index.html">実行の手引き</a>を利用できる。</p>
+</section>
+<section id="自己確認-1" class="level4">
+<h4>自己確認</h4>
+<p>答えの三つの位置を、受付・修理・曜日の順に読む。二つの人名を入れ替えた組が自動的に答えになるわけではないので、それぞれの役割に必要な技能も見直そう。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>問い合わせ</th>
+<th>答えの集合</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code class="sourceCode prolog">pair(<span class="dt">P</span><span class="kw">,</span><span class="dt">Q</span><span class="kw">,</span><span class="dt">D</span>)<span class="kw">.</span></code></td>
+<td><code>(aki,aki,tue)</code>、<code>(aki,aki,wed)</code>、<code>(aki,chi,wed)</code>、<code>(ben,aki,tue)</code></td>
+</tr>
+<tr>
+<td><code class="sourceCode prolog">pair(ben<span class="kw">,</span><span class="dt">Q</span><span class="kw">,</span><span class="dt">D</span>)<span class="kw">.</span></code></td>
+<td><code>Q=aki, D=tue</code></td>
+</tr>
+<tr>
+<td><code class="sourceCode prolog">pair(<span class="dt">P</span><span class="kw">,</span><span class="dt">Q</span><span class="kw">,</span>wed)<span class="kw">.</span></code></td>
+<td><code>(P,Q)=(aki,aki)</code>、<code>(aki,chi)</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code class="sourceCode prolog">pair(aki<span class="kw">,</span>aki<span class="kw">,</span>tue)<span class="kw">.</span></code> は成立する。二つの変数に同じ人が入っても、今回の条件に違反しない。一方、<code class="sourceCode prolog">pair(aki<span class="kw">,</span>chi<span class="kw">,</span>tue)<span class="kw">.</span></code> と <code class="sourceCode prolog">pair(ben<span class="kw">,</span>chi<span class="kw">,</span>tue)<span class="kw">.</span></code> は成立しない。chiが火曜に参加できないことを、規則が確かめているかが分かる問い合わせである。</p>
+<details class="hint"><summary>ヒントを開く：三つの引数の役割</summary><div class="hint-body">
+<p>答えの <code>P</code> は受付、<code>Q</code> は修理、<code>D</code> は両者が対応できる曜日である。どちらの候補関係も、第1引数が人、第2引数が曜日という順序になっている。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：曜日を共有する位置</summary><div class="hint-body">
+<p><code>can_work</code> と <code>can_help</code> の第2引数へ、同じ変数を置く。曜日を <code>D</code> と別の変数に分けると、火曜の受付候補と水曜の修理候補まで組み合わせてしまう。</p>
+</div></details>
+</section>
+</section>
+</section>
+<section id="発展" class="level2 sec-advanced">
+<h2 class="sec-advanced">6. 発展</h2>
+<p>必修の関係を別の条件や題材へ移す問題と、再帰を使った探索の問題を用意した。関心と残り時間で選ぼう。必要な説明と出発ファイルはリンク先にあり、次の回の前提にはしない。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>選択肢</th>
+<th>考えること</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../advanced/prolog-challenges/index.html#family">選択P01　家系図</a></td>
+<td>親子関係を中間の人で結ぶ。10〜15分の目安で、最初の別題材におすすめ</td>
+</tr>
+<tr>
+<td><a href="../../advanced/prolog-challenges/index.html#distinct">発展1　別人での役割分担</a></td>
+<td>同じ人の二役を除く条件</td>
+</tr>
+<tr>
+<td><a href="../../advanced/prolog-challenges/index.html#reach">発展2　一辺以上の到達</a></td>
+<td>直接の場合と途中を経由する場合</td>
+</tr>
+<tr>
+<td><a href="../../advanced/prolog-challenges/index.html#paths">発展3　再訪しない経路</a></td>
+<td>循環、訪問済みの管理、別方法での検査</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="振り返り" class="level2 sec-review">
+<h2 class="sec-review">7. 振り返り</h2>
+<p>自分が書いた規則を一つ選び、入力の事実・導く関係・問い合わせで求める値を指し示そう。特に必修2では、人の役割を分ける変数と、同じ曜日を表す共有変数を説明してみる。</p>
+<p>次回は4×4数独を題材に、有限の未知数へ条件を課すMiniZincを使う。Prologと同じ動作をする仕組みではないが、「成立してほしい条件を記述する」という考え方は共通する。再帰やリスト処理を終えている必要はない。</p>
+</section>
+<section id="参照" class="level2 unnumbered sec-reference">
+<h2 class="unnumbered sec-reference">参照</h2>
+<p>書き方や操作に迷ったら、必要な項目だけをここから引く。答えの集合を確認するときは<a href="#結果">4. 結果</a>、自分で規則を書くときは<a href="#演習">5. 演習</a>へ戻れる。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>記法</th>
+<th>この回での読み方</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code class="sourceCode prolog">available(aki<span class="kw">,</span>tue)<span class="kw">.</span></code></td>
+<td>具体的な人と曜日についての事実</td>
+</tr>
+<tr>
+<td><code class="sourceCode prolog">can_work(<span class="dt">P</span><span class="kw">,</span><span class="dt">D</span>) <span class="kw">:-</span> ... <span class="kw">.</span></code></td>
+<td>右側の条件から左側の関係を導く規則</td>
+</tr>
+<tr>
+<td><code class="sourceCode prolog"><span class="kw">,</span></code></td>
+<td>規則の右側や問い合わせで、両方の条件を満たす</td>
+</tr>
+<tr>
+<td><code>P</code>・<code>Q</code>・<code>D</code></td>
+<td>値を対応させる変数。同じ規則・問い合わせ内の同名は同じ値</td>
+</tr>
+<tr>
+<td><code class="sourceCode prolog"><span class="co">%</span></code></td>
+<td>行末までのコメント。実行する条件には含めない</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><a href="../../guides/prolog-start/index.html">実行の手引き</a>には、読み込み・再実行・次の答え・問い合わせ終了と、エラーの見分け方をまとめた。述語名の綴り、引数の順序、末尾のピリオドを見直すと、多くの入力間違いを切り分けられる。</p>
+<p>配布ファイルは<a href="../../downloads/session-01/event-basic.pl" data-code-preview="../../previews/session-01/event-basic.pl.json">解説例</a>、<a href="../../downloads/session-01/help-start.pl" data-code-preview="../../previews/session-01/help-start.pl.json">必修1の出発点</a>、<a href="../../downloads/session-01/pair-start.pl" data-code-preview="../../previews/session-01/pair-start.pl.json">必修2の出発点</a>、<a href="../../downloads/session-01/event-compare.py" data-code-preview="../../previews/session-01/event-compare.py.json">Pythonの比較</a>。発展用の配布物は<a href="../../advanced/prolog-challenges/index.html">発展ページ</a>から開ける。</p>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../index.html">講義一覧</a> · <a href="../../sessions/02-minizinc/index.html">第02回 →</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

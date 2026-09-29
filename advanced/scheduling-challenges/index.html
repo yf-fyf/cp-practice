@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第10回の発展　期限・装置・別表現の検査 - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+<script defer="" src="../../assets/katex/katex.min.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+</script>
+<link rel="stylesheet" href="../../assets/katex/katex.min.css" />
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 発展</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第10回の発展　期限・装置・別表現の検査</h1>
+    <nav class="session-nav" aria-label="第10回の講義資料"><a href="../../sessions/10-smt/index.html">通常講義</a><a href="../../advanced/scheduling-challenges/index.html" aria-current="page">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#deadline">発展1　最小の期限</a>
+      <ul>
+      <li><a href="#条件と探索範囲">条件と探索範囲</a></li>
+      </ul>
+      </li>
+      <li><a href="#machines">発展2　装置も選ぶ日程</a>
+      <ul>
+      <li><a href="#条件と論理和">条件と論理和</a></li>
+      </ul>
+      </li>
+      <li><a href="#jobshop">発展3　一般の日程と独立した検査</a>
+      <ul>
+      <li><a href="#二つの仕事と入力形式">二つの仕事と入力形式</a></li>
+      <li><a href="#モデルの生成">モデルの生成</a></li>
+      <li><a href="#時刻ごとの検査">時刻ごとの検査</a></li>
+      <li><a href="#全解集合の比較">全解集合の比較</a></li>
+      </ul>
+      </li>
+      <li><a href="#seats">選択T10　四人の席順</a>
+      <ul>
+      <li><a href="#条件と作業">条件と作業</a></li>
+      </ul>
+      </li>
+      <li><a href="#send-more">選択M04のZ3版　覆面算</a>
+      <ul>
+      <li><a href="#条件と桁の重み">条件と桁の重み</a></li>
+      </ul>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p><a href="../../sessions/10-smt/index.html">第10回の本文</a>から、最小の期限、装置の選択、一般の日程モデルへ進む。各問題には独立した条件と出発点があり、前の発展の完成は不要である。日程以外を選びたい場合は、席順と覆面算にも取り組める。</p>
+<p>入力の一覧、実行方法、開始時刻の固定、結果の読み方は<a href="../../guides/schedule-check/index.html">確認手引き</a>で確認できる。最適値を求める問題では、成立例と、それより小さい値が不可能な理由を分けて確かめよう。</p>
+</header>
+<section id="deadline" class="level2">
+<h2>発展1　最小の期限</h2>
+<p>期限を変えて充足可能性を調べ、成立する最小の期限を探す。目的のための新しいAPIを導入する代わりに、本文と同じSAT判定を何度か使う。各判定は新しいソルバーで行う。</p>
+<section id="条件と探索範囲" class="level3">
+<h3>条件と探索範囲</h3>
+<p>三作業A・B・Cの所要時間はそれぞれ2・3・2。開始は0以上の整数で中断しない。AとCは同じ装置で重ならず、Aの終了後にBを始める。Bは別の場所なのでCと重なってよい。各作業を期限H以内に終了し、端点での接触を許す。</p>
+<p>求めるのは、以上を満たす日程が存在する最小の整数Hである。必修1の変更時間や必修2のC→Bは引き継がない。<a href="../../downloads/session-10/deadline-start.py" data-code-preview="../../previews/session-10/deadline-start.py.json">deadline-start.py</a>と完成した<a href="../../downloads/session-10/schedule_base.py" data-code-preview="../../previews/session-10/schedule_base.py.json">schedule_base.py</a>、<a href="../../downloads/session-10/integer_io.py" data-code-preview="../../previews/session-10/integer_io.py.json">integer_io.py</a>を使う。</p>
+<p><code class="sourceCode python">at_deadline(H)</code>は、SATなら開始時刻の辞書、UNSATなら<code>None</code>を返す。UNKNOWNでは判定未完了として例外を出す。ソルバー呼出しの部分は提供するので、探索範囲と期限の動かし方を考える。</p>
+<ol type="1">
+<li><strong>作業1：</strong> 所要時間と先行関係から下限を、必ず作れる日程から上限を決める。</li>
+<li><strong>作業2：</strong> 期限を順に試すか、成立性が単調であることを使って二分探索し、最小期限と成立する日程を返す。</li>
+<li>見つけた最小期限の一つ前を別に判定し、UNSATの理由を説明する。</li>
+</ol>
+<p>同時に進められない先行関係をたどると、必要時間の下限を得られる。上限は、先行を守って全作業を一つずつ実施する日程から作れる。下限と上限が、そのまま同じ意味の値とは限らない。</p>
+<p>完成した <code class="sourceCode python">minimum_deadline()</code> を <code>python3 deadline-start.py</code> で実行する。求めた期限の成立例と、一つ前の期限のUNSATを確かめてから、次の確認例を開く。</p>
+<details class="hint"><summary>確認例を開く：期限の値と日程</summary><div class="hint-body">
+<p>最小期限は5で、開始(A,B,C)=(0,2,2)ならAが[0,2)、Bが[2,5)、Cが[2,4)となる。期限4ではA→Bの合計5時間だけでも間に合わない。</p>
+</div></details>
+<p>期限を延ばしても、同じ開始時刻を使えば既存の条件は保たれる。作業・所要時間・資源・先行を変えず、終了上限だけを緩めることが、この単調性の前提である。</p>
+</section>
+</section>
+<section id="machines" class="level2">
+<h2>発展2　装置も選ぶ日程</h2>
+<p>作業ごとの開始に加え、どの装置を使うかも決める。装置が別なら同時に動かせるため、すべての作業を一列に並べるモデルでは、問題が許す日程を失ってしまう。</p>
+<section id="条件と論理和" class="level3">
+<h3>条件と論理和</h3>
+<p>同じ性能の装置1・2があり、三作業A・B・Cの所要時間はすべて3。各作業はどちらか一台を選び、途中で装置を替えず、中断せずに行う。開始は0以上の整数、同じ装置の作業は重ならない。先行関係はない。</p>
+<p>すべて期限Hまでに終了し、端点で接してよい。H=5とH=6を別々に判定する。開始時刻sに加え、装置番号mを整数1〜2で決める。<a href="../../downloads/session-10/machines-start.py" data-code-preview="../../previews/session-10/machines-start.py.json">machines-start.py</a>と<a href="../../downloads/session-10/integer_io.py" data-code-preview="../../previews/session-10/integer_io.py.json">integer_io.py</a>、<a href="../../downloads/session-10/machines-5.json" data-code-preview="../../previews/session-10/machines-5.json.json">期限5</a>・<a href="../../downloads/session-10/machines-6.json" data-code-preview="../../previews/session-10/machines-6.json.json">期限6</a>の入力を使う。</p>
+<p>モデルの <code class="sourceCode python">start[a]</code> は作業aの開始変数、<code class="sourceCode python">machine[a]</code> は装置番号の変数、<code class="sourceCode python">data[<span class="st">&#39;duration&#39;</span>][a]</code> はその所要時間である。開始範囲、装置番号の範囲、全作業ペアを巡回する枠は提供する。<strong>作業1：</strong> 各ペアa・bについて、装置が同じ場合と異なる場合に許す重なりを分け、条件を書く。</p>
+<p><strong>作業2：</strong> 二つの期限で実行し、装置が違う作業の重なりが許されているかも確かめる。出力のsA・sB・sCは開始、mA・mB・mCは装置番号である。装置番号の大小を作業順序として使わない。</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> machines-start.py machines-5.json</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> machines-start.py machines-6.json</span></code></pre></div>
+<details class="hint"><summary>ヒントを開く：装置が違う場合も許す</summary><div class="hint-body">
+<p>同じ装置なら、二つの作業をどちらかの順序へ分ける必要がある。別装置なら、その二つの順序を守らない重なりも許したい。装置の違いを、順序の条件へ「かつ」「または」のどちらで結べばよいか考えよう。</p>
+</div></details>
+<details class="hint"><summary>確認例を開く：装置と順序の論理和</summary><div class="hint-body">
+<p>一つの<code>Or</code>へ、<code class="sourceCode python">machine[a] <span class="op">!=</span> machine[b]</code>、aの終了≤bの開始、bの終了≤aの開始を入れる。装置が同じなら最初の式は偽なので、残る二つの順序のどちらかが必要になる。</p>
+</div></details>
+<p>二つの期限の判定を比較し、成立する場合は同時に進む作業の装置を確認する。成立しない場合は、総作業時間と全装置の時間の総量だけで説明できるか、作業を分割できない条件も使って考えよう。</p>
+<details class="hint"><summary>確認例を開く：二つの期限と不可能性</summary><div class="hint-body">
+<p>期限5はUNSAT、6はSAT。例えばAを装置1で[0,3)、Bを装置2で[0,3)、Cを装置1で[3,6)とできる。AとBが同時でも別装置なので許される。</p>
+<p>総作業時間9が装置2台×期限5の10以下でも十分ではない。三作業を二台へ割り当てると、どちらか一台は少なくとも二作業を担当し、その装置には中断できない3時間の作業が二つ必要になる。この6時間を期限5へ収められない。</p>
+</div></details>
+</section>
+</section>
+<section id="jobshop" class="level2">
+<h2>発展3　一般の日程と独立した検査</h2>
+<p>作業1のモデルだけを記入した段階でも実行できる。検査器が未実装なら「独立検査: 未実装（妥当性は未確認）」と表示される。これは検査成功を意味しない。まず元の入力で開始・終了を確認し、その後で作業2の独立検査と一般化へ進もう。</p>
+<p>固定した作業名の式を書くところから、入力を読んで条件を生成するところへ進む。同じ日程を、モデルでは同じ装置の各ペア、検査器では各時刻の装置使用数という別の表し方で調べる。</p>
+<section id="二つの仕事と入力形式" class="level3">
+<h3>二つの仕事と入力形式</h3>
+<p>仕事1はA→B、仕事2はC→Dの順に実施する。開始は0以上の整数で、作業は中断しない。各装置は同時に一作業だけを行い、端点で接してよい。各作業を期限Hまでに終了する。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>作業</th>
+<th style="text-align: right;">装置</th>
+<th style="text-align: right;">所要時間</th>
+<th>先行する作業</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td>なし</td>
+</tr>
+<tr>
+<td>B</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">3</td>
+<td>A</td>
+</tr>
+<tr>
+<td>C</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td>なし</td>
+</tr>
+<tr>
+<td>D</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td>C</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><a href="../../downloads/session-10/jobshop.json" data-code-preview="../../previews/session-10/jobshop.json.json">jobshop.json</a>がH=5の入力。<a href="../../downloads/session-10/jobshop-long.json" data-code-preview="../../previews/session-10/jobshop-long.json.json">jobshop-long.json</a>はCだけ4時間へ変え、H=7にした比較入力である。作業名・装置番号・所要時間・先行辺・期限をデータとして扱い、A〜D専用の制約にしない。</p>
+<p><a href="../../downloads/session-10/jobshop-start.py" data-code-preview="../../previews/session-10/jobshop-start.py.json">jobshop-start.py</a>、<a href="../../downloads/session-10/jobshop_tools.py" data-code-preview="../../previews/session-10/jobshop_tools.py.json">jobshop_tools.py</a>、<a href="../../downloads/session-10/integer_io.py" data-code-preview="../../previews/session-10/integer_io.py.json">integer_io.py</a>を使う。入力では所要時間と装置番号は正整数、期限は非負整数、作業名は重複しない文字列とする。装置番号が1・2以外でも入力から扱う。</p>
+<p>入力辞書 <code>data</code> の <code>tasks</code> は作業のリストで、各要素の <code>name</code> が作業名、<code>machine</code> が装置番号、<code>duration</code> が所要時間である。<code>precedence</code> は先行辺のリストで、例えば <code class="sourceCode python">[<span class="st">&quot;A&quot;</span>,<span class="st">&quot;B&quot;</span>]</code> はAの終了後にBを始める意味、<code>H</code> が期限である。上の表はこの形式の入力を読みやすく示したものになる。</p>
+</section>
+<section id="モデルの生成" class="level3">
+<h3>モデルの生成</h3>
+<p><code class="sourceCode python">build(data)</code>には作業名から整数開始変数への辞書 <code>starts</code> とソルバー <code>s</code> を用意した。<strong>作業1：</strong> 作業の開始範囲、先行辺ごとの終了≤開始、同じ装置を使う全ペアの非重複を入力から生成する。</p>
+<p>装置が同じかどうかは入力値の比較なので、Pythonの<code class="sourceCode python"><span class="cf">if</span></code>でペアを選別してよい。一方、未定の開始時刻の比較はZ3へ渡す式であり、Pythonの<code class="sourceCode python"><span class="cf">if</span></code>で真偽を決めない。</p>
+<p>先行辺のない作業や、他と装置を共有しない作業にも開始範囲は必要である。必ず四作業がある、装置番号が連続する、入力の配列順が仕事の順序だといった仮定を追加しない。</p>
+</section>
+<section id="時刻ごとの検査" class="level3">
+<h3>時刻ごとの検査</h3>
+<p><code class="sourceCode python">valid_schedule(data, starts)</code>は、名前からPythonの整数開始時刻への辞書を受け取り、妥当ならTrue、違反ならFalseを返す。<strong>作業2：</strong> 範囲と先行を確認し、各整数時刻tで各装置を使用中の作業数を数える。</p>
+<p><span class="math inline">s_i</span> を作業iの開始、<span class="math inline">d_i</span> を所要時間とすると、作業iが時刻tの区間を使っている条件は <span class="math inline">s_i\le t&lt;s_i+d_i</span>。t=0〜H−1を調べ、各装置の使用数が1以下か確認する。モデルのペアの論理和をそのまま転記して検査器としない。</p>
+<details class="hint"><summary>ヒントを開く：単位時間ごとの使用数</summary><div class="hint-body">
+<p>入力の作業を巡回し、tがその作業の半開区間に入るなら、装置番号をキーにした回数を増やす。同じ時刻・同じ装置で2以上なら違反。終了時刻には加えないので、端点で接する二作業を重複と数えない。</p>
+</div></details>
+<p>元の入力の最小期限は5。例えば開始(A,B,C,D)=(0,2,0,2)で成立し、A→Bに合計5時間必要なため4では不可能である。Cを4時間にした入力では、装置2のCとBに計7時間必要となり、最小期限は7。開始(0,4,0,4)が達成する。</p>
+</section>
+<section id="全解集合の比較" class="level3">
+<h3>全解集合の比較</h3>
+<p><a href="../../downloads/session-10/jobshop_tools.py" data-code-preview="../../previews/session-10/jobshop_tools.py.json">jobshop_tools.py</a>の<code class="sourceCode python">finite_starts(data)</code>は、各作業の安全な開始範囲の全組合せを返す。提供する<a href="../../downloads/session-10/jobshop-compare.py" data-code-preview="../../previews/session-10/jobshop-compare.py.json">jobshop-compare.py</a>で、独立検査器に通る有限列挙と、SMTの全解集合を照合できる。</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> jobshop-start.py jobshop.json</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> jobshop-compare.py jobshop-start.py</span></code></pre></div>
+<p><a href="../../downloads/session-10/jobshop-cases.json" data-code-preview="../../previews/session-10/jobshop-cases.json.json">jobshop-cases.json</a>は八つの入力を持つ。元の二入力、期限を一つ短くした二入力、作業なし、単独作業の期限不足、先行の循環、別の作業名・装置番号の入力である。八入力の具体的な違いと期待解数を次に示す。「元」は上の四作業の表で、指定した項目以外は変えない。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>入力</th>
+<th>作業・先行の設定</th>
+<th style="text-align: right;">H</th>
+<th style="text-align: right;">解数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>元の四作業</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr>
+<td>2</td>
+<td>元のCを4時間へ変更</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">9</td>
+</tr>
+<tr>
+<td>3</td>
+<td>元の四作業</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>4</td>
+<td>元のCを4時間へ変更</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>5</td>
+<td>作業なし・先行なし</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>6</td>
+<td>X：装置2・所要2、先行なし</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>7</td>
+<td>X・Y：ともに装置1・所要1、X→YとY→X</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>8</td>
+<td>P：装置7・所要2、Q：装置3・所要1、R：装置7・所要1、Q→R</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">9</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>作業なしの場合は空の日程一つが成立する。先行の循環は、正の所要時間を持つ作業が互いの終了を待つため解がなくなる。</p>
+<p>集合が違ったら、SMTだけが許した日程と、列挙だけが許した日程を出力から調べる。両実装に同じ誤りがある場合は一致してしまうので、既知の端点・重なり・期限不足と、上の解数も併用する。UNKNOWNを全列挙完了として扱わない。</p>
+<p>開始と所要時間が整数なら、重なる区間には共通する整数の単位時間がある。したがって同じ装置のペアが重ならないことと、各整数時刻の使用数が1以下であることが対応する。実数時刻へ変えた場合に、整数時刻だけの検査が十分とは限らない理由も説明しよう。</p>
+</section>
+</section>
+<section id="seats" class="level2">
+<h2>選択T10　四人の席順</h2>
+<p>開始時刻の代わりに席の位置を整数で表す。隣り合う二つの向き、端の二候補、左にいるという順序を組み合わせる、15〜20分を目安とした別題材である。</p>
+<section id="条件と作業" class="level3">
+<h3>条件と作業</h3>
+<p>左から1〜4の四席へA・B・C・Dを一人ずつ座らせる。席を共有せず、AとBは隣り合い、左右の順序はどちらでもよい。Cは端、DはAより左に座る。すべての条件を満たす一つの席順を求め、目的関数は置かない。</p>
+<figure>
+<img src="../../figures/session-10/seats.svg" alt="左から1〜4の四席。各席に一人ずつ座る。" />
+<figcaption aria-hidden="true">左から1〜4の四席。各席に一人ずつ座る。</figcaption>
+</figure>
+<p><a href="../../downloads/session-10/seats-start.py" data-code-preview="../../previews/session-10/seats-start.py.json">seats-start.py</a>と<a href="../../downloads/session-10/integer_io.py" data-code-preview="../../previews/session-10/integer_io.py.json">integer_io.py</a>を使う。<code>posA</code>・<code>posB</code>・<code>posC</code>・<code>posD</code> はA・B・C・Dの席番号を表す整数変数である。この宣言と表示を提供し、学習者が位置の範囲・不一致・三条件を追加する。</p>
+<ol type="1">
+<li><strong>作業1：</strong> 全員の位置を1〜4とし、すべてのペアの位置を異ならせる。</li>
+<li><strong>作業2：</strong> A・Bが隣り合う二つの向き、Cが端である二つの候補、DがAより左という条件を書く。</li>
+</ol>
+<p><code>Or</code>で二つの向きを表せる。全ペアの不一致は<code class="sourceCode python">Distinct(posA,posB,posC,posD)</code>とも書け、これは引数のすべての値が互いに異なるという意味である。今回の演習内でこの記法を使ってよい。</p>
+<details class="hint"><summary>ヒントを開く：隣接と左右</summary><div class="hint-body">
+<p>Aの位置+1がB、またはBの位置+1がAなら隣接する。Cの端は1または4。Dが左ならDの位置&lt;Aの位置である。単にAとBの位置を異ならせるだけでは隣接にならない。</p>
+</div></details>
+<p>位置(A,B,C,D)は(2,3,4,1)、(3,2,4,1)、(3,4,1,2)、(4,3,1,2)の四通り。例えば(4,2,1,3)は他の条件を満たすがA・Bが隣接せず、拒否される。<a href="../../downloads/session-10/seats-checks.json" data-code-preview="../../previews/session-10/seats-checks.json.json">固定位置の確認例</a>も使える。確認値はA・B・C・Dの順で、モデルの判定前に各変数との等式を一時追加する。例えば拒否例では <code class="sourceCode python">s.add(posA <span class="op">==</span> <span class="dv">4</span>, posB <span class="op">==</span> <span class="dv">2</span>, posC <span class="op">==</span> <span class="dv">1</span>, posD <span class="op">==</span> <span class="dv">3</span>)</code> とする。固定を外してから通常の求解へ戻る。</p>
+</section>
+</section>
+<section id="send-more" class="level2">
+<h2>選択M04のZ3版　覆面算</h2>
+<p>八文字へ数字を割り当て、筆算が成立するようにする。MiniZinc版の完成は前提にせず、整数の上下限・全相異なり・算術等式という三種類の条件を、この問題から組み立てる。</p>
+<section id="条件と桁の重み" class="level3">
+<h3>条件と桁の重み</h3>
+<p>同じ文字は同じ数字、異なる文字は異なる数字を表す。各数字は0〜9、先頭のSとMは0以外とする。次の加算が成立する割当を求める。数独の行・列・ブロックの条件は使わない。</p>
+<pre class="text"><code>  SEND
++ MORE
+------
+ MONEY</code></pre>
+<p><a href="../../downloads/session-10/send-more-start.py" data-code-preview="../../previews/session-10/send-more-start.py.json">send-more-start.py</a>と<a href="../../downloads/session-10/integer_io.py" data-code-preview="../../previews/session-10/integer_io.py.json">integer_io.py</a>を使う。八文字を一つずつ整数記号として宣言し、三つの数を表示する足場を提供している。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>数</th>
+<th>桁の重みを使った式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SEND</td>
+<td>1000S+100E+10N+D</td>
+</tr>
+<tr>
+<td>MORE</td>
+<td>1000M+100O+10R+E</td>
+</tr>
+<tr>
+<td>MONEY</td>
+<td>10000M+1000O+100N+10E+Y</td>
+</tr>
+</tbody>
+</table>
+</div>
+<ol type="1">
+<li><strong>作業1：</strong> 数字の範囲、S・Mの非ゼロ、八文字の全相異なりを追加する。</li>
+<li><strong>作業2：</strong> 三つの数を桁の重みで表し、SEND+MORE=MONEYの等式を追加する。</li>
+</ol>
+<p><code class="sourceCode python">Distinct(S,E,N,D,M,O,R,Y)</code>は八変数の値がすべて異なるという意味である。これで同じ文字の出現ごとに別の数字を割り当てるのではなく、一つの記号を桁の式の中で再利用する。</p>
+<p>唯一の解は9567+1085=10652で、文字順(S,E,N,D,M,O,R,Y)は(9,5,6,7,1,0,8,2)となる。<a href="../../downloads/session-10/send-checks.json" data-code-preview="../../previews/session-10/send-checks.json.json">確認用の割当</a>では、先頭ゼロの2817+0368=03185と、重複数字を使った9000+1000=10000を拒否できるかも調べられる。</p>
+<p>足し算だけが合っていても、文字の条件を守った解とは限らない。確認用の <code>digits</code> はS・E・N・D・M・O・R・Yの順で、各変数と対応する数字の等式を判定前に一時追加して一例ずつ固定する。例えば先頭ゼロ例のMには <code class="sourceCode python">s.add(M <span class="op">==</span> <span class="dv">0</span>)</code> を加え、残り七文字も同じように固定する。例を交換するときは前の固定を外す。先頭ゼロと全相異なりの違反を別々に確認し、どの制約の役割かを説明しよう。</p>
+<p>MiniZinc版も試した人は、数字の範囲・全相異なり・桁の等式に対応する箇所を並べ、同じ数字の割当を許す理由を説明してみよう。両版の完成を求める追加課題ではない。</p>
+</section>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../index.html">講義一覧</a> · <a href="../../sessions/10-smt/index.html">第10回の本文へ</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

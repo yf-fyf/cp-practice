@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第03回　候補を減らし、場合分けして解く - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+<script defer="" src="../../assets/katex/katex.min.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+</script>
+<link rel="stylesheet" href="../../assets/katex/katex.min.css" />
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 通常講義</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第03回　候補を減らし、場合分けして解く</h1>
+    <nav class="session-nav" aria-label="第03回の講義資料"><a href="../../sessions/03-search/index.html" aria-current="page">通常講義</a><a href="../../advanced/propagation-challenges/index.html">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#目標">目標</a>
+      </li>
+      <li><a href="#問題">1. 問題</a>
+      </li>
+      <li><a href="#定式化">2. 定式化</a>
+      <ul>
+      <li><a href="#候補表と近隣マス">候補表と近隣マス</a></li>
+      <li><a href="#一巡の更新規則">一巡の更新規則</a></li>
+      </ul>
+      </li>
+      <li><a href="#解説例">3. 解説例</a>
+      <ul>
+      <li><a href="#手順1-初期値からの削減">手順1　初期値からの削減</a></li>
+      <li><a href="#手順2-次の巡で使う値">手順2　次の巡で使う値</a></li>
+      <li><a href="#手順3-分岐前の保存">手順3　分岐前の保存</a></li>
+      <li><a href="#手順4-仮定と復元">手順4　仮定と復元</a></li>
+      </ul>
+      </li>
+      <li><a href="#結果">4. 結果</a>
+      <ul>
+      <li><a href="#停止状態の読み分け">停止状態の読み分け</a></li>
+      <li><a href="#推論の強さ">推論の強さ</a></li>
+      </ul>
+      </li>
+      <li><a href="#演習">5. 演習</a>
+      <ul>
+      <li><a href="#必修1-別盤面の候補削減">必修1　別盤面の候補削減</a></li>
+      <li><a href="#必修2-別の枝と復元">必修2　別の枝と復元</a></li>
+      </ul>
+      </li>
+      <li><a href="#発展">6. 発展</a>
+      </li>
+      <li><a href="#振り返り">7. 振り返り</a>
+      </li>
+      <li><a href="#参照">参照</a>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p>数独の空欄に入り得る数字を候補として残し、確定した数字から少しずつ絞っていく。途中で決められなくなったら、候補を一つ仮定して調べる。小さな盤面で、伝播・場合分け・元へ戻す操作を追ってみよう。</p>
+</header>
+<section id="目標" class="level2 unnumbered sec-goal">
+<h2 class="unnumbered sec-goal">目標</h2>
+<p>この回では、ソルバーが答えを探すときの考え方を、手で追える規則に絞って調べる。最終盤面だけでなく、途中の候補とその変化を指して、次の三つを説明できるようになろう。</p>
+<ul>
+<li>確定した数字を根拠に、他のマスから候補を除ける。</li>
+<li>候補の削減が止まった状態と、完成解や矛盾を区別できる。</li>
+<li>仮定した枝から、派生した変更も含めて元の状態へ戻せる。</li>
+</ul>
+<p>基本の4×4数独の条件を短く復習して始める。集合の読み方と更新規則はここで説明する。第02回の主対角線・発展・未完成のプログラムは前提にしない。<a href="../../downloads/session-03/sudoku4.mzn" data-code-preview="../../previews/session-03/sudoku4.mzn.json">完成した数独モデル</a>も再配布するが、必修は手で追う作業であり、Python探索器の実装は発展である。</p>
+<p>説明・実演に50分、<a href="#演習">5. 演習</a>に45分、振り返りに5分を使う。必修1は15分、必修2は25分、残りは確認の目安とする。通常の演習に提出・宿題・完了報告はなく、教員の完了承認も待たない。全16マスを何度も転記せず、指定したマスと根拠を中心に記録してよい。</p>
+</section>
+<section id="問題" class="level2 sec-problem">
+<h2 class="sec-problem">1. 問題</h2>
+<p>第02回の盤面をもう一度使い、完成させるまでの途中に注目する。最初からある数字は確定しているが、空欄の数字はまだ分からない。それぞれに残せる候補を考えよう。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">盤面と条件</span> 4×4の各マスは1〜4とし、初期値を変えない。各行・各列、および行1〜2／3〜4と列1〜2／3〜4で区切る四つの2×2ブロックを、それぞれ全相異なりとする。点は空欄である。</p>
+<p><span class="math display">
+\begin{array}{cc|cc}
+1&amp;\cdot&amp;\cdot&amp;4\\
+\cdot&amp;4&amp;\cdot&amp;2\\\hline
+2&amp;\cdot&amp;4&amp;\cdot\\
+\cdot&amp;3&amp;\cdot&amp;1
+\end{array}
+</span></p>
+<p>この盤面について、確定した値から他の候補を除く過程を調べる。主対角線などの追加条件は使わない。</p>
+</div>
+<p>例えば1行2列に1を置くと、同じ行の1と重なるので不適合である。だから1を候補から除ける。一方、「まだ衝突を見つけていない数字」が、必ず完成解の一部になるとは限らない。</p>
+</section>
+<section id="定式化" class="level2 sec-model">
+<h2 class="sec-model">2. 定式化</h2>
+<p>完成盤面だけを変数で表すことに加えて、今回は途中の状態も表す。マスごとの候補集合と、その集合を更新する規則を決めれば、途中の計算を比較できる。</p>
+<section id="候補表と近隣マス" class="level3">
+<h3>候補表と近隣マス</h3>
+<p>マスの位置は上からr行目、左からc列目とし、組で書くときは <code>(r,c)</code> の順とする。その候補集合を <span class="math inline">D_{r,c}</span> と書く。集合の中の数字は「まだ除いていない候補」である。例えば <span class="math inline">\{1,3\}</span> は1か3、<span class="math inline">\{2\}</span> は2だけを表す。</p>
+<p>初期値があるマスは、その数字だけの一要素集合にする。空欄は <span class="math inline">\{1,2,3,4\}</span> から始める。16個の集合を並べた表が、いまの<strong>状態</strong>である。入力の0は空欄の印なので、候補に0は入れない。</p>
+<p>あるマスと同じ行・列・ブロックのどれかを共有する別のマスを、ここでは<strong>近隣マス</strong>と呼ぶ。自分自身は含めない。同じマスが行とブロックの両方で近隣になっても、同じ数字を二度除く必要はない。</p>
+</section>
+<section id="一巡の更新規則" class="level3">
+<h3>一巡の更新規則</h3>
+<p><strong>一斉更新</strong>では、全マスが同じ更新前の候補表を参照する。未確定マスから、その巡の開始時に一要素集合だった近隣マスの値を除き、別の表へ書く。すでに確定したマスは変えない。</p>
+<p>マスを一つの記号iで表すと、未確定マスへの規則は次のように書ける。<span class="math inline">\setminus</span> は集合から指定の要素を除く記号で、右辺の候補集合はいずれも更新前のものを指す。</p>
+<p><span class="math display">
+D_i&#39;=D_i\setminus\{v\mid j\text{ はiの近隣マス},\ D_j=\{v\}\}.
+</span></p>
+<p>この削減を<strong>伝播</strong>と呼ぶ。同じ巡で新しく確定した値は、次の巡から使う。手元で一マスずつすぐ反映する方法もあり得るが、この教材の途中表を比較するときは一斉更新に揃える。</p>
+<p>更新の前後に矛盾を調べる。候補が空集合 <span class="math inline">\varnothing</span> になるか、同じ行・列・ブロックに同じ値の確定マスが二つあれば矛盾である。候補が空でなくても、後者の衝突だけで止める。これは学習用の規則であり、Gecode内部の処理順を再現したものではない。</p>
+</section>
+</section>
+<section id="解説例" class="level2 sec-demo">
+<h2 class="sec-demo">3. 解説例</h2>
+<p>ここは教員が候補表を使って実演する。まず伝播だけで完成する例を追い、次に候補が残る別の盤面で場合分けを試す。更新前の表を残し、変更した値の根拠を指そう。</p>
+<section id="手順1-初期値からの削減" class="level3">
+<h3>手順1　初期値からの削減</h3>
+<p>1行2列では、同じ行から1・4、同じ列から4・3を除けるので2だけが残る。全マスを初期状態から一斉に更新すると、次の表になる。一要素集合は数字だけで略記する。</p>
+<p><span class="math display">
+\begin{array}{cc|cc}
+1&amp;2&amp;3&amp;4\\
+3&amp;4&amp;\{1,3\}&amp;2\\\hline
+2&amp;1&amp;4&amp;3\\
+4&amp;3&amp;2&amp;1
+\end{array}
+</span></p>
+<p>2行3列には1と3が残る。同じ行の2行1列はこの巡で新しく3になったため、まだ削除の根拠には使わない。<a href="../../downloads/session-03/demo-work.txt" data-code-preview="../../previews/session-03/demo-work.txt.json">初期表のメモ</a>と見比べ、どの表の数字を参照したか確かめよう。</p>
+</section>
+<section id="手順2-次の巡で使う値" class="level3">
+<h3>手順2　次の巡で使う値</h3>
+<p>第二巡は、いま作った表を更新前の状態とする。2行1列が3に確定しているので、同じ行の <span class="math inline">D_{2,3}=\{1,3\}</span> から3を除ける。結果は次の完成盤面になる。</p>
+<pre class="text"><code>1 2 3 4
+3 4 1 2
+2 1 4 3
+4 3 2 1</code></pre>
+<p>初期値が保たれ、各行・各列・四つのブロックに1〜4が揃っている。さらに更新しても変わらない。このように規則を適用しても状態が変わらない点を<strong>固定点</strong>と呼ぶ。今回の固定点は完成解だが、固定点がいつも完成するとは限らない。</p>
+</section>
+<section id="手順3-分岐前の保存" class="level3">
+<h3>手順3　分岐前の保存</h3>
+<p>次は初期配置を <code>0021 / 0000 / 0010 / 2100</code> に変える。0は空欄で、数独の基本条件は同じである。一巡後に得られる次の候補表は、繰り返しても変わらない。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>行＼列</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>{3,4}</td>
+<td>{3,4}</td>
+<td>{2}</td>
+<td>{1}</td>
+</tr>
+<tr>
+<td>2</td>
+<td>{1,3,4}</td>
+<td>{2,3,4}</td>
+<td>{3,4}</td>
+<td>{3,4}</td>
+</tr>
+<tr>
+<td>3</td>
+<td>{3,4}</td>
+<td>{3,4}</td>
+<td>{1}</td>
+<td>{2,3,4}</td>
+</tr>
+<tr>
+<td>4</td>
+<td>{2}</td>
+<td>{1}</td>
+<td>{3,4}</td>
+<td>{3,4}</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>この表を <span class="math inline">D^*</span> と呼び、16マスすべて保存する。<span class="math inline">A=x_{1,1}</span>、<span class="math inline">B=x_{1,2}</span>、<span class="math inline">C=x_{2,1}</span> と名付けよう。AとBの候補はともに <span class="math inline">\{3,4\}</span>、Cの候補は <span class="math inline">\{1,3,4\}</span> である。</p>
+<p>Cの候補から一つを選び、その値に固定した場合を調べる。これが<strong>場合分け</strong>であり、いまの候補から必然的に確定した値とは違う。保存表とは別の表に仮定を書けば、後で元へ戻せる。</p>
+</section>
+<section id="手順4-仮定と復元" class="level3">
+<h3>手順4　仮定と復元</h3>
+<p>C=3 と仮定して、一巡だけ更新しよう。A・BはCと同じ左上ブロックにあるので、どちらからも3を除く。その結果、同じ行の二マスが4になってしまう。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>段階</th>
+<th>Aの候補</th>
+<th>Bの候補</th>
+<th>Cの候補</th>
+<th>操作・根拠</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>保存した <span class="math inline">D^*</span></td>
+<td>{3,4}</td>
+<td>{3,4}</td>
+<td>{1,3,4}</td>
+<td>分岐前の状態</td>
+</tr>
+<tr>
+<td>仮定後</td>
+<td>{3,4}</td>
+<td>{3,4}</td>
+<td>{3}</td>
+<td>Cを3に決めて調べる</td>
+</tr>
+<tr>
+<td>一巡後</td>
+<td>{4}</td>
+<td>{4}</td>
+<td>{3}</td>
+<td>同じブロックの3を除く</td>
+</tr>
+<tr>
+<td>復元後</td>
+<td>{3,4}</td>
+<td>{3,4}</td>
+<td>{1,3,4}</td>
+<td>全16マスを保存表へ戻す</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>AとBの衝突が見つかった時点で、この枝は矛盾とする。空集合が出るまで更新する必要はない。矛盾したのは C=3 を加えた問題であり、まだ元の問題全体の解なしを示したわけではない。</p>
+<p>仮定を取り消すときは、Cだけでなく、仮定から派生した候補の削除も取り消す。このように枝から戻る操作を<strong>バックトラック</strong>と呼ぶ。表にはA・B・Cだけを抜き出したが、実際には他のマスにも削減が及ぶため、保存した <span class="math inline">D^*</span> 全体へ戻す。</p>
+<p>復元後に C=1 を仮定すると、Cだけが一要素になり、それ以外の候補は削れずに止まる。これは、選んだ規則でこれ以上削れないという意味である。完成解を得たことや、一意性を確認したことにはならない。</p>
+</section>
+</section>
+<section id="結果" class="level2 sec-result">
+<h2 class="sec-result">4. 結果</h2>
+<p>二つの盤面では、同じ規則を使っても到達する状態が違った。結果を判断するときは、候補の数だけでなく、衝突の有無と、どの仮定の下で調べたかを合わせて読む。</p>
+<section id="停止状態の読み分け" class="level3">
+<h3>停止状態の読み分け</h3>
+<p>候補の削減が止まったときは、まず矛盾がないかを確認する。そのうえで全マスが確定しているかを見る。この順序なら、数字がすべて埋まった不正な盤面を解と呼ばずに済む。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>状態</th>
+<th>言えること</th>
+<th>次の行動</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>空集合、または近隣の確定値が衝突</td>
+<td>今の入力・仮定では解なし</td>
+<td>仮定があれば元へ戻す</td>
+</tr>
+<tr>
+<td>全マス一要素で、基本条件も成立</td>
+<td>完成解が一つ得られた</td>
+<td>必要なら他の枝も調べる</td>
+</tr>
+<tr>
+<td>複数候補が残った固定点</td>
+<td>この規則では削減が止まった</td>
+<td>さらに場合分けや別の推論</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>有限個の候補を漏れなく場合分けすれば、残る解をすべて調べられる。伝播で除くのは、確定した近隣の値と衝突する候補なので、その状態の正しい解を失わない。枝を選ぶ際にも一つの候補だけで終わらず、必要な他の候補を調べることが大切である。</p>
+<p>MiniZincでも枝の結果を照合できる。<a href="../../downloads/session-03/sudoku4.mzn" data-code-preview="../../previews/session-03/sudoku4.mzn.json">完成モデル</a>と<a href="../../downloads/session-03/branch.dzn" data-code-preview="../../previews/session-03/branch.dzn.json">branch.dzn</a>を使い、<code class="sourceCode minizinc"><span class="kw">solve</span> <span class="kw">satisfy</span>;</code> の前へ <code class="sourceCode minizinc"><span class="kw">constraint</span> grid[<span class="dv">2</span>,<span class="dv">1</span>] <span class="op">=</span> <span class="dv">3</span>;</code> を加えると <code>UNSATISFIABLE</code> になる。その一行を <code class="sourceCode minizinc"><span class="kw">constraint</span> grid[<span class="dv">2</span>,<span class="dv">1</span>] <span class="op">=</span> <span class="dv">1</span>;</code> に置き換えると解が得られる。二つの仮定を同時に残さない。</p>
+<p>元の分岐用盤面には4解あり、いずれもCは1である。これは全解を調べた結果であって、手元の固定点だけから読み取れる個数ではない。実行操作と候補表の読み方は<a href="../../guides/propagation-check/index.html">確認の手引き</a>にある。</p>
+</section>
+<section id="推論の強さ" class="level3">
+<h3>推論の強さ</h3>
+<p>確定した値からの削減以外にも、条件から分かることがある。ここでは盤面から離れ、互いに異なる三変数U・V・Wを考えよう。候補は次の三つである。</p>
+<p><span class="math display">D_U=\{1,2\},\qquad D_V=\{1,2\},\qquad D_W=\{1,2,3\}.</span></p>
+<p>一要素集合がないので、今回の規則では何も除けない。しかしUとVは異なる値であり、二つで1と2を使い切る。したがってWは3でなければならない。このように、候補をまとめて見ることで得られる結論もある。</p>
+<p>全相異なりは、全ペアの不等号と同じ完成代入を許す。一方、それを処理するときに使う推論の強さまで同じとは限らない。特定のソルバーが必ずこの強い推論を行うと決めつけず、条件の意味と、削減の方法を分けて考えよう。</p>
+</section>
+</section>
+<section id="演習" class="level2 sec-exercise">
+<h2 class="sec-exercise">5. 演習</h2>
+<p>ここからは、指定した候補と根拠を各自で記録する。別の巡の表を混ぜないよう、更新前と更新後を分けよう。途中で迷ったら<a href="#一巡の更新規則">更新規則</a>と<a href="#解説例">解説例</a>へ戻れる。</p>
+<section id="必修1-別盤面の候補削減" class="level3">
+<h3>必修1　別盤面の候補削減</h3>
+<p>最初は、解説と同じ一斉更新を別の初期配置に適用する。第一巡と第二巡で使える情報の違いに注目し、候補を消すたびに根拠になった確定マスを一つ挙げよう。</p>
+<section id="問題-1" class="level4">
+<h4>問題</h4>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 各マスは1〜4、0は空欄、0以外の初期値は保持する。各行・各列と、行1〜2／3〜4・列1〜2／3〜4で区切る四つの2×2ブロックでは、それぞれ1〜4を一度ずつ使う。</p>
+<p><span class="math display">
+\begin{array}{cc|cc}
+4&amp;3&amp;0&amp;0\\
+2&amp;0&amp;0&amp;3\\\hline
+0&amp;0&amp;1&amp;0\\
+0&amp;0&amp;0&amp;4
+\end{array}
+</span></p>
+<p>空欄の候補は初めに{1,2,3,4}、初期値は一要素集合とする。行は上から、列は左から1〜4と数える。候補が一つだけのマスを確定マスと呼び、近隣とは同じ行・列・ブロックのいずれかを共有する別のマスを指す。各巡の開始時に確定した近隣の値を、未確定マスだけから一斉に除く。同じ巡で新しく確定した値は次の巡から使い、確定済みのマスは変えない。自分自身は近隣に含めない。空集合か確定値同士の衝突があれば矛盾として止める。</p>
+</div>
+</section>
+<section id="作業" class="level4">
+<h4>作業</h4>
+<p><a href="../../downloads/session-03/practice-work.txt" data-code-preview="../../previews/session-03/practice-work.txt.json">practice-work.txt</a>には初期候補表がある。次の二作業を進め、特に1行4列と4行1列を追う。他のマスは、削除の根拠を得るために必要な範囲から確認してよい。</p>
+<figure class="code"><figcaption>practice-work.txt</figcaption>
+<pre class="text"><code>TODO(作業1): 第一巡の指定マスの候補と、削除の根拠を記す。
+TODO(作業2): 第二巡で使える確定値と、削除後の候補を記す。</code></pre>
+</figure>
+<p>作業1では初期値だけを根拠にし、作業2では第一巡で新しく確定した値も使う。最後に完成盤面の初期値・行・列・ブロックを照合する。<a href="../../downloads/session-03/practice.dzn" data-code-preview="../../previews/session-03/practice.dzn.json">practice.dzn</a>を使った実行確認もできるが、出力を得ることだけで途中の根拠の説明を代用しない。</p>
+</section>
+<section id="自己確認" class="level4">
+<h4>自己確認</h4>
+<p>まず、各候補を除いた根拠が同じ行・列・ブロックにあり、更新前の表で確定していたかを確かめる。第一巡と第二巡の指定マスを記録してから、この問題の末尾にある確認例を開き、候補と根拠を照合しよう。</p>
+<p>一巡で完成した場合は、同じ巡の新しい確定値を先取りしていないかを確認する。最終盤面が合っていても、途中表が異なるときは、どの巡の値を使ったかを見直す。</p>
+<details class="hint"><summary>ヒントを開く：根拠を読む表</summary><div class="hint-body">
+<p>使いたい確定値へ、何巡目で確定したかを書き添える。その値が今回の更新中に初めて決まったものなら、削除の根拠として使えるのは次の巡からである。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：確認例・指定マスの変化</summary><div class="hint-body">
+<p>第一巡の1行4列は{1,2}、4行1列は{1,3}である。第一巡で確定した1行3列の2と3行1列の3を、第二巡の削除の根拠として使うと、どちらも{1}になる。完成盤面は次のとおり。</p>
+<pre class="text"><code>4 3 2 1
+2 1 4 3
+3 4 1 2
+1 2 3 4</code></pre>
+<p>全16マスの途中表も見たい場合は<a href="../../guides/propagation-check/index.html#必修1の候補表">巡ごとの確認表</a>を参照できる。</p>
+</div></details>
+</section>
+</section>
+<section id="必修2-別の枝と復元" class="level3">
+<h3>必修2　別の枝と復元</h3>
+<p>候補が複数残った数独で、一つの値を仮定して矛盾するかを調べる。矛盾したら仮定前へ戻し、別の値を試す。分岐前の表は完成したものを配るので、前の演習の候補表は必要ない。仮定・派生した削除・復元を分けて記録しよう。</p>
+<section id="問題-2" class="level4">
+<h4>問題</h4>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と開始表</span> 初期配置は <code>0021 / 0000 / 0010 / 2100</code>。<code>/</code> は改行を表し、行は上から、列は左から1〜4と数える。各マスは1〜4、0は空欄、0以外の初期値を保持する。各行・各列・四つの2×2ブロックをそれぞれ全相異なりとする。ブロックは行1〜2／3〜4と列1〜2／3〜4で区切る。</p>
+<p>近隣は同じ行・列・ブロックの別マスとし、一巡開始時の確定値を未確定マスから一斉に除く。空集合、または近隣の確定値の衝突で矛盾とする。候補集合はそのマスにまだ残している数字を表し、{3,4}なら3または4、{2}なら2に確定している。新しく確定した値を使うのは次の巡からである。次の表は、この更新を繰り返しても変わらなくなった固定点で、<span class="math inline">D^*</span> と名付けて開始表とする。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>行＼列</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>{3,4}</td>
+<td>{3,4}</td>
+<td>{2}</td>
+<td>{1}</td>
+</tr>
+<tr>
+<td>2</td>
+<td>{1,3,4}</td>
+<td>{2,3,4}</td>
+<td>{3,4}</td>
+<td>{3,4}</td>
+</tr>
+<tr>
+<td>3</td>
+<td>{3,4}</td>
+<td>{3,4}</td>
+<td>{1}</td>
+<td>{2,3,4}</td>
+</tr>
+<tr>
+<td>4</td>
+<td>{2}</td>
+<td>{1}</td>
+<td>{3,4}</td>
+<td>{3,4}</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Aは1行1列、Bは1行2列、Cは2行1列のマスの値とする。C=4を試し、元へ戻してC=1を試す。</p>
+</div>
+</section>
+<section id="作業-1" class="level4">
+<h4>作業</h4>
+<p><a href="../../downloads/session-03/branch-work.txt" data-code-preview="../../previews/session-03/branch-work.txt.json">branch-work.txt</a>に保存済みの <span class="math inline">D^*</span> と記入欄がある。更新後の表で保存表を上書きしないようにし、二つの枝を同じ出発点から調べよう。</p>
+<figure class="code"><figcaption>branch-work.txt</figcaption>
+<pre class="text"><code>TODO(作業1): C=4を仮定し、A・Bの変化と矛盾の根拠を記す。
+TODO(作業2): D*全体へ戻し、C=1を仮定したときの状態を記す。</code></pre>
+</figure>
+<p>作業1では、A・Bの候補がどう変わり、どの重複禁止に反するかを記す。作業2では復元する範囲を説明し、C=1の枝に複数候補が残るマスを一つ挙げる。その状態から分かることと、まだ分からないことを分けよう。</p>
+</section>
+<section id="自己確認-1" class="level4">
+<h4>自己確認</h4>
+<p>C=4の枝では、更新後のA・Bが同じ制約を共有することを確認し、その値の組が許されるかを判断する。復元後は保存したD*と16集合を照合し、仮定から派生した削除を残していないか確かめよう。</p>
+<p>C=1の枝については、矛盾・完成・未確定の固定点のどれに当たるかを自分の表から判断する。その後、この問題の末尾の確認例で、候補・根拠・状態の分類を照合する。</p>
+<details class="hint"><summary>ヒントを開く：戻すのは全状態</summary><div class="hint-body">
+<p>仮定したCだけでなく、その値を根拠に候補を除いたマスにも印を付ける。保存した16集合の表をまるごと使って、C=1の枝を始めよう。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：確認例・矛盾と未確定</summary><div class="hint-body">
+<p>C=4の枝は一巡後にA・Bがともに{3}となり、同じ行の重複で矛盾する。Cだけでなく全16集合を開始表D*へ戻す。</p>
+<p>C=1の枝は、開始表のCだけを{1}に変えた状態から削減が進まない。A・Bには{3,4}が残る。これは未確定の固定点で、完成解が得られたという意味ではない。全マスの仮定後の表は<a href="../../guides/propagation-check/index.html#必修2の復元">復元の確認表</a>にもある。</p>
+</div></details>
+</section>
+</section>
+</section>
+<section id="発展" class="level2 sec-advanced">
+<h2 class="sec-advanced">6. 発展</h2>
+<p>候補をまとめた推論、完成盤面の検査、全解探索の実装へ進める。三問はそれぞれ必要な入力と出発点を持つ。プログラムを作る場合も、前の発展の完成を必須にしない。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>問題</th>
+<th>深める内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../advanced/propagation-challenges/index.html#sets">発展1　候補集合をまとめた推論</a></td>
+<td>値の個数からの削減と矛盾</td>
+</tr>
+<tr>
+<td><a href="../../advanced/propagation-challenges/index.html#check">発展2　完成盤面の検査</a></td>
+<td>条件別の成立・拒否をPythonで判定</td>
+</tr>
+<tr>
+<td><a href="../../advanced/propagation-challenges/index.html#search">発展3　伝播と全解探索</a></td>
+<td>状態のコピー、再帰、解集合、探索方針の比較</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="振り返り" class="level2 sec-review">
+<h2 class="sec-review">7. 振り返り</h2>
+<p>更新前の表と、仮定する前の保存表を見ながら、次の問いに答えよう。単に「戻す」と言うだけでなく、どの変更を取り消すかをマスの名前で説明してみる。</p>
+<ol type="1">
+<li>第一巡で新しく確定した値を、その巡の別の削除に使わないのはなぜか。</li>
+<li>候補が空集合でなくても、矛盾しているのはどのような状態か。</li>
+<li>C=4を取り消すとき、Cだけを戻してはいけないのはなぜか。</li>
+</ol>
+<p>第04回は、追加条件が解の集合をどう変えるかを調べる。基本の数独モデルを改めて配るので、Pythonの探索器や強い伝播を完成させている必要はない。</p>
+</section>
+<section id="参照" class="level2 unnumbered sec-reference">
+<h2 class="unnumbered sec-reference">参照</h2>
+<p>途中の表が合わないときは、同じ初期配置と同じ更新規則を使っているかを先に確認する。実行結果が必要な場合には、配布された完成モデルと確認の手引きを使える。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>用語・資料</th>
+<th>意味・用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>候補集合</td>
+<td>そのマスからまだ除いていない値の集合</td>
+</tr>
+<tr>
+<td>伝播</td>
+<td>制約と確定値を根拠に候補を減らすこと</td>
+</tr>
+<tr>
+<td>固定点</td>
+<td>選んだ更新規則を適用しても変わらない状態</td>
+</tr>
+<tr>
+<td>場合分け／バックトラック</td>
+<td>候補を仮定して調べる／派生した変更も含めて戻る</td>
+</tr>
+<tr>
+<td><a href="../../guides/propagation-check/index.html">候補表と実行の確認</a></td>
+<td>巡ごとの表、Python・MiniZincの操作</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-03/propagation.py" data-code-preview="../../previews/session-03/propagation.py.json">学習用の伝播実装</a></td>
+<td>発展3へ提供する完成した規則</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-03/sudoku4.mzn" data-code-preview="../../previews/session-03/sudoku4.mzn.json">基本数独モデル</a></td>
+<td>解説・演習の結果の照合</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>実際の有限領域ソルバーにおける伝播・探索の概説は<a href="https://docs.minizinc.dev/en/stable/mzn_search.html#finite-domain-search">MiniZinc Handbook</a>を参照できる。この回の候補表は学習用規則の結果であり、そのソルバーの内部ログではない。</p>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../sessions/02-minizinc/index.html">← 第02回</a> · <a href="../../index.html">講義一覧</a> · <a href="../../sessions/04-rules/index.html">第04回 →</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

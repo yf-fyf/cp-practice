@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第04回　ルールを制約にして、パズルを作る - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+<script defer="" src="../../assets/katex/katex.min.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+</script>
+<link rel="stylesheet" href="../../assets/katex/katex.min.css" />
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 通常講義</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第04回　ルールを制約にして、パズルを作る</h1>
+    <nav class="session-nav" aria-label="第04回の講義資料"><a href="../../sessions/04-rules/index.html" aria-current="page">通常講義</a><a href="../../advanced/puzzle-challenges/index.html">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#目標">目標</a>
+      </li>
+      <li><a href="#問題">1. 問題</a>
+      </li>
+      <li><a href="#定式化">2. 定式化</a>
+      <ul>
+      <li><a href="#入力と未知の値">入力と未知の値</a></li>
+      <li><a href="#三項の和と等式">三項の和と等式</a></li>
+      </ul>
+      </li>
+      <li><a href="#解説例">3. 解説例</a>
+      <ul>
+      <li><a href="#手順1-基本条件の再開">手順1　基本条件の再開</a></li>
+      <li><a href="#手順2-合計条件の追加">手順2　合計条件の追加</a></li>
+      <li><a href="#手順3-入力の交換">手順3　入力の交換</a></li>
+      </ul>
+      </li>
+      <li><a href="#結果">4. 結果</a>
+      <ul>
+      <li><a href="#固定盤面による確認">固定盤面による確認</a></li>
+      <li><a href="#解集合と冗長な条件">解集合と冗長な条件</a></li>
+      </ul>
+      </li>
+      <li><a href="#演習">5. 演習</a>
+      <ul>
+      <li><a href="#必修1-別の三マスの合計">必修1　別の三マスの合計</a></li>
+      <li><a href="#必修2-二つの盤面を区別するヒント">必修2　二つの盤面を区別するヒント</a></li>
+      </ul>
+      </li>
+      <li><a href="#発展">6. 発展</a>
+      </li>
+      <li><a href="#振り返り">7. 振り返り</a>
+      </li>
+      <li><a href="#参照">参照</a>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p>4×4数独に「この三マスの合計はいくつ」というヒントを加える。与えられたルールを式に写すところから始め、残したい完成盤面と除きたい完成盤面を見比べて、ヒントの対象を自分で選ぶ。</p>
+</header>
+<section id="目標" class="level2 unnumbered sec-goal">
+<h2 class="unnumbered sec-goal">目標</h2>
+<p>今回は、書いた式を実行するだけでなく、その式が何を通し、何を除くかを確かめる。問題文・添字・出力を対応させ、次の三つを説明できるようになろう。</p>
+<ul>
+<li>対象のマス・演算・比較を分け、三マスの合計条件を書ける。</li>
+<li>通るべき盤面と拒否すべき盤面を使って、条件の過不足を調べられる。</li>
+<li>二つの完成盤面を区別する合計ヒントを選べる。</li>
+</ul>
+<p>第02回の配列・入力・決定変数を使う。基本条件が完成した<a href="../../downloads/session-04/sudoku4.mzn" data-code-preview="../../previews/session-04/sudoku4.mzn.json">数独モデル</a>と、各演習の出発ファイルを再配布するので、前の演習や発展の完成は不要である。第03回で見た「解なし」と「まだ決まらない」の違いも振り返る。操作は<a href="../../guides/puzzle-check/index.html">実行と確認の手引き</a>で授業内に確認できる。</p>
+<p>説明・実演に50分、<a href="#演習">5. 演習</a>に45分、振り返りに5分を使う。必修1は15分、必修2は25分、残りは確認の目安である。通常演習の提出・宿題・完了報告はなく、教員の完了承認も待たない。発展は関心と進度に合わせて選ぶ。</p>
+</section>
+<section id="問題" class="level2 sec-problem">
+<h2 class="sec-problem">1. 問題</h2>
+<p>基本の数独には複数の完成盤面がある。ここへ数字を直接書き込む代わりに、一部のマスの合計を知らせる。まず、ヒントが指定する位置と、そこで満たす条件を分けて確認しよう。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 初期値のない4×4数独について、次の条件を満たす完成盤面を一つ求める。</p>
+<ul>
+<li>各マスに1〜4を入れる。各行・各列・四つの2×2ブロックでは、1〜4が一度ずつ現れる。</li>
+<li>ブロックは行1〜2／3〜4と列1〜2／3〜4を組み合わせた四領域とする。</li>
+<li>三マス <span class="math inline">(1,2),(1,3),(2,3)</span> の合計は6とする。位置は上からの行番号、左からの列番号で表す。</li>
+<li>三マスの数字に、基本条件以外の重複禁止は課さない。</li>
+</ul>
+</div>
+<p>合計の対象は次の図のA・B・Cである。色は「足す対象」を表し、同じ色のマスを必ず異なる数字にするという新しいルールは表さない。基本の行・列・ブロックの条件は、そのまま残る。</p>
+<figure>
+<img src="../../figures/session-04/puzzle-sum-demo.svg" alt="対象A=(1,2)、B=(1,3)、C=(2,3)の合計を6とする" />
+<figcaption aria-hidden="true">対象A=(1,2)、B=(1,3)、C=(2,3)の合計を6とする</figcaption>
+</figure>
+</section>
+<section id="定式化" class="level2 sec-model">
+<h2 class="sec-model">2. 定式化</h2>
+<p>数独の16個の決定変数は変えずに、一つの等式を加える。新しいルールを加えるたびに基本条件を書き直すのではなく、どの条件を残し、どの条件を追加するかを意識しよう。</p>
+<section id="入力と未知の値" class="level3">
+<h3>入力と未知の値</h3>
+<p>マスの値を <span class="math inline">x_{r,c}</span> とする。<span class="math inline">r,c</span> は1〜4の行・列番号であり、<span class="math inline">x_{r,c}</span> の定義域も1〜4である。入力 <span class="math inline">g_{r,c}</span> の0は空欄、1〜4は固定する初期値を表す。</p>
+<p>指定合計 <span class="math inline">t</span> は問題として与える入力である。今回の解説例では <span class="math inline">t=6</span>。合計値そのものを自由な未知数にすると、どんな完成盤面でも、その三マスを足した値を選べてしまう。盤面を絞るヒントにするには、先に指定された数と比べる必要がある。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>役割</th>
+<th>MiniZincの名前</th>
+<th>今回の指定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>初期値の入力</td>
+<td><code class="sourceCode minizinc">given[r,c]</code></td>
+<td>空盤面ならすべて0</td>
+</tr>
+<tr>
+<td>指定合計の入力</td>
+<td><code class="sourceCode minizinc">clue_total</code></td>
+<td>解説例では6</td>
+</tr>
+<tr>
+<td>決定変数</td>
+<td><code class="sourceCode minizinc">grid[r,c]</code></td>
+<td>各マス1〜4</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="三項の和と等式" class="level3">
+<h3>三項の和と等式</h3>
+<p>対象の位置を固定し、その位置の値を足してから指定合計と等しいことを課す。数式では次の一行になる。添字の数字そのものを足す式とは区別しよう。</p>
+<p><span class="math display">x_{1,2}+x_{1,3}+x_{2,3}=t.</span></p>
+<p>式は、対象が三マス、演算が足し算、比較が等号、という三部分からなる。対象を変えれば別のルールになり、<code class="sourceCode minizinc"><span class="op">=</span></code> を「以下」に変えても別のルールになる。実行できる構文であっても、問題の意味が同じとは限らない。</p>
+<p>基本条件から、各行・各列・四つのブロックの全相異なりと、初期値のあるマスの固定を引き継ぐ。合計対象の三マスに対する全相異なりは新設しない。後の必修1では、同じ数字を含む三マスが正しい合計を満たす。</p>
+</section>
+</section>
+<section id="解説例" class="level2 sec-demo">
+<h2 class="sec-demo">3. 解説例</h2>
+<p>ここは教員が、基本モデルへ合計条件を加えて実演する。ファイル内の手順1〜3と対応させて読み、未知の盤面を求める実行と、完成盤面を固定して検査する実行を使い分ける。</p>
+<section id="手順1-基本条件の再開" class="level3">
+<h3>手順1　基本条件の再開</h3>
+<p><a href="../../downloads/session-04/sum-demo.mzn" data-code-preview="../../previews/session-04/sum-demo.mzn.json">sum-demo.mzn</a>を開く。基本の数独に、指定合計の宣言と一つの追加制約を加えた完成例である。<code>given</code>・<code>grid</code> と行・列・ブロックの条件は、第02回で読んだものと同じ意味を持つ。</p>
+<figure class="code"><figcaption>sum-demo.mzn</figcaption>
+<div class="sourceCode" id="cb1"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span>: clue_total;</span></code></pre></div>
+</figure>
+<p><code class="sourceCode minizinc"><span class="dt">int</span></code> だけなので、この値は実行時に与える。<a href="../../downloads/session-04/demo.dzn" data-code-preview="../../previews/session-04/demo.dzn.json">demo.dzn</a>には、すべて0の <code>given</code> と <code class="sourceCode minizinc">clue_total <span class="op">=</span> <span class="dv">6</span>;</code> がある。対角線や不等号など、前の発展で加えた条件はこのモデルには含まれない。</p>
+</section>
+<section id="手順2-合計条件の追加" class="level3">
+<h3>手順2　合計条件の追加</h3>
+<p>MiniZincの <code>sum</code> は、渡した配列の要素を足した値を表す。三つのマスを角括弧で並べてから、その合計が入力と等しいことを <code class="sourceCode minizinc"><span class="kw">constraint</span></code> で指定する。</p>
+<figure class="code"><figcaption>sum-demo.mzn</figcaption>
+<div class="sourceCode" id="cb2"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">sum</span>([grid[<span class="dv">1</span>,<span class="dv">2</span>], grid[<span class="dv">1</span>,<span class="dv">3</span>], grid[<span class="dv">2</span>,<span class="dv">3</span>]]) <span class="op">=</span> clue_total;</span></code></pre></div>
+</figure>
+<p>これは <code class="sourceCode minizinc">grid[<span class="dv">1</span>,<span class="dv">2</span>] <span class="op">+</span> grid[<span class="dv">1</span>,<span class="dv">3</span>] <span class="op">+</span> grid[<span class="dv">2</span>,<span class="dv">3</span>] <span class="op">=</span> clue_total</code> と同じ等式である。<code>sum</code> だけでは条件ではなく数値の式なので、何とどう比較するかまで書く。今回は指定された三マスをそのまま列挙すればよい。</p>
+</section>
+<section id="手順3-入力の交換" class="level3">
+<h3>手順3　入力の交換</h3>
+<p>モデルと <code>demo.dzn</code> を組み合わせ、Gecodeで実行する。ファイルを分けずに試す場合は、完成した<a href="../../downloads/session-04/sum-demo-inline.mzn" data-code-preview="../../previews/session-04/sum-demo-inline.mzn.json">一ファイル版</a>を使える。どちらも同じ問題を解く。</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode sum-demo.mzn demo.dzn</span></code></pre></div>
+<p>出力された盤面の行・列・ブロックを確認し、対象の三マスを自分でも足す。続いて、<a href="../../downloads/session-04/P-demo.dzn" data-code-preview="../../previews/session-04/P-demo.dzn.json">Pを固定する入力</a>へ交換する。この解説例の入力ファイルは一度に一つを指定し、空盤面のデータへ固定盤面のデータを重ねて定義しない。発展2では、異なる入力名を与える二ファイルを併用する場合がある。</p>
+<p>Pの16マスを固定した場合、ソルバーが別の盤面へ逃げることはできない。その盤面が条件を満たすかを調べる検査になる。入力だけを交換することで、モデルの同じ追加制約を確かめられる。</p>
+</section>
+</section>
+<section id="結果" class="level2 sec-result">
+<h2 class="sec-result">4. 結果</h2>
+<p>一つの解が出たときに分かるのは、その出力がモデルの条件を満たしたことだ。モデルが問題文と同じ意味かを調べるには、通る例だけでなく、拒否するべき例も比較する必要がある。</p>
+<section id="固定盤面による確認" class="level3">
+<h3>固定盤面による確認</h3>
+<p>次は解説例を満たす完成盤面Pである。空盤面を解いたときの出力がPと違っていても、基本条件と三マスの合計を満たせば正しい。解の出る順序は指定していない。</p>
+<p><span class="math display">P=\begin{array}{cc|cc}1&amp;2&amp;3&amp;4\\3&amp;4&amp;1&amp;2\\\hline2&amp;1&amp;4&amp;3\\4&amp;3&amp;2&amp;1\end{array}.</span></p>
+<p>Pでは対象の値が2・3・1なので、合計は6になる。同じPを固定したまま、指定合計だけを変えると、等号の両側が一致するかを確かめられる。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>固定盤面</th>
+<th style="text-align: right;">指定合計</th>
+<th>正しい結果</th>
+<th>見分ける誤り</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P</td>
+<td style="text-align: right;">6</td>
+<td>Pを受理</td>
+<td>条件の追加し過ぎ</td>
+</tr>
+<tr>
+<td>P</td>
+<td style="text-align: right;">5</td>
+<td>解なし</td>
+<td><code class="sourceCode minizinc"><span class="op">&gt;=</span></code> にしている</td>
+</tr>
+<tr>
+<td>P</td>
+<td style="text-align: right;">7</td>
+<td>解なし</td>
+<td><code class="sourceCode minizinc"><span class="op">&lt;=</span></code> にしている</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><a href="../../downloads/session-04/P-demo-low.dzn" data-code-preview="../../previews/session-04/P-demo-low.dzn.json">合計5の入力</a>・<a href="../../downloads/session-04/P-demo-high.dzn" data-code-preview="../../previews/session-04/P-demo-high.dzn.json">合計7の入力</a>を使う。例えば <code class="sourceCode minizinc"><span class="op">&lt;=</span></code> では、合計6のPを指定合計7でも通してしまう。両側の誤りを分けるため、5と7をそれぞれ試す。</p>
+<p>これらの確認を通過しても、すべての入力で正しいという証明にはならない。対象の位置が誤っていても、たまたま同じ合計になる盤面はある。式の添字を問題文と照合することと、実行による検査の両方を使おう。</p>
+</section>
+<section id="解集合と冗長な条件" class="level3">
+<h3>解集合と冗長な条件</h3>
+<p>基本の数独を満たす盤面すべてを集めたものが解集合である。初期値のない4×4数独は288解で、解説例の合計条件を加えると48解になる。一つの合計ヒントでは、Pだけには決まらない。</p>
+<figure>
+<img src="../../figures/session-04/solution-sets.svg" alt="基本の288解の内側に合計6を満たす48解がある。行和10の追加では288解すべてが残る" />
+<figcaption aria-hidden="true">基本の288解の内側に合計6を満たす48解がある。行和10の追加では288解すべてが残る</figcaption>
+</figure>
+<p>基本条件を保ったまま追加条件を課すと、残る解は元の解集合の一部になる。もともと違反していた盤面が、新しい条件の追加によって正しい解に変わることはない。</p>
+<p>ただし、追加すると必ず解が減るわけではない。基本数独の各行は1〜4を一度ずつ使うので、すでに合計が10である。「各行の和は10」を足しても、288解すべてが残る。このように、他の条件からすでに成り立つ条件を<strong>冗長な制約</strong>と呼ぶ。</p>
+<p>冗長かどうかは、残る解の集合についての性質である。処理が必ず速くなるという意味ではない。また、行和10だけで行の全相異なりを置き換えることもできない。和が10でも1・1・4・4のような重複はあり得るからである。<a href="#演習">演習</a>では、条件を残したまま合計の対象を変える。</p>
+</section>
+</section>
+<section id="演習" class="level2 sec-exercise">
+<h2 class="sec-exercise">5. 演習</h2>
+<p>まず指定された三マスの合計を書き、次に自分で三マスを選ぶ。どちらも基本条件が完成した別々の出発ファイルを使う。前の合計条件を残したまま書き足さないよう、対象の位置を確認してから始めよう。</p>
+<section id="必修1-別の三マスの合計" class="level3">
+<h3>必修1　別の三マスの合計</h3>
+<p>解説例と同じ書き方で、対象だけを別の三マスに変える。入力の合計値を交換して検査するところまで行い、意図したルールとコードが対応しているかを確かめよう。</p>
+<section id="問題-1" class="level4">
+<h4>問題</h4>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 4×4の各マスに1〜4を入れ、各行・各列・四つの2×2ブロックで1〜4を一度ずつ使う。ブロックは行1〜2／3〜4と列1〜2／3〜4を組み合わせた四領域。初期値がある場合は保持する。</p>
+<p>追加する条件は、<span class="math inline">(2,2),(3,2),(3,3)</span> の合計9だけとする。解説例の合計条件は引き継がず、この三マスへの追加の重複禁止も課さない。まず初期値なしで解く。</p>
+<p>検査用の完成盤面は次のPを使う。</p>
+<p><span class="math display">P=\begin{array}{cc|cc}1&amp;2&amp;3&amp;4\\3&amp;4&amp;1&amp;2\\\hline2&amp;1&amp;4&amp;3\\4&amp;3&amp;2&amp;1\end{array}.</span></p>
+</div>
+</section>
+<section id="作業" class="level4">
+<h4>作業</h4>
+<p>位置 <code>(r,c)</code> は上からr行目・左からc列目で、行・列は1〜4とする。<code class="sourceCode minizinc">grid[r,c]</code> はそのマスの解の数字、<code class="sourceCode minizinc">given[r,c]</code> は初期値（0なら空欄）、<code class="sourceCode minizinc">clue_total</code> は指定合計を表す。</p>
+<p><a href="../../downloads/session-04/sum-start.mzn" data-code-preview="../../previews/session-04/sum-start.mzn.json">sum-start.mzn</a>を自分の作業用に保存する。基本条件・入力宣言・出力は用意してある。追加するのは一つの等式であり、<code>grid</code> の値をPに直接固定する制約ではない。</p>
+<figure class="code"><figcaption>sum-start.mzn</figcaption>
+<div class="sourceCode" id="cb4"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業1): 指定された三マスを選び、合計の等式を書く。</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業2): P固定と合計8・10の入力で受理・拒否を確かめる。</span></span></code></pre></div>
+</figure>
+<ol type="1">
+<li><strong>作業1：</strong> <code>sum</code> は配列に並べた値を足す。対象の三マスをその配列へ並べ、<code class="sourceCode minizinc">clue_total</code> と等しい制約を書く。初期値は全マス0、指定合計は9の<a href="../../downloads/session-04/practice.dzn" data-code-preview="../../previews/session-04/practice.dzn.json">practice.dzn</a>で実行し、出力の合計を確かめる。</li>
+<li><strong>作業2：</strong> <a href="../../downloads/session-04/P-practice.dzn" data-code-preview="../../previews/session-04/P-practice.dzn.json">P・合計9</a>、<a href="../../downloads/session-04/P-practice-low.dzn" data-code-preview="../../previews/session-04/P-practice-low.dzn.json">P・合計8</a>、<a href="../../downloads/session-04/P-practice-high.dzn" data-code-preview="../../previews/session-04/P-practice-high.dzn.json">P・合計10</a>へ一つずつ交換する。いずれも <code>given</code> の全16マスに問題のPを入れ、<code class="sourceCode minizinc">clue_total</code> だけを9・8・10へ変えた入力である。モデルは変えず、受理する場合と解なしになる場合を記録する。</li>
+</ol>
+</section>
+<section id="自己確認" class="level4">
+<h4>自己確認</h4>
+<p>Pの対象値は4・1・4で、合計は9になる。P固定では9を受理し、8と10を拒否できればよい。二つの4は異なる行・列・基本ブロックにあるため、この問題の重複禁止には違反しない。</p>
+<p>空盤面では複数の答えがあり、全列挙すると60解になる。個数の列挙は操作に余裕がある場合の確認でよい。まず一つの出力を足し、Pを固定する三つの検査と式の添字を確かめる。<a href="../../guides/puzzle-check/index.html">確認手引き</a>には対象値の合計がずれた別の完成盤面もある。</p>
+<details class="hint"><summary>ヒントを開く：二つの4と対象の範囲</summary><div class="hint-body">
+<p>対象位置をPの上で一つずつ指す。<code class="sourceCode minizinc">grid[<span class="dv">2</span>,<span class="dv">2</span>]</code> の4と <code class="sourceCode minizinc">grid[<span class="dv">3</span>,<span class="dv">3</span>]</code> の4は、同じ行にも列にも基本ブロックにもいない。<code>sum</code> の対象であることを理由に <code>alldifferent</code> を加えると、通るべきPを拒否してしまう。</p>
+</div></details>
+</section>
+</section>
+<section id="必修2-二つの盤面を区別するヒント" class="level3">
+<h3>必修2　二つの盤面を区別するヒント</h3>
+<p>ここでは、式の対象となる位置を自分で決める。PとQの値を比較し、三マスを足したときに差が残る選び方を探そう。ルールの種類は合計の等式一つに固定する。</p>
+<section id="問題-2" class="level4">
+<h4>問題</h4>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 4×4の各マスに1〜4を入れる。各行・各列・四つの2×2ブロックで1〜4を一度ずつ使い、初期値があれば保持する。ブロックは行1〜2／3〜4と列1〜2／3〜4の組合せとする。</p>
+<p>異なる三マスを選び、その合計を指定するヒントを一つ作る。三マスは隣接しなくてもよく、同じ数字を含んでもよい。下のPを受理し、Qを拒否することを求める。</p>
+<p><span class="math display">P=\begin{array}{cc|cc}1&amp;2&amp;3&amp;4\\3&amp;4&amp;1&amp;2\\\hline2&amp;1&amp;4&amp;3\\4&amp;3&amp;2&amp;1\end{array},\qquad
+Q=\begin{array}{cc|cc}1&amp;2&amp;3&amp;4\\3&amp;4&amp;2&amp;1\\\hline2&amp;1&amp;4&amp;3\\4&amp;3&amp;1&amp;2\end{array}.</span></p>
+<p>基本条件以外に加えてよいのは、この三マスの合計条件だけ。解説例・必修1の合計条件は引き継がない。Pへの直接固定では代替できない。Pが唯一の解になることは要求しない。</p>
+</div>
+</section>
+<section id="作業-1" class="level4">
+<h4>作業</h4>
+<p>位置 <code>(r,c)</code> は上からr行目・左からc列目で、行・列は1〜4とする。<code class="sourceCode minizinc">grid[r,c]</code> はそのマスの解の数字、<code class="sourceCode minizinc">given[r,c]</code> は初期値（0なら空欄）、<code class="sourceCode minizinc">clue_total</code> は指定合計を表す。</p>
+<p><a href="../../downloads/session-04/design-start.mzn" data-code-preview="../../previews/session-04/design-start.mzn.json">design-start.mzn</a>を使う。三マスを決めたらPでの合計を入力の値としてモデル内へ書く。ここでは固定した合計を使って、P・Q・空盤面の入力を交換する。</p>
+<figure class="code"><figcaption>design-start.mzn</figcaption>
+<div class="sourceCode" id="cb5"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span>: clue_total <span class="op">=</span> <span class="dv">0</span>; <span class="co">% TODO(作業1): 異なる三マスを選び、Pでの合計に変更する。</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業2): 選んだ三マスの合計制約を一つ書く。</span></span></code></pre></div>
+</figure>
+<ol type="1">
+<li><strong>作業1：</strong> 三つの位置、Pの三つの値と合計、Qの三つの値と合計をメモする。合計が等しければ位置を選び直し、<code class="sourceCode minizinc">clue_total</code> の0をPの合計へ変更する。</li>
+<li><strong>作業2：</strong> 選んだ三マスの合計を <code class="sourceCode minizinc">clue_total</code> と等しくする。<a href="../../downloads/session-04/P.dzn" data-code-preview="../../previews/session-04/P.dzn.json">P.dzn</a>・<a href="../../downloads/session-04/Q.dzn" data-code-preview="../../previews/session-04/Q.dzn.json">Q.dzn</a>・<a href="../../downloads/session-04/empty.dzn" data-code-preview="../../previews/session-04/empty.dzn.json">empty.dzn</a>を別々に指定して実行する。P・Qの入力は <code>given</code> の全16マスをそれぞれの完成盤面に固定し、空盤面の入力は全マスを0にする。</li>
+</ol>
+</section>
+<section id="自己確認-1" class="level4">
+<h4>自己確認</h4>
+<p>P固定では受理、Q固定では解なし、空盤面では少なくとも一解が出ることを確かめる。解なしは <code>UNSATISFIABLE</code> で確認し、エラーや時間切れとは区別する。三つの位置は本当に異なるか、合計以外の条件でQを拒否していないかも、コードを読み返して確認する。</p>
+<p>PとQで値が異なるマスを含めても、別のマスで差が打ち消されることがある。異なるマスを見つけるだけで終えず、三つを足した結果を比較しよう。正しい選び方は複数あり、他の人と同じ三マスである必要はない。</p>
+<details class="hint"><summary>ヒントを開く：差が打ち消されるか調べる</summary><div class="hint-body">
+<p>選んだ三マスごとにPの値からQの値を引き、その三つの差を足す。合計が0なら区別できない。差のある位置を一つ選び、残り二つをどう選べば差を保てるか考えよう。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：確認例・合計の差を残す選び方</summary><div class="hint-body">
+<p>PとQでは2行3列の値が1だけ違う。この位置に、両盤面で値が同じ二マスを組み合わせると差が残る。例えば3行3列・3行4列を選んだ場合、PとQのそれぞれで三項を実際に足してみよう。</p>
+</div></details>
+</section>
+</section>
+</section>
+<section id="発展" class="level2 sec-advanced">
+<h2 class="sec-advanced">6. 発展</h2>
+<p>合計を複数に広げる、一意性を確かめる、別のパズルへ移すという方向がある。<a href="../../advanced/puzzle-challenges/index.html">独立した発展演習</a>では、それぞれ必要な条件と出発モデルを用意している。前の発展の完成は不要である。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>選択</th>
+<th>深めること</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../advanced/puzzle-challenges/index.html#multiple">発展1　複数の合計ヒント</a></td>
+<td>ヒントごとに対象位置・合計・有効かどうかを入力にする</td>
+</tr>
+<tr>
+<td><a href="../../advanced/puzzle-challenges/index.html#second">発展2　第二解と一意性</a></td>
+<td>既知の解を除き、第二解があるかを調べる</td>
+</tr>
+<tr>
+<td><a href="../../advanced/puzzle-challenges/index.html#minimum">発展3　最少の合計ヒント</a></td>
+<td>36候補から最少のヒントを選び、最小性まで確かめる</td>
+</tr>
+<tr>
+<td><a href="../../advanced/puzzle-challenges/index.html#send-more">選択M04　SEND+MORE=MONEY</a></td>
+<td>SEND+MORE=MONEYを数字の範囲・重複禁止・等式で解く</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>次の第05回では、和の対象をマスの値から「選ばれた人数」へ広げる。添字集合全体を足す書き方は、その回の本編で改めて説明する。</p>
+</section>
+<section id="振り返り" class="level2 sec-review">
+<h2 class="sec-review">7. 振り返り</h2>
+<p>自分の合計条件を、対象・演算・比較に分けて読もう。続いて、Pを通すだけでは足りない理由と、Qを除くために対象をどう選んだかを説明する。実行結果と問題文の対応を言葉にできるかが確認の中心となる。</p>
+<ul>
+<li>合計の等式を「以下」に変えると、どんな盤面を余分に通すか。</li>
+<li>条件を加えても解の個数が変わらない例は何か。</li>
+<li>Pを通しQを除いたことから、Pが唯一の解だと言えるか。</li>
+</ul>
+</section>
+<section id="参照" class="level2 unnumbered sec-reference">
+<h2 class="unnumbered sec-reference">参照</h2>
+<p>作業を再開するときは、使うモデルと入力の組を先に確かめる。合計値をモデル内で定義する必修2と、入力ファイルで定義する解説例・必修1では、渡すデータが異なる。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>用語・操作</th>
+<th>意味・参照先</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code class="sourceCode minizinc"><span class="fu">sum</span>([a,b,c])</code></td>
+<td>三つの値を足した数値の式。比較を付けて制約にする</td>
+</tr>
+<tr>
+<td>解集合</td>
+<td>モデルの条件をすべて満たす解を集めた集合</td>
+</tr>
+<tr>
+<td>冗長な制約</td>
+<td>他の条件からすでに成り立ち、追加しても解集合を変えない制約</td>
+</tr>
+<tr>
+<td>解なし</td>
+<td>固定した入力のもとで、全条件を満たす解が存在しない</td>
+</tr>
+<tr>
+<td>実行と検査</td>
+<td><a href="../../guides/puzzle-check/index.html">入力の選択・結果の読み方</a></td>
+</tr>
+<tr>
+<td>配布物</td>
+<td><a href="../../downloads/session-04/session-04.zip">一式のZIP</a>、<a href="../../downloads/session-04/sum-start.mzn" data-code-preview="../../previews/session-04/sum-start.mzn.json">必修1</a>、<a href="../../downloads/session-04/design-start.mzn" data-code-preview="../../previews/session-04/design-start.mzn.json">必修2</a></td>
+</tr>
+<tr>
+<td>記法の原典</td>
+<td><a href="https://docs.minizinc.dev/en/stable/modelling2.html">MiniZinc公式教材：配列と集約</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>位置の取り違え、<code class="sourceCode minizinc"><span class="op">=</span></code> と <code class="sourceCode minizinc"><span class="op">&lt;=</span></code> の取り違え、合計対象への余分な全相異なりは、どれも実行できる場合がある。<a href="#結果">結果の確認</a>に戻り、受理例と拒否例に加えて、式の意味も読み直そう。</p>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../sessions/03-search/index.html">← 第03回</a> · <a href="../../index.html">講義一覧</a> · <a href="../../sessions/05-assignment/index.html">第05回 →</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

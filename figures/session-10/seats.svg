@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="413.333" height="161.333" viewBox="0 0 310 121" role="img" aria-labelledby="title">
+<title id="title">左から1〜4の四席。各席に一人ずつ座る。</title>
+<style>text{font:12px sans-serif;fill:#222} .axis{stroke:#666;stroke-width:1} .a{fill:#e8dff0;stroke:#593b66} .c{fill:#dfeaf4;stroke:#335f7e} .b{fill:#e4ecdf;stroke:#466738}</style>
+<text x="12" y="17">左</text><text x="266" y="17">右</text>
+<rect x="12" y="29" width="58" height="38" fill="none" stroke="#593b66"/><text x="41" y="53" text-anchor="middle">1</text>
+<rect x="80" y="29" width="58" height="38" fill="none" stroke="#593b66"/><text x="109" y="53" text-anchor="middle">2</text>
+<rect x="148" y="29" width="58" height="38" fill="none" stroke="#593b66"/><text x="177" y="53" text-anchor="middle">3</text>
+<rect x="216" y="29" width="58" height="38" fill="none" stroke="#593b66"/><text x="245" y="53" text-anchor="middle">4</text>
+<text x="12" y="91">各席に一人。</text><text x="12" y="109">A・Bの左右の順序は自由。</text>
+</svg>

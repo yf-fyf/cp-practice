@@ -1,0 +1,1 @@
+{"name": "best-start.dzn", "language": "minizinc", "label": "MiniZincの入力", "code": "% 最適終了を確認してから、その最適値に変更する。\nbest = 0;\n", "lines": ["<span class=\"co\">% 最適終了を確認してから、その最適値に変更する。</span>", "best <span class=\"op\">=</span> <span class=\"dv\">0</span>;"]}

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第10回の日程と実行の確認 - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 手引き</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第10回の日程と実行の確認</h1>
+    <nav class="session-nav" aria-label="第10回の講義資料"><a href="../../sessions/10-smt/index.html">通常講義</a><a href="../../advanced/scheduling-challenges/index.html">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#環境と再開用の足場">環境と再開用の足場</a>
+      </li>
+      <li><a href="#本文の入力と実行">本文の入力と実行</a>
+      </li>
+      <li><a href="#区間と終了状態">区間と終了状態</a>
+      </li>
+      <li><a href="#必修2の下限">必修2の下限</a>
+      </li>
+      <li><a href="#固定した開始の検査">固定した開始の検査</a>
+      </li>
+      <li><a href="#発展1と発展2">発展1と発展2</a>
+      </li>
+      <li><a href="#一般の日程と比較器">一般の日程と比較器</a>
+      </li>
+      <li><a href="#席順と覆面算">席順と覆面算</a>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p><a href="../../sessions/10-smt/index.html">本文</a>／<a href="../../advanced/scheduling-challenges/index.html">発展と選択演習</a>で使うファイルと確認方法をまとめる。PythonからZ3を呼ぶ方法は第09回と同じで、今回は整数の開始時刻をモデルから読む。</p>
+</header>
+<section id="環境と再開用の足場" class="level2">
+<h2>環境と再開用の足場</h2>
+<p>授業で使うPythonから<code class="sourceCode python"><span class="im">import</span> z3</code>できる環境を使う。<a href="../../downloads/session-10/requirements.txt" data-code-preview="../../previews/session-10/requirements.txt.json">requirements.txt</a>に検証した依存を固定してある。環境準備は授業内に扱い、前の発展の完成を待つ必要はない。</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-c</span> <span class="st">&quot;import z3; print(z3.get_version_string())&quot;</span></span></code></pre></div>
+<p>この手引きの<code>python3</code>は授業で使うPythonを指す。別の起動名や仮想環境を使う場合は、そのPythonへ読み替える。新しく用意する場合、Linux・macOSでは次のように作業フォルダーの仮想環境へ入れられる。</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> venv .venv</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">.venv/bin/python</span> <span class="at">-m</span> pip install <span class="at">-r</span> requirements.txt</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">.venv/bin/python</span> <span class="at">-c</span> <span class="st">&quot;import z3; print(z3.get_version_string())&quot;</span></span></code></pre></div>
+<p>作成後は本文の<code>python3</code>を<code>.venv/bin/python</code>へ読み替えてよい。Windowsでの仮想環境は、作成に使う<code>python</code>と、作成後の<code>.venv\Scripts\python.exe</code>を区別する。Z3のパッケージ名は<code>z3-solver</code>、インポート名は<code>z3</code>である。<a href="https://github.com/Z3Prover/z3#python">公式の導入案内</a>と<a href="https://docs.python.org/3/library/venv.html">Pythonの仮想環境</a>を参照できる。</p>
+<p><a href="../../downloads/session-10/warmup.py" data-code-preview="../../previews/session-10/warmup.py.json">Booleanの小例</a>と<a href="../../downloads/session-10/sat_io.py" data-code-preview="../../previews/session-10/sat_io.py.json">sat_io.py</a>は第09回と同じものを再配布する。整数のモデルは<a href="../../downloads/session-10/integer_io.py" data-code-preview="../../previews/session-10/integer_io.py.json">integer_io.py</a>を使う。前者のboolの読み取りを、そのまま整数の値の読み取りに使わない。</p>
+</section>
+<section id="本文の入力と実行" class="level2">
+<h2>本文の入力と実行</h2>
+<p>モデル、JSON入力、共通ファイルを同じフォルダーへ保存し、そこで実行する。所要時間は入力で、出力された開始へ足すと終了になる。モデル内に別の固定時間を残さない。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>用途</th>
+<th>モデル</th>
+<th>入力</th>
+<th>期待する判定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>解説</td>
+<td><a href="../../downloads/session-10/schedule-demo.py" data-code-preview="../../previews/session-10/schedule-demo.py.json">schedule-demo.py</a></td>
+<td><a href="../../downloads/session-10/demo.json" data-code-preview="../../previews/session-10/demo.json.json">demo.json</a>：時間2,3,2、H=7</td>
+<td>SAT</td>
+</tr>
+<tr>
+<td>解説の厳しい期限</td>
+<td>schedule-demo.py</td>
+<td><a href="../../downloads/session-10/demo-4.json" data-code-preview="../../previews/session-10/demo-4.json.json">demo-4.json</a>：H=4</td>
+<td>UNSAT</td>
+</tr>
+<tr>
+<td>最小期限の成立確認</td>
+<td>schedule-demo.py</td>
+<td><a href="../../downloads/session-10/demo-5.json" data-code-preview="../../previews/session-10/demo-5.json.json">demo-5.json</a>：H=5</td>
+<td>SAT</td>
+</tr>
+<tr>
+<td>必修1</td>
+<td><a href="../../downloads/session-10/schedule-start.py" data-code-preview="../../previews/session-10/schedule-start.py.json">schedule-start.py</a></td>
+<td><a href="../../downloads/session-10/practice.json" data-code-preview="../../previews/session-10/practice.json.json">practice.json</a>：時間3,2,2、H=7</td>
+<td>SAT</td>
+</tr>
+<tr>
+<td>必修2</td>
+<td><a href="../../downloads/session-10/wait-start.py" data-code-preview="../../previews/session-10/wait-start.py.json">wait-start.py</a></td>
+<td><a href="../../downloads/session-10/wait-6.json" data-code-preview="../../previews/session-10/wait-6.json.json">wait-6.json</a>、<a href="../../downloads/session-10/wait-7.json" data-code-preview="../../previews/session-10/wait-7.json.json">wait-7.json</a></td>
+<td>H=6はUNSAT、7はSAT</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>すべてinteger_io.pyが必要。必修2では、完成した<a href="../../downloads/session-10/schedule_base.py" data-code-preview="../../previews/session-10/schedule_base.py.json">schedule_base.py</a>も保存する。出発ファイルはTODOを記入してから問題の答えとして使う。未記入でもSATになる場合があるが、条件が足りない状態である。</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> schedule-demo.py demo.json</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> schedule-start.py practice.json</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> wait-start.py wait-6.json</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> wait-start.py wait-7.json</span></code></pre></div>
+<p>各実行は新しいソルバーを作る。期限6で作ったソルバーへ期限7の制約を継ぎ足すと、以前の厳しい期限が残るため比較にならない。JSONを変更した場合は保存してから再実行する。</p>
+</section>
+<section id="区間と終了状態" class="level2">
+<h2>区間と終了状態</h2>
+<p>SATの場合は、開始時刻と半開区間を表示する。例えば解説でA=0・B=2・C=2なら、Aは[0,2)、Bは[2,5)、Cは[2,4)。開始0以上、終了が期限以下、先行関係、同じ装置の非重複を順に確認する。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>確認すること</th>
+<th>見る値・式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>開始の下限</td>
+<td>開始が0以上か</td>
+</tr>
+<tr>
+<td>終了期限</td>
+<td>開始＋所要時間がH以下か</td>
+</tr>
+<tr>
+<td>A→B</td>
+<td>Aの終了がBの開始以下か</td>
+</tr>
+<tr>
+<td>A・Cの共有装置</td>
+<td>どちらか一方の終了が他方の開始以下か</td>
+</tr>
+<tr>
+<td>必修2のC→B</td>
+<td>Cの終了がBの開始以下か</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>UNSATでは日程を表示せず、UNKNOWNでは理由を表示する。UNKNOWNや途中で止めた実行を、解なしや最適性の証明へ読み替えない。この回の通常モデルは充足問題なので、SATの表示自体は最短化を意味しない。</p>
+</section>
+<section id="必修2の下限" class="level2">
+<h2>必修2の下限</h2>
+<p>自分で必要時間を説明してから、この確認例と照合する。式の実装と二つの期限の実行は、本文の作業を先に使う。</p>
+<details class="hint"><summary>確認例を開く：装置の時間と先行関係</summary><div class="hint-body">
+<p>AとCは同じ装置で合計5時間、その両方の後にBが2時間必要になる。開始が0以上なので、全体の完了を7より前にすることはできない。期限7の成立例と、この下限を合わせて期限6の解なしを説明できる。</p>
+</div></details>
+</section>
+<section id="固定した開始の検査" class="level2">
+<h2>固定した開始の検査</h2>
+<p><a href="../../downloads/session-10/schedule-checks.json" data-code-preview="../../previews/session-10/schedule-checks.json.json">schedule-checks.json</a>には、端点での接触、途中の重なり、先行違反、期限超過、負の開始の確認例がある。<code>start</code>はA・B・Cの順で、<code>valid</code>はその入力と対応モデルについての期待である。</p>
+<p>必修1では、編集した<code>schedule-start.py</code>と配布の<code>schedule-checks.json</code>、<code>demo.json</code>、<code>practice.json</code>、<code>integer_io.py</code>を同じフォルダーへ置く。次のコマンドは自分のモデルに固定値を追加して7件を確認する。すべてPASS、最後に<code>7 checks, 0 failures</code>なら期待と一致する。FAILならその入力と条件を読み返す。</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> schedule-start.py <span class="at">--check</span></span></code></pre></div>
+<p>検査ではJSONの<code>model</code>が<code>basic</code>の行を使う。<code>wait</code>の行はC→Bを含む必修2用なので除く。<code>--check</code>と入力ファイル名は同時に指定しない。UNKNOWNは期待したUNSATとは扱わず失敗として表示する。</p>
+<p>個別に調べる場合、完成したモデルをコピーし、<code class="sourceCode python">build(data)</code>の後、判定前に次を追加すると、指定した日程が許されるかを調べられる。開始変数そのものをPythonの整数で上書きせず、追加制約で固定する。</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>s, starts <span class="op">=</span> build(data)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>s.add(starts[<span class="st">&#39;A&#39;</span>] <span class="op">==</span> <span class="dv">0</span>, starts[<span class="st">&#39;B&#39;</span>] <span class="op">==</span> <span class="dv">2</span>, starts[<span class="st">&#39;C&#39;</span>] <span class="op">==</span> <span class="dv">1</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>report_schedule(s, starts, data)</span></code></pre></div>
+<p>この例は解説の時間2,3,2に対して、A・Cの途中の重なりだけを破りUNSATとなる。A=0・B=2・C=2へ変えるとSAT。必修2用の行はwait-start.pyの完成モデルで調べる。入力だけでなく、C→Bを含むモデルかどうかも対応させる。</p>
+</section>
+<section id="発展1と発展2" class="level2">
+<h2>発展1と発展2</h2>
+<p>発展1は<a href="../../downloads/session-10/deadline-start.py" data-code-preview="../../previews/session-10/deadline-start.py.json">deadline-start.py</a>、schedule_base.py、integer_io.pyを使う。期限を受ける<code>at_deadline</code>は完成しており、SATの辞書・UNSATのNone・判定未完了の例外を区別する。</p>
+<p>発展2は<a href="../../downloads/session-10/machines-start.py" data-code-preview="../../previews/session-10/machines-start.py.json">machines-start.py</a>、integer_io.py、<a href="../../downloads/session-10/machines-5.json" data-code-preview="../../previews/session-10/machines-5.json.json">machines-5.json</a>・<a href="../../downloads/session-10/machines-6.json" data-code-preview="../../previews/session-10/machines-6.json.json">machines-6.json</a>を使う。sAなどは開始、mAなどは装置番号で、開始値と装置番号を一つの尺度で比べない。</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> deadline-start.py</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> machines-start.py machines-5.json</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> machines-start.py machines-6.json</span></code></pre></div>
+<p>実行結果を記録してから、次の確認例と照合する。</p>
+<details class="hint"><summary>確認例を開く：最小期限と装置の選択</summary><div class="hint-body">
+<p>発展1の最小期限は5で、開始(A,B,C)=(0,2,2)が成立する。期限4ではA→Bだけでも間に合わない。発展2は期限5でUNSAT、6でSATとなる。期限6では、開始(0,0,3)、装置(1,2,1)のように、別装置の作業を同時に始められる。</p>
+</div></details>
+</section>
+<section id="一般の日程と比較器" class="level2">
+<h2>一般の日程と比較器</h2>
+<p>発展3は<a href="../../downloads/session-10/jobshop-start.py" data-code-preview="../../previews/session-10/jobshop-start.py.json">jobshop-start.py</a>、<a href="../../downloads/session-10/jobshop_tools.py" data-code-preview="../../previews/session-10/jobshop_tools.py.json">jobshop_tools.py</a>、integer_io.pyを使う。<a href="../../downloads/session-10/jobshop.json" data-code-preview="../../previews/session-10/jobshop.json.json">jobshop.json</a>と<a href="../../downloads/session-10/jobshop-long.json" data-code-preview="../../previews/session-10/jobshop-long.json.json">jobshop-long.json</a>でモデルと検査器を確認してから、<a href="../../downloads/session-10/jobshop-compare.py" data-code-preview="../../previews/session-10/jobshop-compare.py.json">jobshop-compare.py</a>と<a href="../../downloads/session-10/jobshop-cases.json" data-code-preview="../../previews/session-10/jobshop-cases.json.json">jobshop-cases.json</a>で全解集合を比較する。</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> jobshop-start.py jobshop.json</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> jobshop-start.py jobshop-long.json</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> jobshop-compare.py jobshop-start.py</span></code></pre></div>
+<p>比較器は、自作のモデルと独立検査器を読み込む足場である。検査器は名前→整数開始の辞書を受け取り、範囲・先行・時刻ごとの使用数を確認する。入力八件の全解数は順に3・9・0・0・1・0・0・9。</p>
+<p>作業が一つもない入力では、空の日程一つが成立する。先行の循環は形式エラーではなく、正の所要時間を持つ作業が互いに先に終わることを要求するためUNSATとなる。固定のA〜Dや装置1〜2しか扱えない実装になっていないかも確かめる。</p>
+<p>両実装に同じ誤りがあれば一致することがあるので、既知の成立例・拒否例と解数も照合する。有限列挙の範囲外まで一般の正しさが確認できたという意味ではない。半開区間と整数の単位時間が対応する理由は、発展本文で説明する。</p>
+</section>
+<section id="席順と覆面算" class="level2">
+<h2>席順と覆面算</h2>
+<p>席順には<a href="../../downloads/session-10/seats-start.py" data-code-preview="../../previews/session-10/seats-start.py.json">seats-start.py</a>とinteger_io.py、覆面算には<a href="../../downloads/session-10/send-more-start.py" data-code-preview="../../previews/session-10/send-more-start.py.json">send-more-start.py</a>とinteger_io.pyを使う。どちらも入力条件は出発ファイルと発展本文にある。</p>
+<p><a href="../../downloads/session-10/seats-checks.json" data-code-preview="../../previews/session-10/seats-checks.json.json">seats-checks.json</a>の<code>position</code>はA・B・C・Dの順、<a href="../../downloads/session-10/send-checks.json" data-code-preview="../../previews/session-10/send-checks.json.json">send-checks.json</a>の<code>digits</code>はS・E・N・D・M・O・R・Yの順である。固定する場合は、各変数と確認値の等式を判定前に追加する。</p>
+<p>席順ではA・Bの逆向きも許し、位置(4,2,1,3)は隣接していないので拒否する。覆面算では9567+1085=10652を受理し、先頭ゼロ・異なる文字の数字の重複をそれぞれ拒否する。判定後の整数の表示と、元の条件の照合を分けて行おう。</p>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../index.html">講義一覧</a> · <a href="../../sessions/10-smt/index.html">第10回の本文へ</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="405.333" height="205.333" viewBox="0 0 304 154" role="img" aria-labelledby="title">
+<title id="title">同じ装置のAとC。Aが先でもCが先でも、時刻2で接してよい。</title>
+<style>text{font:12px sans-serif;fill:#222} .axis{stroke:#666;stroke-width:1} .a{fill:#e8dff0;stroke:#593b66} .c{fill:#dfeaf4;stroke:#335f7e} .b{fill:#e4ecdf;stroke:#466738}</style>
+<text x="10" y="41">順序1</text>
+<rect data-task="A" data-start="0" data-duration="2" class="a" x="56" y="24" width="112" height="26"/>
+<text x="112" y="41" text-anchor="middle">A</text>
+<rect data-task="C" data-start="2" data-duration="2" class="c" x="168" y="24" width="112" height="26"/>
+<text x="224" y="41" text-anchor="middle">C</text>
+<line class="axis" x1="56" y1="56" x2="280" y2="56"/>
+<line class="axis" x1="56" y1="53" x2="56" y2="60"/><text x="56" y="73" text-anchor="middle">0</text>
+<line class="axis" x1="168" y1="53" x2="168" y2="60"/><text x="168" y="73" text-anchor="middle">2</text>
+<line class="axis" x1="280" y1="53" x2="280" y2="60"/><text x="280" y="73" text-anchor="middle">4</text>
+<text x="10" y="113">順序2</text>
+<rect data-task="C" data-start="0" data-duration="2" class="c" x="56" y="96" width="112" height="26"/>
+<text x="112" y="113" text-anchor="middle">C</text>
+<rect data-task="A" data-start="2" data-duration="2" class="a" x="168" y="96" width="112" height="26"/>
+<text x="224" y="113" text-anchor="middle">A</text>
+<line class="axis" x1="56" y1="128" x2="280" y2="128"/>
+<line class="axis" x1="56" y1="125" x2="56" y2="132"/><text x="56" y="145" text-anchor="middle">0</text>
+<line class="axis" x1="168" y1="125" x2="168" y2="132"/><text x="168" y="145" text-anchor="middle">2</text>
+<line class="axis" x1="280" y1="125" x2="280" y2="132"/><text x="280" y="145" text-anchor="middle">4</text>
+</svg>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第07回の勤務表の実行と検査 - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 手引き</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第07回の勤務表の実行と検査</h1>
+    <nav class="session-nav" aria-label="第07回の講義資料"><a href="../../sessions/07-schedule/index.html">通常講義</a><a href="../../advanced/roster-challenges/index.html">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#基本と技能">基本と技能</a>
+      </li>
+      <li><a href="#技能の固定検査">技能の固定検査</a>
+      </li>
+      <li><a href="#二人の固定検査">二人の固定検査</a>
+      </li>
+      <li><a href="#周期勤務の検査">周期勤務の検査</a>
+      </li>
+      <li><a href="#配布一覧">配布一覧</a>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p>第07回の<a href="../../sessions/07-schedule/index.html">本文</a>と<a href="../../advanced/roster-challenges/index.html">発展演習</a>の操作をまとめる。入力は問題の条件であり、出力される勤務表とは別である。前回や前の演習のファイルがなくても、以下の完成した基本モデルから再開できる。</p>
+</header>
+<section id="基本と技能" class="level2">
+<h2>基本と技能</h2>
+<p>MiniZinc IDEでモデルを開き、データファイルを選んで実行する。コマンドを使う場合は、配布ファイルを同じフォルダーへ保存し、そこで次を実行する。<code>-a</code> は全解を列挙する指定で、一つの勤務表を見るだけなら不要である。</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode roster-basic.mzn base.dzn</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode roster-basic.mzn practice.dzn</span></code></pre></div>
+<p>必修1は <code>practice-start.mzn</code> に変数と三条件を書く。必修2で再開する場合は <code>roster-basic.mzn</code> をコピーし、<code>skill-start.mzn</code> の作業をそこへ追加する。完成した必修1を手元に持っている必要はない。技能条件を書いたファイルを <code>roster-skill.mzn</code> と保存した例では、次の二つの入力を同時に渡す。</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode roster-skill.mzn practice.dzn skill.dzn</span></code></pre></div>
+<p>発展1・2はそれぞれの出発ファイルのTODOを記入し、次を実行する。発展2に発展1の排他条件や必修2の技能入力を加えない。技能2の必要人数を変更する場合は <code>skills.dzn</code> のコピーを作って <code>skill_required</code> の第2行だけを書き換える。</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode pair-start.mzn practice.dzn</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode two-skill-start.mzn practice.dzn skills.dzn</span></code></pre></div>
+<p><code>UNSATISFIABLE</code> は条件を満たす表がないという判定である。時間切れや <code>UNKNOWN</code> は不可能性の証明ではない。充足の一例を公平さの最適解と呼ばない。</p>
+</section>
+<section id="技能の固定検査" class="level2">
+<h2>技能の固定検査</h2>
+<p>技能条件を書いた自分の<code>roster-skill.mzn</code>の末尾へ、次のうち一方の<code class="sourceCode minizinc"><span class="kw">constraint</span></code>だけを一時的に追加する。行はA〜E、列は1〜4日目である。入力は通常どおり<code>practice.dzn</code>と<code>skill.dzn</code>を指定する。新しい条件を書くのではなく、特定の表が自分の条件を満たすか調べる操作である。</p>
+<p>受理する表（AB／AD／CD／BC）：</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> work <span class="op">=</span> [| <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>                  | <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>                  | <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>                  | <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">0</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>                  | <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span> |];</span></code></pre></div>
+<p>拒否する表（DE／AC／BD／BC）：</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> work <span class="op">=</span> [| <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                  | <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                  | <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                  | <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                  | <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span> |];</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode roster-skill.mzn practice.dzn skill.dzn</span></code></pre></div>
+<p>前者は解あり、後者はUNSATISFIABLEが期待される。後者は1日目に技能を持つ人がいない。二つの固定を同時に書くと、技能に関係なく矛盾するので、交換して実行する。確認後は固定の行を外し、自由に勤務表を探すモデルへ戻す。</p>
+</section>
+<section id="二人の固定検査" class="level2">
+<h2>二人の固定検査</h2>
+<p>発展1では、<a href="#技能の固定検査">技能の固定検査</a>にある二つの表を、技能なしの自分の<code>pair-start.mzn</code>へ一方ずつ固定して使える。渡す入力は<code>practice.dzn</code>だけで、技能入力・技能条件は加えない。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>固定する表</th>
+<th>発展1での期待</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AB／AD／CD／BC</td>
+<td>拒否</td>
+<td>1日目にAとBが同時に勤務する</td>
+</tr>
+<tr>
+<td>DE／AC／BD／BC</td>
+<td>受理</td>
+<td>AとBは同日勤務せず、1日目は二人とも休む</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode pair-start.mzn practice.dzn</span></code></pre></div>
+<p>技能の検査とは受理・拒否が逆になる。固定した表がどの問題の条件を満たすかを区別する。後者も拒否した場合は、二人の和を等号1にしていないか確かめる。確認後は固定の制約を外す。</p>
+</section>
+<section id="周期勤務の検査" class="level2">
+<h2>周期勤務の検査</h2>
+<p>周期問題の作業を記入したモデルを次のように実行する。表示の最初の一行は、初日から順に二人ずつ並べたJSONである。例えば <code>[1,5]</code> は群1の人1と群2の人5を選んだ一日を表す。後続の区切り線を含めず、その一行を自分の <code>pairs.json</code> に保存する。</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode cycle-start.mzn cycle-14.dzn</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode cycle-start.mzn cycle-16.dzn</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> cycle-check-start.py cycle-14.json pairs.json</span></code></pre></div>
+<p>最後のコマンドはPython側のTODOを記入してから使う。16日の出力には <code>cycle-16.json</code> を渡す。<code>.dzn</code> はMiniZinc用、<code>.json</code> は独立検査用で、同じ群人数・期間・勤務日数の境界を持つ。検査結果 <code>VALID</code> は全条件を満たし、<code>INVALID</code> は少なくとも一つに違反するという意味である。</p>
+<p><code>cycle-cases.json</code> は確認用の三つの表と期待判定を持つ。検査関数を記入した後に、同じフォルダーで次を実行できる。自分で作った16日の表についても検査し、各人の日数と16組の使い方から上限に達したことを説明する。</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> importlib.util</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>spec <span class="op">=</span> importlib.util.spec_from_file_location(</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;checker&quot;</span>, <span class="st">&quot;cycle-check-start.py&quot;</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>checker <span class="op">=</span> importlib.util.module_from_spec(spec)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>spec.loader.exec_module(checker)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> case <span class="kw">in</span> json.loads(Path(<span class="st">&quot;cycle-cases.json&quot;</span>).read_text()):</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> json.loads(Path(case[<span class="st">&quot;input&quot;</span>]).read_text())</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> checker.valid_schedule(data, case[<span class="st">&quot;pairs&quot;</span>])</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(case[<span class="st">&quot;name&quot;</span>], result, <span class="st">&quot;expected&quot;</span>, case[<span class="st">&quot;valid&quot;</span>])</span></code></pre></div>
+<p>17日は勤務の供給人日と異なる組の数のどちらからも不可能と説明できる。追加で実行を試す入力も用意したが、長い探索を授業内に待ち続ける必要はない。時間上限を付けた次の実行が終了しても、判定がUNKNOWNならUNSATと読み替えない。</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode <span class="at">--time-limit</span> 10000 cycle-start.mzn cycle-17.dzn</span></code></pre></div>
+</section>
+<section id="配布一覧" class="level2">
+<h2>配布一覧</h2>
+<p>同じフォルダーへ保存する。周期勤務の検査に外部のPythonパッケージは必要ない。開始モデルと検査器のTODOは学習者が記入し、完成解答はこの一覧に含めない。</p>
+<ul>
+<li><a href="../../downloads/session-07/roster-basic.mzn" data-code-preview="../../previews/session-07/roster-basic.mzn.json">roster-basic.mzn</a></li>
+<li><a href="../../downloads/session-07/base.dzn" data-code-preview="../../previews/session-07/base.dzn.json">base.dzn</a></li>
+<li><a href="../../downloads/session-07/practice.dzn" data-code-preview="../../previews/session-07/practice.dzn.json">practice.dzn</a></li>
+<li><a href="../../downloads/session-07/practice-start.mzn" data-code-preview="../../previews/session-07/practice-start.mzn.json">practice-start.mzn</a></li>
+<li><a href="../../downloads/session-07/skill.dzn" data-code-preview="../../previews/session-07/skill.dzn.json">skill.dzn</a></li>
+<li><a href="../../downloads/session-07/skill-start.mzn" data-code-preview="../../previews/session-07/skill-start.mzn.json">skill-start.mzn</a></li>
+<li><a href="../../downloads/session-07/skills.dzn" data-code-preview="../../previews/session-07/skills.dzn.json">skills.dzn</a></li>
+<li><a href="../../downloads/session-07/pair-start.mzn" data-code-preview="../../previews/session-07/pair-start.mzn.json">pair-start.mzn</a></li>
+<li><a href="../../downloads/session-07/two-skill-start.mzn" data-code-preview="../../previews/session-07/two-skill-start.mzn.json">two-skill-start.mzn</a></li>
+<li><a href="../../downloads/session-07/cycle-start.mzn" data-code-preview="../../previews/session-07/cycle-start.mzn.json">cycle-start.mzn</a></li>
+<li><a href="../../downloads/session-07/cycle-14.dzn" data-code-preview="../../previews/session-07/cycle-14.dzn.json">cycle-14.dzn</a></li>
+<li><a href="../../downloads/session-07/cycle-14.json" data-code-preview="../../previews/session-07/cycle-14.json.json">cycle-14.json</a></li>
+<li><a href="../../downloads/session-07/cycle-16.dzn" data-code-preview="../../previews/session-07/cycle-16.dzn.json">cycle-16.dzn</a></li>
+<li><a href="../../downloads/session-07/cycle-16.json" data-code-preview="../../previews/session-07/cycle-16.json.json">cycle-16.json</a></li>
+<li><a href="../../downloads/session-07/cycle-17.dzn" data-code-preview="../../previews/session-07/cycle-17.dzn.json">cycle-17.dzn</a></li>
+<li><a href="../../downloads/session-07/cycle-17.json" data-code-preview="../../previews/session-07/cycle-17.json.json">cycle-17.json</a></li>
+<li><a href="../../downloads/session-07/cycle-check-start.py" data-code-preview="../../previews/session-07/cycle-check-start.py.json">cycle-check-start.py</a></li>
+<li><a href="../../downloads/session-07/cycle-cases.json" data-code-preview="../../previews/session-07/cycle-cases.json.json">cycle-cases.json</a></li>
+</ul>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../index.html">講義一覧</a> · <a href="../../sessions/07-schedule/index.html">第07回の本文へ</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

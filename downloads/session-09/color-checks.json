@@ -1,0 +1,58 @@
+{
+  "all-false": {
+    "WA": [],
+    "NT": [],
+    "SA": [],
+    "Q": [],
+    "NSW": [],
+    "V": [],
+    "T": []
+  },
+  "T-two": {
+    "WA": [
+      "red"
+    ],
+    "NT": [
+      "green"
+    ],
+    "SA": [
+      "blue"
+    ],
+    "Q": [
+      "red"
+    ],
+    "NSW": [
+      "green"
+    ],
+    "V": [
+      "red"
+    ],
+    "T": [
+      "red",
+      "green"
+    ]
+  },
+  "valid": {
+    "WA": [
+      "red"
+    ],
+    "NT": [
+      "green"
+    ],
+    "SA": [
+      "blue"
+    ],
+    "Q": [
+      "red"
+    ],
+    "NSW": [
+      "green"
+    ],
+    "V": [
+      "red"
+    ],
+    "T": [
+      "red"
+    ]
+  }
+}

@@ -1,0 +1,1 @@
+{"name": "weight-start.dzn", "language": "minizinc", "label": "MiniZincの入力", "code": "% 時間の上限から十分な重みを決めて変更する。\nW = 1;\n", "lines": ["<span class=\"co\">% 時間の上限から十分な重みを決めて変更する。</span>", "W <span class=\"op\">=</span> <span class=\"dv\">1</span>;"]}

@@ -1,0 +1,1 @@
+{"name": "knapsack-7.dzn", "language": "minizinc", "label": "MiniZincの入力", "code": "capacity = 7;\n", "lines": ["capacity <span class=\"op\">=</span> <span class=\"dv\">7</span>;"]}

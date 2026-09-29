@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="413.333" height="181.333" viewBox="0 0 310 136" role="img" aria-labelledby="title">
+<title id="title">周期勤務では最終日と初日も隣り合う</title>
+<g font-family="sans-serif" font-size="12" text-anchor="middle" fill="#25364a">
+<path d="M48 57 H262 M262 64 V90 H48 V64" fill="none" stroke="#617990" stroke-width="2"/>
+<g fill="#edf2f7" stroke="#617990"><rect x="18" y="32" width="60" height="35" rx="3"/><rect x="106" y="32" width="60" height="35" rx="3"/><rect x="232" y="32" width="60" height="35" rx="3"/></g>
+<text x="48" y="54">初日</text><text x="136" y="54">2日目</text><text x="199" y="54">…</text><text x="262" y="54">最終日</text>
+<text x="155" y="20">隣り合う両日に同じ人を入れない</text>
+<text x="155" y="112">下の線も隣り合う日の組。</text><text x="155" y="129">14日なら14日目と1日目を調べる。</text>
+</g></svg>

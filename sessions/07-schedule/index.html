@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第07回　勤務表を数理モデルとして解く - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+<script defer="" src="../../assets/katex/katex.min.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+</script>
+<link rel="stylesheet" href="../../assets/katex/katex.min.css" />
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 通常講義</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第07回　勤務表を数理モデルとして解く</h1>
+    <nav class="session-nav" aria-label="第07回の講義資料"><a href="../../sessions/07-schedule/index.html" aria-current="page">通常講義</a><a href="../../advanced/roster-challenges/index.html">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#目標">目標</a>
+      </li>
+      <li><a href="#問題">1. 問題</a>
+      </li>
+      <li><a href="#定式化">2. 定式化</a>
+      <ul>
+      <li><a href="#入力と決定変数">入力と決定変数</a></li>
+      <li><a href="#四つの条件">四つの条件</a></li>
+      </ul>
+      </li>
+      <li><a href="#解説例">3. 解説例</a>
+      <ul>
+      <li><a href="#手順1-入力と決定変数を宣言する">手順1　入力と決定変数を宣言する</a></li>
+      <li><a href="#手順2-三つの条件を書く">手順2　三つの条件を書く</a></li>
+      <li><a href="#手順3-入力を与えて実行する">手順3　入力を与えて実行する</a></li>
+      </ul>
+      </li>
+      <li><a href="#結果">4. 結果</a>
+      </li>
+      <li><a href="#演習">5. 演習</a>
+      <ul>
+      <li><a href="#必修1-五人四日の勤務表">必修1　五人・四日の勤務表</a></li>
+      <li><a href="#必修2-技能を持つ人を毎日確保する">必修2　技能を持つ人を毎日確保する</a></li>
+      </ul>
+      </li>
+      <li><a href="#発展">6. 発展</a>
+      </li>
+      <li><a href="#振り返り">7. 振り返り</a>
+      </li>
+      <li><a href="#参照">参照</a>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p>売店の勤務表を題材に、人と日の組ごとの決定を0と1で表し、日ごとの人数・人ごとの日数・技能を持つ人の人数という、対象の違う集計を使い分ける。</p>
+</header>
+<section id="目標" class="level2 unnumbered sec-goal">
+<h2 class="unnumbered sec-goal">目標</h2>
+<p>この回を終えると、次の三つができるようになる。どれも「答えが出せる」ことではなく、「なぜその式なのかを説明できる」ことを指している。</p>
+<ul>
+<li>入力・決定変数・制約を区別し、数式の意味を説明できる。</li>
+<li>日について足すのか人について足すのかを選んで制約を書ける。</li>
+<li>条件を足して解き直し、出力がその条件を満たすか自分で確かめられる。</li>
+</ul>
+<p>決定変数、二次元配列、<code>sum</code>、<code>forall</code>は既習として振り返る。前回の演習が終わっていなくてよく、完成した出発ファイルを配るので、そこから始められる。実演を写し取れなくても演習には進める。提出はなく、教員の確認を待つ必要もない。</p>
+<p>座学と実演に40分、各自の演習に55分、振り返りに5分を使う。手を動かすのは<a href="#演習">5. 演習</a>からで、先に読み進めてもよい。配布物は基本モデル<code>roster-basic.mzn</code>、入力<code>base.dzn</code>と<code>practice.dzn</code>、技能の入力<code>skill.dzn</code>、演習の出発ファイル<code>practice-start.mzn</code>と<code>skill-start.mzn</code>である。操作と全配布一覧は<a href="../../guides/roster-check/index.html">勤務表の確認手引き</a>にある。</p>
+</section>
+<section id="問題" class="level2 sec-problem">
+<h2 class="sec-problem">1. 問題</h2>
+<p>まず、解きたい場面を読む。ここから先の節は、すべてこの場面を数学の問題として扱ったものである。</p>
+<div class="callout callout-scenario" role="note">
+<p><span class="callout-label">場面</span> 来週の火・水・木に臨時の売店を開く。候補者はA・B・C・Dの四人で、全員が同じ仕事を担当できる。各日は10時から13時までの一枠で、途中の交代はない。誰がどの日に勤務できるかは、あらかじめ聞き取ってある。</p>
+<p>各日に勤務できる人をちょうど二人ずつ選び、勤務表を一つ作りたい。学業と両立できるよう、一人にお願いする勤務は三日間で二日までとする。</p>
+</div>
+<p>場面には書かれていることが多いので、今回扱う条件を四つに絞る。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件</span> 期間と時間帯は火・水・木の三日間で、各日は一枠のみ。候補者はA・B・C・Dの四人で、全員が同じ仕事を担当できる。各日の人数はちょうど二人。一人あたりの日数は二日まで。誰がどの日に勤務できるかは、次の節の入力で与える。勤務できても必ず選ぶわけではない。</p>
+</div>
+<p>この四つ以外は扱わない。勤務回数の公平さや、誰を優先するかという基準は入れず、条件を満たす案を一つ求めるところまでとする。</p>
+<p>一日が一枠なので、人と日の組ごとに勤務するかどうかを決めれば勤務表になる。途中で交代する場合は時間枠も区別する別の問題になるが、今回は扱わない。</p>
+</section>
+<section id="定式化" class="level2 sec-model">
+<h2 class="sec-model">2. 定式化</h2>
+<p>条件を、計算機に渡せる形へ写す。人の添字集合を <span class="math inline">P=\{1,\ldots,n\}</span>、日の添字集合を <span class="math inline">D=\{1,\ldots,m\}</span> とし、入力と決定変数を名前で区別するところから始める。</p>
+<section id="入力と決定変数" class="level3">
+<h3>入力と決定変数</h3>
+<p>入力は三つある。<span class="math inline">a_{p,d}</span> は人 <span class="math inline">p</span> が日 <span class="math inline">d</span> に勤務可能なら1、不可能なら0。<span class="math inline">r_d</span> は日 <span class="math inline">d</span> に必要な人数。<span class="math inline">u_p</span> は人 <span class="math inline">p</span> の勤務日数の上限である。求めるものは勤務表で、二値の変数 <span class="math inline">x_{p,d}</span> で表す。値1が勤務、値0が休みである。</p>
+<p>解説例で使う値は次のとおりである。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">入力</span> <span class="math inline">n=4</span>、<span class="math inline">m=3</span>、<span class="math inline">r=(2,2,2)</span>、<span class="math inline">u=(2,2,2,2)</span> とし、行列 <span class="math inline">a</span> は次のとおり。行はA・B・C・D、列は火・水・木の順とする。</p>
+<p><span class="math display">
+a=\begin{pmatrix}
+1&amp;1&amp;0\\
+1&amp;0&amp;1\\
+0&amp;1&amp;1\\
+1&amp;1&amp;1
+\end{pmatrix}.
+</span></p>
+</div>
+<p>この行列を読むときに、一つ取り違えやすいところがある。<span class="math inline">a</span> と <span class="math inline">x</span> はどちらも同じ形の0と1の表だが、片方は与えられていて動かず、もう片方はこれから決める。</p>
+<div class="callout callout-point" role="note">
+<p><span class="callout-label">要点</span> <span class="math inline">a_{2,1}=1</span> は人2が日1に勤務できるという入力の事実であって、人2を日1に選ぶという決定ではない。決めるのは <span class="math inline">x</span> の側だけで、<span class="math inline">a</span> は動かない。</p>
+</div>
+</section>
+<section id="四つの条件" class="level3">
+<h3>四つの条件</h3>
+<p>入力が決まったので、あとは満たすべき条件を式にすればよい。ここまでで名前を付けた <span class="math inline">a</span>、<span class="math inline">r</span>、<span class="math inline">u</span>、<span class="math inline">x</span> を使って、勤務表が満たすべきことを四つの式に書き下す。求めるものは次のとおりである。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">求めるもの</span> 次の四つをすべて満たす行列 <span class="math inline">x</span> を一つ求める。</p>
+<p><span class="math display">x_{p,d}\in\{0,1\},\qquad
+\sum_{p\in P}x_{p,d}=r_d,\qquad
+x_{p,d}\le a_{p,d},\qquad
+\sum_{d\in D}x_{p,d}\le u_p.</span></p>
+<p>左から順に式(1)から式(4)と呼ぶ。式(2)はすべての日 <span class="math inline">d</span> に、式(3)はすべての組 <span class="math inline">(p,d)</span> に、式(4)はすべての人 <span class="math inline">p</span> に課す。</p>
+</div>
+<p>良い表を選ぶ基準は置かないので、目的関数は設けない。</p>
+<p>四つの式が何を言っているかを読んでいく。式(1)は変数の定義域である。式(2)は各日の人数で、日 <span class="math inline">d</span> を固定して人について足す。式(3)は勤務可能性で、入力が0の位置を0に固定する。式(4)は各人の日数の上限で、人 <span class="math inline">p</span> を固定して日について足す。</p>
+<p>式(2)と式(4)は、どちらも <span class="math inline">x</span> の値を足す点では同じだが、固定する添字が違う。式(2)は列を、式(4)は行を見ている。以下の列の図は四人・三日、行の図は五人・四日へ広げた例である。表の大きさが変わっても、固定する添字と動かす添字の役割は同じになる。</p>
+<figure>
+<img src="../../figures/session-07/sum-column.svg" alt="日を固定すると、一列の値を足してその日の勤務人数を数える。" />
+<figcaption aria-hidden="true">日を固定すると、一列の値を足してその日の勤務人数を数える。</figcaption>
+</figure>
+<figure>
+<img src="../../figures/session-07/sum-row.svg" alt="人を固定すると、一行の値を足してその人の勤務日数を数える。" />
+<figcaption aria-hidden="true">人を固定すると、一行の値を足してその人の勤務日数を数える。</figcaption>
+</figure>
+<p>式(3)を等号 <span class="math inline">x_{p,d}=a_{p,d}</span> にすると、勤務できる人を全員選ぶことになってしまう。可能と選択を分けるために不等号を使う。同じように、式(4)を等号にすると全員がちょうど二日になり、後で見るように解がなくなる。</p>
+<figure>
+<img src="../../figures/session-07/input-decision.svg" alt="入力が0のマスは勤務表でも0。入力が1でも勤務表では0にできる。強調枠は人4・日1の例。" />
+<figcaption aria-hidden="true">入力が0のマスは勤務表でも0。入力が1でも勤務表では0にできる。強調枠は人4・日1の例。</figcaption>
+</figure>
+</section>
+</section>
+<section id="解説例" class="level2 sec-demo">
+<h2 class="sec-demo">3. 解説例</h2>
+<p>数式の名前とMiniZincの名前を対応させながら、宣言・条件・実行の順に書く。ここは教員が実演する。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>数式</th>
+<th>MiniZinc</th>
+<th>役割</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="math inline">P,D</span></td>
+<td><code>PEOPLE</code>, <code>DAYS</code></td>
+<td>人と日の添字集合</td>
+</tr>
+<tr>
+<td><span class="math inline">a_{p,d}</span></td>
+<td><code class="sourceCode minizinc">available[p,d]</code></td>
+<td>入力の勤務可能性</td>
+</tr>
+<tr>
+<td><span class="math inline">r_d</span></td>
+<td><code class="sourceCode minizinc">required[d]</code></td>
+<td>入力の必要人数</td>
+</tr>
+<tr>
+<td><span class="math inline">u_p</span></td>
+<td><code class="sourceCode minizinc">max_days[p]</code></td>
+<td>入力の日数上限</td>
+</tr>
+<tr>
+<td><span class="math inline">x_{p,d}</span></td>
+<td><code class="sourceCode minizinc">work[p,d]</code></td>
+<td>ソルバーが決める勤務有無</td>
+</tr>
+</tbody>
+</table>
+</div>
+<section id="手順1-入力と決定変数を宣言する" class="level3">
+<h3>手順1　入力と決定変数を宣言する</h3>
+<p>入力には<code class="sourceCode minizinc"><span class="dt">var</span></code>を付けず、決めてほしいものだけに付ける。この一文字が、動かせない値と動かしてよい値の区別になる。式(1)は定義域<code class="sourceCode minizinc"><span class="dv">0</span><span class="op">..</span><span class="dv">1</span></code>として書く。</p>
+<figure class="code"><figcaption>roster-basic.mzn</figcaption>
+<div class="sourceCode" id="cb1"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">array</span>[PEOPLE, DAYS] <span class="dt">of</span> <span class="dv">0</span><span class="op">..</span><span class="dv">1</span>: available;</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="dt">array</span>[PEOPLE] <span class="dt">of</span> <span class="dt">int</span>: max_days;</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">% 式(1)：人と日ごとの勤務有無</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="dt">array</span>[PEOPLE, DAYS] <span class="dt">of</span> <span class="dt">var</span> <span class="dv">0</span><span class="op">..</span><span class="dv">1</span>: work;</span></code></pre></div>
+</figure>
+</section>
+<section id="手順2-三つの条件を書く" class="level3">
+<h3>手順2　三つの条件を書く</h3>
+<p><code>sum</code>で足す範囲を決め、<code>forall</code>でその条件を全体へ広げる。式(2)は日ごと、式(3)は人と日の組ごと、式(4)は人ごとに課す。<code>sum</code>の中を見て、どの添字が動いているかを確かめよう。</p>
+<figure class="code"><figcaption>roster-basic.mzn</figcaption>
+<div class="sourceCode" id="cb2"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">forall</span>(d <span class="op">in</span> DAYS)(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sum</span>(p <span class="op">in</span> PEOPLE)(work[p,d]) <span class="op">=</span> required[d]</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>);</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">forall</span>(p <span class="op">in</span> PEOPLE, d <span class="op">in</span> DAYS)(</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    work[p,d] <span class="op">&lt;=</span> available[p,d]</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>);</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">forall</span>(p <span class="op">in</span> PEOPLE)(</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sum</span>(d <span class="op">in</span> DAYS)(work[p,d]) <span class="op">&lt;=</span> max_days[p]</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>);</span></code></pre></div>
+</figure>
+</section>
+<section id="手順3-入力を与えて実行する" class="level3">
+<h3>手順3　入力を与えて実行する</h3>
+<p><a href="../../downloads/session-07/roster-basic.mzn" data-code-preview="../../previews/session-07/roster-basic.mzn.json">基本モデル</a>と<a href="../../downloads/session-07/base.dzn" data-code-preview="../../previews/session-07/base.dzn.json">解説例の入力</a>を保存し、Playgroundなら新しいモデルへ両方を貼る。<code class="sourceCode minizinc"><span class="kw">solve</span> <span class="kw">satisfy</span>;</code>は条件を満たす解を一つ求める指定で、<code>output</code>は表示だけを担当し、許す解の範囲を変えない。</p>
+<div class="callout callout-ask" role="note">
+<p><span class="callout-label">問い</span> 実行する前に予想しよう。四人のうち、一度も勤務しない人が出るだろうか。出るとしたら、それは条件に違反しているだろうか。</p>
+</div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode roster-basic.mzn base.dzn</span></code></pre></div>
+</section>
+</section>
+<section id="結果" class="level2 sec-result">
+<h2 class="sec-result">4. 結果</h2>
+<p>出力を、式(2)から式(4)と一つずつ照らし合わせる。答えが出たことと、答えが正しいことは別なので、必ず自分の目で数える。</p>
+<pre class="text"><code>人 火 水 木
+A  1  1  0
+B  1  0  1
+C  0  1  1
+D  0  0  0</code></pre>
+<p>各列の合計はいずれも2で、式(2)を満たす。入力で0だった位置、たとえば人1の木曜は出力でも0で、式(3)を満たす。各行の合計は上から2・2・2・0で、いずれも2以下だから式(4)を満たす。</p>
+<div class="callout callout-check" role="note">
+<p><span class="callout-label">自己確認</span> 自分の出力がこの表と違っても誤りとは限らない。三つの条件をすべて満たす表は複数ある。列の合計・禁止位置・行の合計の三つを数えて、すべて通れば正しい解である。</p>
+</div>
+<p>人4が一度も選ばれていないが、これは条件への違反ではない。式に書いていない条件を、ソルバーが気を利かせて守ってくれることはないからである。Dを必ず一日は入れたいなら、そう書かないかぎり結果には表れない。</p>
+<div class="callout callout-ask" role="note">
+<p><span class="callout-label">問い</span> Dが一日も入らない表を避けたいとする。それは条件が足りないのだろうか、それとも良い表の基準がまだ決まっていないのだろうか。</p>
+</div>
+<p>条件を足す方向で考えると、全員に同じだけ働いてもらう案が浮かぶ。ところが、この案は式(4)の書き方を一つ変えるだけで解が消えてしまう。上限と等号の違いは、この回でいちばん取り違えやすいところである。</p>
+<div class="callout callout-caution" role="note">
+<p><span class="callout-label">注意</span> 全員をちょうど二日にしようとして式(4)を等号にすると、解がなくなる。四人で合計八人日を要求する一方、三日間に必要な人数は六人日しかないためである。</p>
+</div>
+<p>必修2では、技能を持つ勤務者の人数を数える。例えばA・Bだけが技能を持つ場合、上の表の火曜は2人、水曜は1人になる。技能の有無を0/1の入力とし、その人の勤務の0/1値を掛けると、技能のない人の項を0にできる。第06回の「係数×選択」と同じ考え方である。</p>
+</section>
+<section id="演習" class="level2 sec-exercise">
+<h2 class="sec-exercise">5. 演習</h2>
+<p>必修1は解説例と同じ構造の問題を、少し大きい入力で自分で組む。必修2はそこへ技能の条件を足す。どちらも<a href="#定式化">2. 定式化</a>の式に戻りながら進めてよい。</p>
+<section id="必修1-五人四日の勤務表" class="level3">
+<h3>必修1　五人・四日の勤務表</h3>
+<p>五人の勤務可能日から、四日分の勤務表を一つ作る。勤務できる日でも休んでよいことと、毎日必要な人数をそろえることを、別々の条件として表す。</p>
+<section id="問題-1" class="level4">
+<h4>問題</h4>
+<div class="callout callout-scenario" role="note">
+<p><span class="callout-label">場面</span> 営業が四日間に延び、応援のEさんが加わった。五人から新しい勤務可能日を集めたので、各日ちょうど二人、一人二日までという条件で組み直す。</p>
+</div>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 人の集合 <span class="math inline">P</span> はA〜Eの5人、日の集合 <span class="math inline">D</span> は日1〜4である。<span class="math inline">x_{p,d}</span> は人pが日dに勤務するなら1、休むなら0の決定変数、<span class="math inline">a_{p,d}</span> は勤務できるなら1、できないなら0の入力を表す。<span class="math inline">r_d</span> は日dの必要人数、<span class="math inline">u_p</span> は人pの勤務日数の上限である。各日ちょうど2人を勤務可能な人から選び、各人の勤務は合計2日以下とする。</p>
+<p><span class="math inline">P=\{1,\ldots,5\}</span>、<span class="math inline">D=\{1,\ldots,4\}</span>、<span class="math inline">r=(2,2,2,2)</span>、<span class="math inline">u=(2,2,2,2,2)</span> とし、勤務可能性 <span class="math inline">a</span> は行がA〜E、列が日1〜4の順で A=1101、B=1011、C=0111、D=1110、E=1111 とする。</p>
+<p>次の四つをすべて満たす行列 <span class="math inline">x</span> を一つ求めよ。左から順に、変数の定義域、各日の人数、勤務可能性、各人の日数の上限である。</p>
+<p><span class="math display">x_{p,d}\in\{0,1\},\qquad
+\sum_{p\in P}x_{p,d}=r_d,\qquad
+x_{p,d}\le a_{p,d},\qquad
+\sum_{d\in D}x_{p,d}\le u_p.</span></p>
+</div>
+</section>
+<section id="作業" class="level4">
+<h4>作業</h4>
+<p>モデルでは <code class="sourceCode minizinc">work[p,d]</code> が <span class="math inline">x_{p,d}</span>、<code class="sourceCode minizinc">available[p,d]</code> が <span class="math inline">a_{p,d}</span>、<code class="sourceCode minizinc">required[d]</code> が <span class="math inline">r_d</span>、<code class="sourceCode minizinc">max_days[p]</code> が <span class="math inline">u_p</span> に対応する。<code class="sourceCode minizinc">PEOPLE<span class="op">=</span><span class="dv">1</span><span class="op">..</span><span class="dv">5</span></code> はA〜E、<code class="sourceCode minizinc">DAYS<span class="op">=</span><span class="dv">1</span><span class="op">..</span><span class="dv">4</span></code> は日1〜4の番号である。</p>
+<p><a href="../../downloads/session-07/practice-start.mzn" data-code-preview="../../previews/session-07/practice-start.mzn.json">出発ファイル</a>には入力の宣言と表示が入っている。<a href="../../downloads/session-07/practice.dzn" data-code-preview="../../previews/session-07/practice.dzn.json">必修1の入力</a>を与え、次の四つを書き足す。人と日を数値で列挙せず、<code>PEOPLE</code>と<code>DAYS</code>で指定する。</p>
+<figure class="code"><figcaption>practice-start.mzn</figcaption>
+<div class="sourceCode" id="cb5"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業1) 人と日ごとの勤務有無を表す決定変数 work を宣言する</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業2) 各日の勤務人数を required[d] に一致させる</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業3) 勤務できない位置を選ばないようにする</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業4) 各人の勤務日数を max_days[p] 以下にする</span></span></code></pre></div>
+</figure>
+</section>
+<section id="自己確認" class="level4">
+<h4>自己確認</h4>
+<p>各列の合計が2か、入力で0の位置が出力でも0か、各行の合計が2以下かを数える。三つとも通れば正解で、特定の表と一致する必要はない。この入力では条件を満たす表が393通りある。</p>
+<details class="hint"><summary>ヒントを開く：どの添字を固定して足すか</summary><div class="hint-body">
+<p>日別の人数を数えるときは表の一列、人別の日数を数えるときは一行を選ぶ。選んだ四角の中で変わる添字を<code>sum</code>、どの行・列にも同じ条件を課す対象を<code>forall</code>へ対応させる。日ごとの条件では <code class="sourceCode minizinc"><span class="fu">forall</span>(d <span class="op">in</span> DAYS)</code> の中で人pについて足し、人ごとの条件では <code class="sourceCode minizinc"><span class="fu">forall</span>(p <span class="op">in</span> PEOPLE)</code> の中で日dについて足す。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：解が出ないときに見るところ</summary><div class="hint-body">
+<p>入力と決定変数を等号で結んでいないか、各人をちょうど二日にしていないかを見る。全員ちょうど二日にすると十人日を要求することになり、必要な八人日と両立しない。</p>
+</div></details>
+</section>
+</section>
+<section id="必修2-技能を持つ人を毎日確保する" class="level3">
+<h3>必修2　技能を持つ人を毎日確保する</h3>
+<p>五人で四日分の勤務表を作り、毎日の担当者にレジ締めの技能を持つ人を含める。勤務人数全体と、その中で技能を持つ人数を分けて数える。</p>
+<section id="問題-2" class="level4">
+<h4>問題</h4>
+<div class="callout callout-scenario" role="note">
+<p><span class="callout-label">場面</span> 売店ではレジ締めができる人が毎日一人は必要だとわかった。A・B・Cはこの技能を持ち、D・Eは持たない。</p>
+</div>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 人の集合 <span class="math inline">P</span> はA〜Eの5人、日の集合 <span class="math inline">D</span> は日1〜4である。<span class="math inline">x_{p,d}</span> は人pが日dに勤務するなら1、休むなら0の決定変数、<span class="math inline">a_{p,d}</span> は勤務できるなら1、できないなら0の入力を表す。<span class="math inline">r_d</span> は日dの必要人数、<span class="math inline">u_p</span> は人pの勤務日数の上限である。各日ちょうど2人を勤務可能な人から選び、各人の勤務は合計2日以下とする。</p>
+<p>具体的な入力は、<span class="math inline">P=\{1,\ldots,5\}</span>、<span class="math inline">D=\{1,\ldots,4\}</span>、<span class="math inline">r=(2,2,2,2)</span>、<span class="math inline">u=(2,2,2,2,2)</span>、勤務可能性 <span class="math inline">a</span> は A=1101、B=1011、C=0111、D=1110、E=1111。これに技能の有無 <span class="math inline">s_p</span> を加える。持つなら1、持たないなら0で、今回は <span class="math inline">s=(1,1,1,0,0)</span> である。</p>
+<p>次の五つをすべて満たす行列 <span class="math inline">x</span> を一つ求めよ。最後の一つが今回加える条件で、技能を持つ勤務者が各日に少なくとも一人いることを表す。二人以上になってもよい。</p>
+<p><span class="math display">x_{p,d}\in\{0,1\},\qquad
+\sum_{p\in P}x_{p,d}=r_d,\qquad
+x_{p,d}\le a_{p,d},\qquad
+\sum_{d\in D}x_{p,d}\le u_p,\qquad
+\sum_{p\in P}s_p x_{p,d}\ge1.</span></p>
+</div>
+</section>
+<section id="作業-1" class="level4">
+<h4>作業</h4>
+<p>モデルでは <code class="sourceCode minizinc">work[p,d]</code> が <span class="math inline">x_{p,d}</span>、<code class="sourceCode minizinc">available[p,d]</code> が <span class="math inline">a_{p,d}</span>、<code class="sourceCode minizinc">required[d]</code> が <span class="math inline">r_d</span>、<code class="sourceCode minizinc">max_days[p]</code> が <span class="math inline">u_p</span> に対応する。<code class="sourceCode minizinc">PEOPLE<span class="op">=</span><span class="dv">1</span><span class="op">..</span><span class="dv">5</span></code> はA〜E、<code class="sourceCode minizinc">DAYS<span class="op">=</span><span class="dv">1</span><span class="op">..</span><span class="dv">4</span></code> は日1〜4の番号である。</p>
+<p><a href="../../downloads/session-07/roster-basic.mzn" data-code-preview="../../previews/session-07/roster-basic.mzn.json">完成した基本モデル</a>を <code>roster-skill.mzn</code> としてコピーし、<a href="../../downloads/session-07/skill-start.mzn" data-code-preview="../../previews/session-07/skill-start.mzn.json">追加する部分の案内</a>にある二つの作業を書き足す。実行時には、上の勤務可能日・人数・日数上限を持つ <a href="../../downloads/session-07/practice.dzn" data-code-preview="../../previews/session-07/practice.dzn.json">practice.dzn</a> と、技能の有無を持つ <a href="../../downloads/session-07/skill.dzn" data-code-preview="../../previews/session-07/skill.dzn.json">skill.dzn</a> の両方を渡す。宣言する <code class="sourceCode minizinc">skill[p]</code> が <span class="math inline">s_p</span> に対応し、技能を持たない人の勤務は技能の人数に数えない。</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode roster-skill.mzn practice.dzn skill.dzn</span></code></pre></div>
+<figure class="code"><figcaption>skill-start.mzn</figcaption>
+<div class="sourceCode" id="cb7"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業1) 技能を持つかどうかの入力 skill を宣言する</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業2) 各日、技能を持つ勤務者を少なくとも一人にする</span></span></code></pre></div>
+</figure>
+</section>
+<section id="自己確認-1" class="level4">
+<h4>自己確認</h4>
+<p>次の二つの表で、自分のモデルが受理と拒否を正しく分けるかを確かめる。「AB／AD／CD／BC」は日1から順にAとB、AとD、CとD、BとCが勤務する意味で、日数の列はA〜Eの順である。どちらも勤務可能性・各日2人・各人2日以下を満たしている。違うのは技能の条件だけである。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>各日の担当</th>
+<th>人ごとの日数</th>
+<th>技能を持つ人の数</th>
+<th>期待</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AB／AD／CD／BC</td>
+<td>2, 2, 2, 2, 0</td>
+<td>2, 1, 1, 2</td>
+<td>受理</td>
+</tr>
+<tr>
+<td>DE／AC／BD／BC</td>
+<td>1, 2, 2, 2, 1</td>
+<td>0, 2, 1, 2</td>
+<td>拒否</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>編集したモデルに、担当者なら <code class="sourceCode minizinc"><span class="kw">constraint</span> work[p,d] <span class="op">=</span> <span class="dv">1</span>;</code>、それ以外なら <code class="sourceCode minizinc"><span class="kw">constraint</span> work[p,d] <span class="op">=</span> <span class="dv">0</span>;</code> を全20マス分一時的に加えて、一つずつ表を固定して実行する。二つ目を試す前に一つ目の固定条件を外し、通常の求解に戻るときはすべて外す。<a href="../../guides/roster-check/index.html#技能の固定検査">表をまとめて固定する書き方</a>も使える。最初に出た一解を眺めるだけでは、技能条件の有無を確かめられない。</p>
+<p>下の表を受理してしまうなら、技能の人数を数える対象がずれている。上の表を拒否してしまうなら、ちょうど一人に狭めていないかを見る。</p>
+<details class="hint"><summary>ヒントを開く：技能保有者が何人働くか</summary><div class="hint-body">
+<p>まず、ある日について「技能を持ち、かつその日に勤務する人」の数を式で書いてみる。日を固定して、人について足すことになる。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：入力が0の人を数えない書き方</summary><div class="hint-body">
+<p><span class="math inline">s_p</span> と <span class="math inline">x_{p,d}</span> を掛けると、技能を持たない人の項は0になる。掛けた値を足せば、技能を持つ勤務者の数になる。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：少なくとも一人を表す比較</summary><div class="hint-body">
+<p>「少なくとも一人」は、その人数が1以上ということである。等号ではなく <span class="math inline">\ge</span> を使う。到達形は <span class="math inline">\sum_{p} s_p x_{p,d}\ge1</span> を各日に課したものになる。</p>
+</div></details>
+</section>
+</section>
+</section>
+<section id="発展" class="level2 sec-advanced">
+<h2 class="sec-advanced">6. 発展</h2>
+<p>自分の関心に合わせて選ぶ。三問とも独立して読めるようにしてあり、全部を終えることは前提にしない。次の通常回はこの発展を前提にしない。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>問題</th>
+<th>出発点</th>
+<th>考えること</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../advanced/roster-challenges/index.html#pair">発展1　同じ日に選べない二人</a></td>
+<td>技能なしの必修1</td>
+<td>二つの変数の和で排他を表す</td>
+</tr>
+<tr>
+<td><a href="../../advanced/roster-challenges/index.html#skills">発展2　二種類の技能を確保する</a></td>
+<td>技能なしの必修1</td>
+<td>一人が二つの技能に数えられてよい</td>
+</tr>
+<tr>
+<td><a href="../../advanced/roster-challenges/index.html#cycle">発展3　周期的な勤務表と、作れる期間の限界</a></td>
+<td>新しい入力と条件</td>
+<td>境界をまたぐ隣接と、可能な期間の上限</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="振り返り" class="level2 sec-review">
+<h2 class="sec-review">7. 振り返り</h2>
+<p>今回は、勤務できるという入力と勤務するという決定を分け、日について足す条件と人について足す条件を書き分けた。条件を足すほど、許される表は狭くなる。</p>
+<div class="callout callout-ask" role="note">
+<p><span class="callout-label">問い</span> 上限を守った表が「最も公平な表」とは限らない。条件を満たす複数の案から一つを選ぶには、何を基準にすればよいだろうか。</p>
+</div>
+<p>この問いは第08回の最適化へ続く。第08回は技能の条件を含まない必修1の入力と完成モデルから始めるので、<a href="#発展">6. 発展</a>を終えていなくても差し支えない。</p>
+</section>
+<section id="参照" class="level2 unnumbered sec-reference">
+<h2 class="unnumbered sec-reference">参照</h2>
+<p>この回で使うファイルと、出てきた言葉をまとめる。演習の途中で必要になったときに、ここへ戻って引けばよい。読み進める順番の中には入っていない。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>ファイル</th>
+<th>使いどころ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../downloads/session-07/roster-basic.mzn" data-code-preview="../../previews/session-07/roster-basic.mzn.json">roster-basic.mzn</a></td>
+<td>解説例で完成させる基本モデル</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-07/base.dzn" data-code-preview="../../previews/session-07/base.dzn.json">base.dzn</a></td>
+<td>解説例の入力。四人・三日</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-07/practice.dzn" data-code-preview="../../previews/session-07/practice.dzn.json">practice.dzn</a></td>
+<td>必修1・必修2の入力。五人・四日</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-07/skill.dzn" data-code-preview="../../previews/session-07/skill.dzn.json">skill.dzn</a></td>
+<td>必修2の技能の入力</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-07/practice-start.mzn" data-code-preview="../../previews/session-07/practice-start.mzn.json">practice-start.mzn</a></td>
+<td>必修1の出発ファイル</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-07/skill-start.mzn" data-code-preview="../../previews/session-07/skill-start.mzn.json">skill-start.mzn</a></td>
+<td>必修2の出発ファイル</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>決定変数</strong>はソルバーが値を決めるもので、MiniZincでは<code class="sourceCode minizinc"><span class="dt">var</span></code>を付ける。<strong>入力</strong>は与えられて動かない値である。<strong>実行可能解</strong>は、すべての条件を満たす値の組をいう。今回は目的関数を置かないので、実行可能解が一つ見つかれば終わりである。</p>
+<div class="callout callout-caution" role="note">
+<p><span class="callout-label">注意</span> <code>sum</code>の中で動く添字と、<code>forall</code>で固定する添字を取り違えると、行と列を数え違える。式(2)と式(4)を見比べて、どちらを固定しているかを確かめる。</p>
+</div>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../sessions/06-optimization/index.html">← 第06回</a> · <a href="../../index.html">講義一覧</a> · <a href="../../sessions/08-preferences/index.html">第08回 →</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,209 @@
+[
+  {
+    "tasks": [
+      {
+        "name": "A",
+        "machine": 1,
+        "duration": 2
+      },
+      {
+        "name": "B",
+        "machine": 2,
+        "duration": 3
+      },
+      {
+        "name": "C",
+        "machine": 2,
+        "duration": 2
+      },
+      {
+        "name": "D",
+        "machine": 1,
+        "duration": 1
+      }
+    ],
+    "precedence": [
+      [
+        "A",
+        "B"
+      ],
+      [
+        "C",
+        "D"
+      ]
+    ],
+    "H": 5
+  },
+  {
+    "tasks": [
+      {
+        "name": "A",
+        "machine": 1,
+        "duration": 2
+      },
+      {
+        "name": "B",
+        "machine": 2,
+        "duration": 3
+      },
+      {
+        "name": "C",
+        "machine": 2,
+        "duration": 4
+      },
+      {
+        "name": "D",
+        "machine": 1,
+        "duration": 1
+      }
+    ],
+    "precedence": [
+      [
+        "A",
+        "B"
+      ],
+      [
+        "C",
+        "D"
+      ]
+    ],
+    "H": 7
+  },
+  {
+    "tasks": [
+      {
+        "name": "A",
+        "machine": 1,
+        "duration": 2
+      },
+      {
+        "name": "B",
+        "machine": 2,
+        "duration": 3
+      },
+      {
+        "name": "C",
+        "machine": 2,
+        "duration": 2
+      },
+      {
+        "name": "D",
+        "machine": 1,
+        "duration": 1
+      }
+    ],
+    "precedence": [
+      [
+        "A",
+        "B"
+      ],
+      [
+        "C",
+        "D"
+      ]
+    ],
+    "H": 4
+  },
+  {
+    "tasks": [
+      {
+        "name": "A",
+        "machine": 1,
+        "duration": 2
+      },
+      {
+        "name": "B",
+        "machine": 2,
+        "duration": 3
+      },
+      {
+        "name": "C",
+        "machine": 2,
+        "duration": 4
+      },
+      {
+        "name": "D",
+        "machine": 1,
+        "duration": 1
+      }
+    ],
+    "precedence": [
+      [
+        "A",
+        "B"
+      ],
+      [
+        "C",
+        "D"
+      ]
+    ],
+    "H": 6
+  },
+  {
+    "tasks": [],
+    "precedence": [],
+    "H": 0
+  },
+  {
+    "tasks": [
+      {
+        "name": "X",
+        "machine": 2,
+        "duration": 2
+      }
+    ],
+    "precedence": [],
+    "H": 1
+  },
+  {
+    "tasks": [
+      {
+        "name": "X",
+        "machine": 1,
+        "duration": 1
+      },
+      {
+        "name": "Y",
+        "machine": 1,
+        "duration": 1
+      }
+    ],
+    "precedence": [
+      [
+        "X",
+        "Y"
+      ],
+      [
+        "Y",
+        "X"
+      ]
+    ],
+    "H": 3
+  },
+  {
+    "tasks": [
+      {
+        "name": "P",
+        "machine": 7,
+        "duration": 2
+      },
+      {
+        "name": "Q",
+        "machine": 3,
+        "duration": 1
+      },
+      {
+        "name": "R",
+        "machine": 7,
+        "duration": 1
+      }
+    ],
+    "precedence": [
+      [
+        "Q",
+        "R"
+      ]
+    ],
+    "H": 4
+  }
+]

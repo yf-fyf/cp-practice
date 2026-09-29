@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第09回　SATで依存・排他・選択を扱う - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+<script defer="" src="../../assets/katex/katex.min.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+</script>
+<link rel="stylesheet" href="../../assets/katex/katex.min.css" />
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 通常講義</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第09回　SATで依存・排他・選択を扱う</h1>
+    <nav class="session-nav" aria-label="第09回の講義資料"><a href="../../sessions/09-sat/index.html" aria-current="page">通常講義</a><a href="../../advanced/sat-challenges/index.html">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#目標">目標</a>
+      </li>
+      <li><a href="#問題">1. 問題</a>
+      </li>
+      <li><a href="#定式化">2. 定式化</a>
+      <ul>
+      <li><a href="#充足可能性と代入">充足可能性と代入</a></li>
+      <li><a href="#依存と排他">依存と排他</a></li>
+      <li><a href="#記号式とpythonの真偽値">記号式とPythonの真偽値</a></li>
+      </ul>
+      </li>
+      <li><a href="#解説例">3. 解説例</a>
+      <ul>
+      <li><a href="#手順1-boolean変数">手順1　Boolean変数</a></li>
+      <li><a href="#手順2-依存と排他">手順2　依存と排他</a></li>
+      <li><a href="#手順3-判定と代入の確認">手順3　判定と代入の確認</a></li>
+      <li><a href="#手順4-条件の追加と削除">手順4　条件の追加と削除</a></li>
+      </ul>
+      </li>
+      <li><a href="#結果">4. 結果</a>
+      </li>
+      <li><a href="#演習">5. 演習</a>
+      <ul>
+      <li><a href="#必修1-必須機能の変更">必修1　必須機能の変更</a></li>
+      <li><a href="#必修2-二機能のちょうど一方">必修2　二機能のちょうど一方</a></li>
+      </ul>
+      </li>
+      <li><a href="#発展">6. 発展</a>
+      </li>
+      <li><a href="#振り返り">7. 振り返り</a>
+      </li>
+      <li><a href="#参照">参照</a>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p>アプリにどの機能を入れるかを、真偽値の組として決める。ある機能に別の機能が必要という依存や、同時には選べないという条件を論理式へ写し、すべての条件を満たす選び方を求める。</p>
+</header>
+<section id="目標" class="level2 unnumbered sec-goal">
+<h2 class="unnumbered sec-goal">目標</h2>
+<p>この回では、既習の命題論理を使い、条件を満たす真偽値を計算機に探させる。代入を表示できたら、次の三つを説明できるようになろう。</p>
+<ul>
+<li>依存・排他・少なくとも一方・ちょうど一方を論理式で表せる。</li>
+<li>SAT・UNSAT・判定不能を区別し、SATの代入を元の条件と照合できる。</li>
+<li>固定した二つの代入で、「ちょうど一方」の条件漏れを調べられる。</li>
+</ul>
+<p>命題論理式・真理値表・論理回路とPythonの基本を使う。Z3の環境操作とAPIは授業内で説明する。<a href="../../downloads/session-09/warmup.py" data-code-preview="../../previews/session-09/warmup.py.json">操作用の小例</a>、<a href="../../downloads/session-09/sat_io.py" data-code-preview="../../previews/session-09/sat_io.py.json">判定と表示の共通部分</a>、<a href="../../guides/sat-start/index.html">実行の手引き</a>から始められる。第08回のPython発展や、MiniZincからの変換は前提にしない。</p>
+<p>説明・実演に55分、<a href="#演習">5. 演習</a>に40分、振り返りに5分を使う。必修1は15分、必修2は20分、残り5分は確認の目安である。環境準備を事前の宿題にはせず、通常演習の提出・宿題・完了報告・教員の完了承認も設けない。発展は選んで取り組む。</p>
+</section>
+<section id="問題" class="level2 sec-problem">
+<h2 class="sec-problem">1. 問題</h2>
+<p>機能の名前だけから追加の関係を推測せず、ここに示す条件を正式な仕様として読む。どの機能を選ぶかを決定し、選ばれた機能の数を最大にするなどの目的は置かない。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> アプリの構成として、次の四機能をそれぞれ選ぶか選ばないか決める。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>記号</th>
+<th>機能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>分析画面</td>
+</tr>
+<tr>
+<td>B</td>
+<td>集計機能</td>
+</tr>
+<tr>
+<td>C</td>
+<td>データ保存機能</td>
+</tr>
+<tr>
+<td>D</td>
+<td>保存しない動作モード</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>守る条件は次の四つである。</p>
+<ol type="1">
+<li>Aを必ず選ぶ。</li>
+<li>Aを選ぶならBも選ぶ。</li>
+<li>Bを選ぶならCも選ぶ。</li>
+<li>CとDを同時には選ばない。</li>
+</ol>
+<p>これらをすべて満たす一つの選び方を求める。真は選ぶこと、偽は選ばないことを表す。</p>
+</div>
+<p>「AにはBが必要」は、Bを選んだら必ずAも選ぶという意味ではない。また「CとDを同時には選ばない」は、必ずどちらかを選ぶという意味ではない。必要な関係を一つずつ分けて表そう。</p>
+</section>
+<section id="定式化" class="level2 sec-model">
+<h2 class="sec-model">2. 定式化</h2>
+<p>まず、各機能を選ぶかどうかへBoolean変数を対応させる。その上で、問題文の四条件を論理式へ写す。式の真偽を調べる代入を自分で決める場合と、式を真にする代入を探す場合を区別しよう。</p>
+<section id="充足可能性と代入" class="level3">
+<h3>充足可能性と代入</h3>
+<p>Boolean変数は真または偽を値に持つ。A・B・C・Dへ値を割り当てることを<strong>代入</strong>と呼ぶ。四変数なら代入は <span class="math inline">2^4=16</span> 通りあり、各代入について問題の式が真か偽かを調べられる。</p>
+<p>式を真にする代入が一つでも存在するかという問題を、<strong>充足可能性問題（SAT）</strong>と呼ぶ。存在すればSAT、どの代入でも満たせなければUNSATである。すべての代入で真かを調べることとは異なる。</p>
+<p>今回はZ3というソルバーをPythonから使う。Z3は整数などを含む問題も扱えるが、この回で渡す条件は命題論理の範囲である。整数の時刻を含める問題は第10回で扱う。</p>
+</section>
+<section id="依存と排他" class="level3">
+<h3>依存と排他</h3>
+<p>Aを選ぶならBも選ぶという依存を <span class="math inline">A\Rightarrow B</span> と書く。この式が偽になるのは、Aが真なのに必要なBが偽という場合だけである。Aが偽なら、この条件はBを制限しない。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>A</th>
+<th>B</th>
+<th>A⇒B</th>
+<th>¬A∨B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>偽</td>
+<td>偽</td>
+<td>真</td>
+<td>真</td>
+</tr>
+<tr>
+<td>偽</td>
+<td>真</td>
+<td>真</td>
+<td>真</td>
+</tr>
+<tr>
+<td>真</td>
+<td>偽</td>
+<td>偽</td>
+<td>偽</td>
+</tr>
+<tr>
+<td>真</td>
+<td>真</td>
+<td>真</td>
+<td>真</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>一方、CとDの同時選択を禁止する式は <span class="math inline">\neg(C\land D)</span> である。両方真の場合だけを拒否するので、両方偽でもこの式を満たす。依存と排他は、それぞれどの組を拒否するかで読める。</p>
+<p>四条件をすべて守るには、次の連言を真にする。Aという式を単独で加えることが、Aを必須にする指定である。含意だけを書いても、Aそのものを選ぶ義務は生まれない。</p>
+<p><span class="math display">\Phi=A\land(A\Rightarrow B)\land(B\Rightarrow C)\land\neg(C\land D).</span></p>
+</section>
+<section id="記号式とpythonの真偽値" class="level3">
+<h3>記号式とPythonの真偽値</h3>
+<p><code class="sourceCode python">Bool(<span class="st">&#39;A&#39;</span>)</code>は、まだ値を決めていない記号としてのAを作る。Pythonの変数名Aへ<code class="sourceCode python"><span class="va">True</span></code>を代入する操作ではない。依存などの式をソルバーへ渡した後、条件に合うAの値を求める。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>論理の意味</th>
+<th>Z3へ渡す式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AかつB</td>
+<td><code class="sourceCode python">And(A, B)</code></td>
+</tr>
+<tr>
+<td>AまたはB</td>
+<td><code class="sourceCode python">Or(A, B)</code></td>
+</tr>
+<tr>
+<td>Aではない</td>
+<td><code class="sourceCode python">Not(A)</code></td>
+</tr>
+<tr>
+<td>AならばB</td>
+<td><code class="sourceCode python">Implies(A, B)</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>未知の記号式をPythonの<code class="sourceCode python"><span class="kw">and</span></code>・<code class="sourceCode python"><span class="kw">or</span></code>・<code class="sourceCode python"><span class="kw">not</span></code>で結んだり、<code class="sourceCode python"><span class="cf">if</span> A:</code>で分岐したりしない。Python自身が真偽を決めようとして、エラーや意図と異なる式の原因になる。確定した通常のboolを扱う真理値表とは場面を分けよう。</p>
+</section>
+</section>
+<section id="解説例" class="level2 sec-demo">
+<h2 class="sec-demo">3. 解説例</h2>
+<p>教員が操作例から始め、変数を作り、条件を加え、判定と代入を読む。配布ファイルにはインポートと実行部分もあり、新しいAPIは問題の式との対応を見ながら確認できる。</p>
+<section id="手順1-boolean変数" class="level3">
+<h3>手順1　Boolean変数</h3>
+<p>まず<a href="../../downloads/session-09/warmup.py" data-code-preview="../../previews/session-09/warmup.py.json">warmup.py</a>を実行し、SATとp・qの値を読む。条件は<code class="sourceCode python">Or(p, q)</code>なので、少なくとも一方がTrueになればよい。次に<a href="../../downloads/session-09/features-demo.py" data-code-preview="../../previews/session-09/features-demo.py.json">features-demo.py</a>の四機能の宣言を見る。</p>
+<figure class="code"><figcaption>features-demo.py</figcaption>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>    A <span class="op">=</span> Bool(<span class="st">&#39;A&#39;</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    B <span class="op">=</span> Bool(<span class="st">&#39;B&#39;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    C <span class="op">=</span> Bool(<span class="st">&#39;C&#39;</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    D <span class="op">=</span> Bool(<span class="st">&#39;D&#39;</span>)</span></code></pre></div>
+</figure>
+<p>各行の左側はPythonで使う名前、<code>Bool</code>の文字列はZ3の記号名である。同じ名前の記号を誤って複数の機能へ使わない。配布ファイルの<code>build</code>関数は、新しいソルバーと変数の対応を作って返す足場である。</p>
+</section>
+<section id="手順2-依存と排他" class="level3">
+<h3>手順2　依存と排他</h3>
+<p><code class="sourceCode python">Solver()</code>で条件を入れるソルバーを作る。<code>s.add</code>へ複数の式を渡すと、そのすべてを満たすように要求する。依存二つと、C・Dの同時選択の禁止を順に追加する。</p>
+<figure class="code"><figcaption>features-demo.py</figcaption>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> Solver()</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    s.add(Implies(A, B), Implies(B, C), Not(And(C, D)))</span></code></pre></div>
+</figure>
+<p>通常の実行では、さらに<code class="sourceCode python">s.add(A)</code>でAを必須にする。ここまでが問題文の四条件に対応する。選ぶ数を増やす、依存の逆も成り立たせるなど、書かなかった条件はソルバーが補うものではない。</p>
+</section>
+<section id="手順3-判定と代入の確認" class="level3">
+<h3>手順3　判定と代入の確認</h3>
+<p><a href="../../downloads/session-09/sat_io.py" data-code-preview="../../previews/session-09/sat_io.py.json">sat_io.py</a>の<code>report</code>が、判定結果を三つの場合に分ける。<code class="sourceCode python">check()</code>は充足可能性の判定であり、SATの場合にだけ<code class="sourceCode python">model()</code>から一つの充足代入を読む。</p>
+<figure class="code"><figcaption>sat_io.py</figcaption>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> solver.check()</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> result <span class="op">==</span> sat:</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>        values <span class="op">=</span> read_values(solver.model(), variables)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">&#39;SAT&#39;</span>)</span></code></pre></div>
+</figure>
+<p>ここでZ3が返す<strong>モデル</strong>は、条件を満たす代入のことである。問題を表現するプログラム全体を「モデル」と呼ぶ用法とは、読む場面が異なる。配布の表示処理は、指定した全変数の真偽を順番に出す。</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> features-demo.py</span></code></pre></div>
+<p>出力を次の<a href="#結果">結果</a>と照合する。UNSATでは充足代入を表示せず、UNKNOWNなら判定できなかった理由を表示する。判定不能を解なしへ読み替えず、SATでないときにモデルを取り出さない。</p>
+</section>
+<section id="手順4-条件の追加と削除" class="level3">
+<h3>手順4　条件の追加と削除</h3>
+<p>同じ解説例でDも必須にした場合と、最初のA必須だけを外した場合を別々に試す。各コマンドは新しいソルバーから実行するので、前の実行で加えた条件が残ることはない。</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> features-demo.py <span class="at">--case</span> with-D</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> features-demo.py <span class="at">--case</span> without-A</span></code></pre></div>
+<p>Dも必須にすると、AからB、BからCが必要になり、CとDの排他と衝突する。A必須を外すと、全機能を選ばない代入も許される。ただし、複数ある代入のうち、必ず全偽が表示されるという意味ではない。</p>
+</section>
+</section>
+<section id="結果" class="level2 sec-result">
+<h2 class="sec-result">4. 結果</h2>
+<p>通常の四条件を満たす代入は一つである。Aが必須なので真、依存を順にたどるとBとCも真となる。CとDを同時に選べないためDは偽になる。この推論を実出力と照合しよう。</p>
+<pre class="text"><code>SAT
+A=True
+B=True
+C=True
+D=False</code></pre>
+<p>A・B・Cが真で依存を満たし、Dが偽で共存禁止を満たす。一つの式だけでなく、問題の四条件をそれぞれ確認する。Dも必須にした実行はUNSATになる。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>実行</th>
+<th>判定</th>
+<th>条件からの説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>通常</td>
+<td>SAT</td>
+<td>A・B・Cが真、Dが偽</td>
+</tr>
+<tr>
+<td>Dも必須</td>
+<td>UNSAT</td>
+<td>必須となるCとDが共存できない</td>
+</tr>
+<tr>
+<td>A必須を削除</td>
+<td>SAT</td>
+<td>全偽も許される。表示される一例は他でもよい</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>含意は真理値表のとおり <span class="math inline">A\Rightarrow B\equiv\neg A\lor B</span> と書ける。同様に式Φを、次のような「または」のまとまりを「かつ」でつないだ形へ書き換えられる。</p>
+<p><span class="math display">A\land(\neg A\lor B)\land(\neg B\lor C)\land(\neg C\lor\neg D).</span></p>
+<p>変数またはその否定を<strong>リテラル</strong>、リテラルの論理和を<strong>節</strong>、節の連言を<strong>CNF（連言標準形）</strong>と呼ぶ。Aだけの節もある。この形は発展の小さいSATソルバーやMaxSATで再び使う。必修では、CNFへの一般変換やファイル形式を自作せず、Z3へ式を渡せばよい。</p>
+<p>n変数なら代入は <span class="math inline">2^n</span> 通りある。条件から確定できる値を進め、未定なら場合分けする考え方は第03回とつながる。ただし、実際のZ3がすべてを単純な真理値表の順で調べると説明しているわけではない。小さい学習用の探索は発展で扱う。</p>
+</section>
+<section id="演習" class="level2 sec-exercise">
+<h2 class="sec-exercise">5. 演習</h2>
+<p>必修1では依存・排他・必須の指定を自分で書き、必修2では一つの選択条件を二つの式へ分ける。どちらも出力の足場は提供するので、問題の条件と追加する式の対応に集中しよう。</p>
+<section id="必修1-必須機能の変更" class="level3">
+<h3>必修1　必須機能の変更</h3>
+<p>五つの機能から、履歴閲覧を必ず使える組合せを選ぶ。ある機能を使うなら別の機能も必要になるという依存と、必ず使う機能の指定を、別々に式へ表す。</p>
+<section id="問題-1" class="level4">
+<h4>問題</h4>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> A＝分析画面、B＝集計機能、C＝データ保存機能、D＝保存しない動作モード、E＝履歴閲覧機能を、それぞれ選ぶか選ばないか決める。守る条件は次の五つ。</p>
+<ol type="1">
+<li>Eを必ず選ぶ。Aには必須指定を置かない。</li>
+<li>履歴を見るにはデータ保存が必要である。</li>
+<li>分析画面を使うには集計機能が必要である。</li>
+<li>集計機能を使うにはデータ保存が必要である。</li>
+<li>データ保存と、保存しない動作モードは共存できない。</li>
+</ol>
+<p>真は選ぶこと、偽は選ばないことを表す。以上をすべて満たす一つの代入を求める。目的関数は置かない。</p>
+</div>
+</section>
+<section id="作業" class="level4">
+<h4>作業</h4>
+<p><a href="../../downloads/session-09/features-start.py" data-code-preview="../../previews/session-09/features-start.py.json">features-start.py</a>と<a href="../../downloads/session-09/sat_io.py" data-code-preview="../../previews/session-09/sat_io.py.json">sat_io.py</a>を同じフォルダーへ保存する。変数宣言、ソルバーの作成、判定と表示の足場は完成している。A〜Eは問題の機能に対応するZ3のBoolean変数で、<code>s</code> は条件を保持するソルバー、<code class="sourceCode python">s.add(...)</code> は条件を追加する操作である。条件をTODOへ追加する。</p>
+<ol type="1">
+<li><strong>作業1：</strong> 必須のEと、EからCへの依存を式にして追加する。</li>
+<li><strong>作業2：</strong> AからB、BからCへの依存、CとDの共存禁止を追加する。</li>
+<li>実行し、SATなら各変数の値が五条件を満たすか確認する。</li>
+</ol>
+<figure class="code"><figcaption>features-start.py</figcaption>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>    <span class="co"># </span><span class="al">TODO</span><span class="co">(作業1): 必須はEとし、EからCへの依存を追加する。</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># </span><span class="al">TODO</span><span class="co">(作業2): AからB、BからCへの依存と、C・Dの共存不可を追加する。</span></span></code></pre></div>
+</figure>
+<p>出発ファイルは未記入でも実行できるが、その場合は問題の条件が足りない。SATと表示されることだけで完成とはせず、どの<code>s.add</code>がどの条件に対応するかを読み直そう。</p>
+</section>
+<section id="自己確認" class="level4">
+<h4>自己確認</h4>
+<p>CとEは真、Dは偽である。AとBは次の三通りのいずれかになればよい。一回の実行で一つが得られればよく、必修で全代入の列挙は要求しない。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+<th>D</th>
+<th>E</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>偽</td>
+<td>偽</td>
+<td>真</td>
+<td>偽</td>
+<td>真</td>
+</tr>
+<tr>
+<td>偽</td>
+<td>真</td>
+<td>真</td>
+<td>偽</td>
+<td>真</td>
+</tr>
+<tr>
+<td>真</td>
+<td>真</td>
+<td>真</td>
+<td>偽</td>
+<td>真</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Aが偽でBが真でも、AならばBという依存を満たす。Aが必ず真になる制約を残すと、正しい選択肢を狭めてしまう。出力がたまたまA真だったことだけでは、その余分な制約がないとは確認できない。</p>
+<p>次は自分のモデルに値を固定して、余分な条件と条件漏れを検査する。配布フォルダーで次を実行する。<code>--case</code>は各回新しいモデルに固定値を追加する操作で、TODOへ書いた条件はそのまま使う。</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> features-start.py <span class="at">--case</span> A-false</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> features-start.py <span class="at">--case</span> A-without-B</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> features-start.py <span class="at">--case</span> E-without-C</span></code></pre></div>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>検査</th>
+<th>固定値（A・B・C・D・Eの順）</th>
+<th>期待</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A-false</td>
+<td>偽・真・真・偽・真</td>
+<td>SAT</td>
+</tr>
+<tr>
+<td>A-without-B</td>
+<td>真・偽・真・偽・真</td>
+<td>UNSAT</td>
+</tr>
+<tr>
+<td>E-without-C</td>
+<td>偽・偽・偽・偽・真</td>
+<td>UNSAT</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>最初の例はAを必須にする誤りや含意の逆転、後の二例は依存の欠落・逆転を調べる。UNKNOWNやエラーは期待したUNSATとは違う。検査後も、五条件がすべて書かれているかを読み返す。</p>
+<details class="hint"><summary>ヒントを開く：拒否したい代入を考える</summary><div class="hint-body">
+<p>「Eが必須」と「EにはCが必要」について、それぞれ破る代入を一つ書く。後者はEが偽のときもCを強制する条件かを考える。残りの依存と共存禁止も、どの真偽の組を拒否するかで確かめよう。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：確認例・必須と依存の式</summary><div class="hint-body">
+<p><code class="sourceCode python">s.add(E, Implies(E, C))</code>で最初の二条件を加える。残りは<code class="sourceCode python">Implies(A, B)</code>、<code class="sourceCode python">Implies(B, C)</code>、<code class="sourceCode python">Not(And(C, D))</code>である。依存の矢印の向きと、A必須を加えていないことを確認する。</p>
+</div></details>
+</section>
+</section>
+<section id="必修2-二機能のちょうど一方" class="level3">
+<h3>必修2　二機能のちょうど一方</h3>
+<p>新しい表示機能Fを加え、Aとの選択を決める。Fには別の依存や禁止がないので、「少なくとも一方」と「両方は不可」のどちらを欠いても、不適切な代入が許されることを確認できる。</p>
+<section id="問題-2" class="level4">
+<h4>問題</h4>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> A＝分析画面、B＝集計機能、C＝データ保存機能、D＝保存しない動作モード、E＝履歴閲覧機能、F＝追加の表示機能を、それぞれ真偽で選ぶ。</p>
+<ol type="1">
+<li>Eを必ず選ぶ。Aには必須指定を置かない。</li>
+<li>履歴を見るにはデータ保存が必要である。</li>
+<li>分析画面を使うには集計機能が必要である。</li>
+<li>集計機能を使うにはデータ保存が必要である。</li>
+<li>データ保存と、保存しない動作モードは共存できない。</li>
+<li>AとFのちょうど一方を選ぶ。</li>
+</ol>
+<p>Fには条件6以外の依存・必須指定・排他はない。真は選ぶこと、偽は選ばないことを表す。以上をすべて満たす一つの代入を求め、目的関数は置かない。</p>
+</div>
+</section>
+<section id="作業-1" class="level4">
+<h4>作業</h4>
+<p><a href="../../downloads/session-09/exclusive-start.py" data-code-preview="../../previews/session-09/exclusive-start.py.json">exclusive-start.py</a>、完成した<a href="../../downloads/session-09/features_base.py" data-code-preview="../../previews/session-09/features_base.py.json">features_base.py</a>、<a href="../../downloads/session-09/sat_io.py" data-code-preview="../../previews/session-09/sat_io.py.json">sat_io.py</a>を使う。条件1〜5とFの宣言は提供済みなので、必修1の完成を待たずに始められる。A〜Fは問題の機能に対応するZ3のBoolean変数で、<code class="sourceCode python">s.add(...)</code> に追加する式がソルバー <code>s</code> の条件になる。</p>
+<ol type="1">
+<li><strong>作業1：</strong> AとFの少なくとも一方を選ぶ式を追加する。</li>
+<li><strong>作業2：</strong> AとFを両方選ぶことを禁止する式を追加する。</li>
+<li>通常の問題を実行した後、二つの固定値の検査を別々に実行する。</li>
+</ol>
+<figure class="code"><figcaption>exclusive-start.py</figcaption>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>    <span class="co"># </span><span class="al">TODO</span><span class="co">(作業1): AとFの少なくとも一方を選ぶ条件を書く。</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># </span><span class="al">TODO</span><span class="co">(作業2): AとFを両方選ぶことを禁止する条件を書く。</span></span></code></pre></div>
+</figure>
+<p>固定値の検査は、完成した元の問題にAとFの値を追加して調べる。各コマンドが新しいソルバーを作るので、両方真の条件と両方偽の条件を一つの問題に積み重ねない。</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> exclusive-start.py</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> exclusive-start.py <span class="at">--case</span> both-true</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> exclusive-start.py <span class="at">--case</span> both-false</span></code></pre></div>
+</section>
+<section id="自己確認-1" class="level4">
+<h4>自己確認</h4>
+<p>通常はSATで、CとEが真、Dが偽になる。残る(A,B,F)は次の三通りのどれかでよい。AとFを選ぶ条件が、Bへの依存を消していないことも確認しよう。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>A</th>
+<th>B</th>
+<th>F</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>真</td>
+<td>真</td>
+<td>偽</td>
+</tr>
+<tr>
+<td>偽</td>
+<td>偽</td>
+<td>真</td>
+</tr>
+<tr>
+<td>偽</td>
+<td>真</td>
+<td>真</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code>both-true</code>と<code>both-false</code>は、正しい条件ならどちらもUNSATとなる。両方真が通るなら同時選択の禁止、両方偽が通るなら少なくとも一方の指定を確かめる。元の通常問題がSATであることと合わせて確認する。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>A</th>
+<th>F</th>
+<th>ちょうど一方として許すか</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>偽</td>
+<td>偽</td>
+<td>許さない</td>
+</tr>
+<tr>
+<td>偽</td>
+<td>真</td>
+<td>許す</td>
+</tr>
+<tr>
+<td>真</td>
+<td>偽</td>
+<td>許す</td>
+</tr>
+<tr>
+<td>真</td>
+<td>真</td>
+<td>許さない</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>この四行の真理値表は、二つの式を組み合わせる意味を確認するもの。固定値の検査は、式を実際の問題全体へ追加できているかを確認するもの。二つの確認を対応させよう。</p>
+<details class="hint"><summary>ヒントを開く：片方の条件だけならどうなるか</summary><div class="hint-body">
+<p>「少なくとも一方」だけを書いたときと、「両方は不可」だけを書いたときで、上の四行のどれを余分に許すかを調べる。二つの固定検査が、どちらの条件漏れを見つけるかも対応させよう。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：確認例・拒否する二つの組の式</summary><div class="hint-body">
+<p>両方偽を除くのが<code class="sourceCode python">Or(A, F)</code>、両方真を除くのが<code class="sourceCode python">Not(And(A, F))</code>である。<code>s.add</code>へ両方を追加する。Fとの排他を、CとDの既存条件が代わりに保証することはない。</p>
+</div></details>
+</section>
+</section>
+</section>
+<section id="発展" class="level2 sec-advanced">
+<h2 class="sec-advanced">6. 発展</h2>
+<p>ここからは、候補数を増やす、すべての解を列挙する、探索そのものを作るという別々の方向へ進む。<a href="../../advanced/sat-challenges/index.html">発展と選択演習</a>に、それぞれ独立した条件と出発ファイルを用意した。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>問題</th>
+<th>広げる内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../advanced/sat-challenges/index.html#one">発展1　多数の候補から一つ</a></td>
+<td>多数の候補からちょうど一つを選ぶ式を生成する</td>
+</tr>
+<tr>
+<td><a href="../../advanced/sat-challenges/index.html#enumerate">発展2　SATの全代入</a></td>
+<td>既知の代入だけを除き、全解を列挙する</td>
+</tr>
+<tr>
+<td><a href="../../advanced/sat-challenges/index.html#dpll">発展3　小さいSATソルバー</a></td>
+<td>CNFの単位伝播・分岐・復元を実装する</td>
+</tr>
+<tr>
+<td><a href="../../advanced/sat-challenges/index.html#colors">選択S09a　Booleanによる配色</a></td>
+<td>Booleanで地域ごとの色と隣接条件を表す</td>
+</tr>
+<tr>
+<td><a href="../../advanced/sat-challenges/index.html#maxsat">選択S09b　四つの節のMaxSAT</a></td>
+<td>四節の真理値表でSATとMaxSATを比べる</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="振り返り" class="level2 sec-review">
+<h2 class="sec-review">7. 振り返り</h2>
+<p>一つの代入を見つけるだけでなく、その代入がどの条件を満たすかを説明しよう。さらに、条件を追加・削除した結果から、自分が書いた式の役割を確かめられる。</p>
+<ul>
+<li>A⇒BとB⇒Aは、どの代入で違いが表れるか。</li>
+<li>条件をまだ書いていないプログラムがSATでも、問題を解いたとは言えないのはなぜか。</li>
+<li>「ちょうど一方」の二成分を、どの固定値で別々に確かめたか。</li>
+</ul>
+<p>第10回は同じPythonとZ3を使い、整数の開始時刻へ変数を広げる。今回の全解列挙や探索器の完成は前提にしない。まずは<a href="#演習">必修2</a>の通常実行と二つの検査を説明できるか確認しよう。</p>
+</section>
+<section id="参照" class="level2 unnumbered sec-reference">
+<h2 class="unnumbered sec-reference">参照</h2>
+<p>操作で迷ったら<a href="../../guides/sat-start/index.html">Z3の実行の手引き</a>の環境確認、配布ファイルの組、状態の読み方へ戻る。コードの読み直しには、次の対応を使える。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>名前・用語</th>
+<th>意味</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Bool</code></td>
+<td>真偽値を求めるための記号を作る</td>
+</tr>
+<tr>
+<td><code>Solver</code>／<code>add</code></td>
+<td>条件を入れるソルバー／条件の追加</td>
+</tr>
+<tr>
+<td><code>check</code></td>
+<td>充足可能性の判定</td>
+</tr>
+<tr>
+<td>SAT／UNSAT</td>
+<td>充足代入が存在する／存在しない</td>
+</tr>
+<tr>
+<td>UNKNOWN</td>
+<td>判定が得られなかった状態</td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td>SATの場合に得られる一つの充足代入</td>
+</tr>
+<tr>
+<td>リテラル・節・CNF</td>
+<td>変数または否定・その論理和・節の連言</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>未知の記号をPythonの真偽値として分岐させる、含意の向きを逆にする、古いA必須を残す、二つの固定検査を重ねる、といった点を確認する。実行時のエラーと、条件の書き間違いによるSAT・UNSATを区別する。</p>
+<p>APIの説明は<a href="https://z3prover.github.io/api/html/namespacez3py.html">Z3の公式Python API</a>、判定は<a href="https://z3prover.github.io/api/html/classz3py_1_1_solver.html">Solverの公式参照</a>、代入の読み取りは<a href="https://z3prover.github.io/api/html/classz3py_1_1_model_ref.html">ModelRefの公式参照</a>で確認できる。</p>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../sessions/08-preferences/index.html">← 第08回</a> · <a href="../../index.html">講義一覧</a> · <a href="../../sessions/10-smt/index.html">第10回 →</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

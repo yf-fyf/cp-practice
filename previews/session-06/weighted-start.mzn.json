@@ -1,0 +1,1 @@
+{"name": "weighted-start.mzn", "language": "minizinc", "label": "MiniZinc", "code": "include \"kits-core.mzn\";\nint: W;\n% TODO(作業1): 重みWで第一目的を優先し、使用時間を引いた式を最大化する。\n", "lines": ["<span class=\"kw\">include</span> <span class=\"st\">&quot;kits-core.mzn&quot;</span>;", "<span class=\"dt\">int</span>: W;", "<span class=\"co\">% TODO(作業1): 重みWで第一目的を優先し、使用時間を引いた式を最大化する。</span>"]}

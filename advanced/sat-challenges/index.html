@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第09回の発展　式の生成・全解・探索 - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+<script defer="" src="../../assets/katex/katex.min.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+</script>
+<link rel="stylesheet" href="../../assets/katex/katex.min.css" />
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 発展</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第09回の発展　式の生成・全解・探索</h1>
+    <nav class="session-nav" aria-label="第09回の講義資料"><a href="../../sessions/09-sat/index.html">通常講義</a><a href="../../advanced/sat-challenges/index.html" aria-current="page">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#one">発展1　多数の候補から一つ</a>
+      <ul>
+      <li><a href="#条件と式の生成">条件と式の生成</a></li>
+      </ul>
+      </li>
+      <li><a href="#enumerate">発展2　SATの全代入</a>
+      <ul>
+      <li><a href="#条件と表示されない変数">条件と表示されない変数</a></li>
+      <li><a href="#除外と繰り返し">除外と繰り返し</a></li>
+      </ul>
+      </li>
+      <li><a href="#dpll">発展3　小さいSATソルバー</a>
+      <ul>
+      <li><a href="#入力と戻り値">入力と戻り値</a></li>
+      <li><a href="#単位伝播と二つの終了">単位伝播と二つの終了</a></li>
+      <li><a href="#分岐と状態の復元">分岐と状態の復元</a></li>
+      <li><a href="#確認と根拠">確認と根拠</a></li>
+      </ul>
+      </li>
+      <li><a href="#colors">選択S09a　Booleanによる配色</a>
+      <ul>
+      <li><a href="#地域色辺">地域・色・辺</a></li>
+      <li><a href="#三種類の条件">三種類の条件</a></li>
+      </ul>
+      </li>
+      <li><a href="#maxsat">選択S09b　四つの節のMaxSAT</a>
+      <ul>
+      <li><a href="#条件と真理値表">条件と真理値表</a></li>
+      </ul>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p><a href="../../sessions/09-sat/index.html">第09回の本文</a>から、候補数の一般化、全代入の列挙、探索の実装へ進む。各問題には独立した出発点があり、前の発展の完成は不要である。選択S09aの配色とS09bのMaxSATも、関心に合わせて選べる。</p>
+<p>PythonとZ3の準備、ファイルの組合せ、検査入力は<a href="../../guides/sat-start/index.html">実行の手引き</a>にまとめた。学習用ソルバーとMaxSATの真理値表はPython標準ライブラリだけで動かせる。</p>
+</header>
+<section id="one" class="level2">
+<h2>発展1　多数の候補から一つ</h2>
+<p>二候補の「ちょうど一方」を、五候補の「ちょうど一つ」へ広げる。一つの長い論理和と、候補の各ペアを禁止する条件を生成し、候補数が変わったときの式の数も考えよう。</p>
+<section id="条件と式の生成" class="level3">
+<h3>条件と式の生成</h3>
+<p>候補X1〜X5からちょうど一つを選ぶ。各候補に一つのBoolean変数を対応させ、真が選ぶことを表す。他の依存・必須指定・排他はなく、目的関数も置かない。</p>
+<p><a href="../../downloads/session-09/one-start.py" data-code-preview="../../previews/session-09/one-start.py.json">one-start.py</a>と<a href="../../downloads/session-09/sat_io.py" data-code-preview="../../previews/session-09/sat_io.py.json">sat_io.py</a>を使う。変数の生成と表示、<code class="sourceCode python">combinations(candidates, <span class="dv">2</span>)</code>で異なる二候補の組を作る枠は提供する。<code>candidates</code> はX1〜X5に対応するZ3変数のリスト、<code>s</code> は条件を加えるソルバーである。各ペアは重複せず、自分自身とのペアも作らない。</p>
+<ol type="1">
+<li><strong>作業1：</strong> 候補の少なくとも一つを選ぶ条件を書く。<code>Or</code>は配列を引数に取れるので、候補のリストを渡せる。</li>
+<li><strong>作業2：</strong> 各ペアについて両方選ぶことを禁止する条件を書く。</li>
+<li>五候補で実行した後、候補数nを0・1・2・8へ変えて確認する。nはコマンド引数として提供する。</li>
+</ol>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> one-start.py 5</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> one-start.py 1</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> one-start.py 0</span></code></pre></div>
+<details class="hint"><summary>ヒントを開く：一つの論理和と全ペア</summary><div class="hint-body">
+<p>少なくとも一つは<code class="sourceCode python">Or(candidates)</code>。ペア<code class="sourceCode python">left, right</code>には<code class="sourceCode python">Not(And(left, right))</code>を追加する。特定の隣り合う候補だけを禁止すると、離れた二候補を同時に選べてしまう。</p>
+</div></details>
+<p>五候補では真がちょうど一つとなり、代入は五通りである。条件数は少なくとも一つの1節と、全ペアの <span class="math inline">n(n-1)/2</span> 節。n=5なら11節になる。n=1ではその一候補が真、n=0では一つ選べないのでUNSATとなる。空の<code class="sourceCode python">Or([])</code>は偽に当たる。</p>
+<p>候補数が大きくなるとペア数は二次的に増える。他の符号化を調べる場合は、条件数と補助変数数を分け、性能の優劣を一回の短い計測だけで断定しない。ここではまず、この生成した式がちょうど一つを表す理由を説明しよう。</p>
+</section>
+</section>
+<section id="enumerate" class="level2">
+<h2>発展2　SATの全代入</h2>
+<p>ソルバーが返した一つの代入だけを除けば、別の代入を探せる。この操作を繰り返し、これ以上ないという判定まで確認する。どの変数の値を同じと見なすかが、全列挙の対象を決める。</p>
+<section id="条件と表示されない変数" class="level3">
+<h3>条件と表示されない変数</h3>
+<p>A＝分析画面、B＝集計、C＝保存、D＝保存しないモード、E＝履歴閲覧を真偽で選ぶ。真は選ぶこと、偽は選ばないことを表す。Eを必ず選び、Eを選ぶならC、Aを選ぶならB、Bを選ぶならCも選ぶ。CとDは同時に選ばない。Aの必須指定やFは含めず、目的関数は置かない。</p>
+<p>完成した<a href="../../downloads/session-09/features_base.py" data-code-preview="../../previews/session-09/features_base.py.json">features_base.py</a>と<a href="../../downloads/session-09/enumerate-start.py" data-code-preview="../../previews/session-09/enumerate-start.py.json">enumerate-start.py</a>、<a href="../../downloads/session-09/sat_io.py" data-code-preview="../../previews/session-09/sat_io.py.json">sat_io.py</a>を使う。列挙するのはA〜Eすべての値の組である。必修1を自分で完成させていなくてもよい。</p>
+<p>Z3のモデル表示では、値を決める必要がなかった変数が省略されることがある。提供する<code>read_values</code>は、指定した各変数について<code class="sourceCode python">model.evaluate(variable, model_completion<span class="op">=</span><span class="va">True</span>)</code>を使い、一つのモデルでの真偽を補って読む。</p>
+<p>例えば制約を一つも加えていない変数Uは、真でも偽でもよい。モデルの表示にUがなくても「変数がない」「解がない」ことにはならない。補われた値は一例であり、それが唯一の値であるという保証ではない。</p>
+</section>
+<section id="除外と繰り返し" class="level3">
+<h3>除外と繰り返し</h3>
+<p><code class="sourceCode python">enumerate_models(s, variables)</code>へ繰り返しを追加する。<code>s</code> は上の五条件を入れたZ3ソルバー、<code>variables</code>は記号名からZ3変数への辞書、<code>read_values</code>の結果は記号名から通常のPythonのboolへの辞書である。</p>
+<ol type="1">
+<li><strong>作業1：</strong> <code class="sourceCode python">check()</code>がSATなら全指定変数の値を読み、結果リストへ記録する。</li>
+<li><strong>作業2：</strong> 今の代入と少なくとも一変数が違う条件を追加し、再び判定する。</li>
+<li>UNSATで列挙完了としてリストを返す。UNKNOWNなら列挙未完了を報告し、全解が揃ったリストとして返さない。</li>
+</ol>
+<details class="hint"><summary>ヒントを開く：一つの組だけを除く</summary><div class="hint-body">
+<p>各変数について<code class="sourceCode python">variable <span class="op">!=</span> values[name]</code>を作り、それらを<code>Or</code>で結ぶ。Aだけを違わせると、Aが同じ別解までまとめて失う。すべてを違わせる<code>And</code>も、今の一解だけの除外にはならない。</p>
+</div></details>
+<p>期待する(A,B,C,D,E)は、(偽,偽,真,偽,真)、(偽,真,真,偽,真)、(真,真,真,偽,真)の三つである。順序に依存せず集合で比較し、各代入を五条件へ戻して独立に検査する。</p>
+<p>比較用には <code>Bool</code> と <code>Solver</code> をZ3から読み込み、<code class="sourceCode python">enumerate_models(Solver(), {<span class="st">&quot;U&quot;</span>: Bool(<span class="st">&quot;U&quot;</span>)})</code> を呼ぶ。制約なしのU一変数を列挙すると、真・偽の二通りが必要になる。一度補った値を固定された唯一の答えだと思っていないかを確認できる。モデルに載った変数だけを巡回するのではなく、列挙対象として指定した変数を使おう。</p>
+</section>
+</section>
+<section id="dpll" class="level2">
+<h2>発展3　小さいSATソルバー</h2>
+<p>整数リテラルのCNFを受け取り、単位伝播と場合分けで充足代入を探す。これは探索を理解するための実装であり、Z3の内部を再現するものではない。第03回の探索器が未完成でも始められる。</p>
+<section id="入力と戻り値" class="level3">
+<h3>入力と戻り値</h3>
+<p>CNFは、いくつかのリテラル（変数またはその否定）を「または」で結んだ節を、さらに「かつ」で結んだ形である。変数は1〜n番で、正整数iは変数i、負整数−iはその否定を表す。一つの節を整数のリスト、CNFを節のリストにする。0はリテラルに使わず、nは非負整数とする。</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span><span class="dt">&quot;n&quot;</span><span class="fu">:</span> <span class="dv">3</span><span class="fu">,</span> <span class="dt">&quot;clauses&quot;</span><span class="fu">:</span> <span class="ot">[[</span><span class="dv">1</span><span class="ot">],</span> <span class="ot">[</span><span class="dv">-1</span><span class="ot">,</span> <span class="dv">2</span><span class="ot">],</span> <span class="ot">[</span><span class="dv">-2</span><span class="ot">,</span> <span class="dv">3</span><span class="ot">]]</span><span class="fu">}</span></span></code></pre></div>
+<p>この入力は、変数1が真、1ならば2、2ならば3という三節の連言である。<a href="../../downloads/session-09/dpll-start.py" data-code-preview="../../previews/session-09/dpll-start.py.json">dpll-start.py</a>へ<code class="sourceCode python">solve(n, clauses)</code>を実装する。<a href="../../downloads/session-09/cnf_tools.py" data-code-preview="../../previews/session-09/cnf_tools.py.json">cnf_tools.py</a>には入力検査と、返した代入が元の式を満たすかの検査を用意した。</p>
+<p>SATなら、キー1〜n、値が通常のboolの辞書を返す。UNSATなら<code class="sourceCode python"><span class="va">None</span></code>を返す。0変数の充足代入<code class="sourceCode python">{}</code>と<code class="sourceCode python"><span class="va">None</span></code>を区別する。入力の節リストは変更せず、元の式による確認に使える状態を保つ。</p>
+</section>
+<section id="単位伝播と二つの終了" class="level3">
+<h3>単位伝播と二つの終了</h3>
+<p>部分代入の下で、真のリテラルを含む節はすでに満たされているので除ける。残りの節では偽になったリテラルを除く。未定リテラルが一つだけ残った節は、そのリテラルを真にする必要がある。これを単位伝播と呼ぶ。</p>
+<ul>
+<li>残る節が一つもなければ、すべて満たしたので成功する。まだ値のない変数には任意の真偽を補い、全変数の代入として返す。</li>
+<li>空の節が一つでも残れば、その節を真にできないので、その枝は失敗する。</li>
+<li>単位節があれば、そのリテラルが真となる値を入れて簡約を繰り返す。</li>
+</ul>
+<p><strong>作業1：</strong> この簡約と単位伝播を実装する。同じリテラルの重複がある節は、単位かどうかを判断する前に重複をまとめてよい。入力全体が空の<code class="sourceCode python">[]</code>と、空節を含む<code class="sourceCode python">[[]]</code>を取り違えない。</p>
+</section>
+<section id="分岐と状態の復元" class="level3">
+<h3>分岐と状態の復元</h3>
+<p>単位伝播が止まっても未定の節が残る場合、その節にある未定変数を一つ選ぶ。偽を仮定した枝と真を仮定した枝の両方を調べ、一方で成功すればその代入を返す。両方失敗したときだけ、元の枝も失敗とする。</p>
+<p><strong>作業2：</strong> この分岐を実装し、失敗した枝で確定した値を次の枝へ持ち越さない。辞書をコピーして枝ごとに持つ方法でも、変更を記録して戻す方法でもよい。戻す対象は仮定した一変数だけではなく、その後の伝播で決まった値も含む。</p>
+<details class="hint"><summary>ヒントを開く：二つの空と枝の独立性</summary><div class="hint-body">
+<p><code class="sourceCode python">[]</code>は条件なしなのでSAT、<code class="sourceCode python">[[]]</code>は満たせない節があるのでUNSAT。分岐ごとに部分代入をコピーし、元の節から簡約し直す方法なら、兄弟の枝の代入や節の削除が混ざるのを避けやすい。</p>
+</div></details>
+</section>
+<section id="確認と根拠" class="level3">
+<h3>確認と根拠</h3>
+<p>まず<a href="../../downloads/session-09/cnf-unit.json" data-code-preview="../../previews/session-09/cnf-unit.json.json">単位伝播の入力</a>、<a href="../../downloads/session-09/cnf-conflict.json" data-code-preview="../../previews/session-09/cnf-conflict.json.json">矛盾する単位節</a>、<a href="../../downloads/session-09/cnf-restore.json" data-code-preview="../../previews/session-09/cnf-restore.json.json">復元の入力</a>、<a href="../../downloads/session-09/cnf-branch-unsat.json" data-code-preview="../../previews/session-09/cnf-branch-unsat.json.json">分岐しても解なし</a>で確認する。各ファイルの内容と期待判定を次に示す。<code>n</code> は変数数、<code>clauses</code> は上で定めた節のリストである。</p>
+<div class="table-scroll">
+<table style="width:100%;">
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 30%" />
+<col style="width: 23%" />
+<col style="width: 23%" />
+</colgroup>
+<thead>
+<tr>
+<th>入力</th>
+<th style="text-align: right;">n</th>
+<th>clauses</th>
+<th>期待</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cnf-unit.json</td>
+<td style="text-align: right;">3</td>
+<td><code class="sourceCode python">[[<span class="dv">1</span>],[<span class="op">-</span><span class="dv">1</span>,<span class="dv">2</span>],[<span class="op">-</span><span class="dv">2</span>,<span class="dv">3</span>]]</code></td>
+<td>SAT</td>
+</tr>
+<tr>
+<td>cnf-conflict.json</td>
+<td style="text-align: right;">1</td>
+<td><code class="sourceCode python">[[<span class="dv">1</span>],[<span class="op">-</span><span class="dv">1</span>]]</code></td>
+<td>UNSAT</td>
+</tr>
+<tr>
+<td>cnf-restore.json</td>
+<td style="text-align: right;">2</td>
+<td><code class="sourceCode python">[[<span class="dv">1</span>,<span class="dv">2</span>],[<span class="dv">1</span>,<span class="op">-</span><span class="dv">2</span>]]</code></td>
+<td>SAT</td>
+</tr>
+<tr>
+<td>cnf-branch-unsat.json</td>
+<td style="text-align: right;">2</td>
+<td><code class="sourceCode python">[[<span class="dv">1</span>,<span class="dv">2</span>],[<span class="dv">1</span>,<span class="op">-</span><span class="dv">2</span>],[<span class="op">-</span><span class="dv">1</span>,<span class="dv">2</span>],[<span class="op">-</span><span class="dv">1</span>,<span class="op">-</span><span class="dv">2</span>]]</code></td>
+<td>UNSAT</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>復元の入力は(1∨2)∧(1∨¬2)。変数1を偽にすると矛盾し、真にした枝は成功する。最初の枝の値を残すと、成功するはずの枝を失ってしまう。返した代入を元の節へ代入して、SATの根拠も確かめる。</p>
+<p><a href="../../downloads/session-09/cnf-compare.py" data-code-preview="../../previews/session-09/cnf-compare.py.json">cnf-compare.py</a>は、二変数の重複・恒真節なしの全512式と、三変数で三節以下の3304式を真理値表で調べ、あなたの関数の判定・代入・入力の保持と照合する。補助的な検査であり、一般のすべてのCNFを試したことにはならない。</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> dpll-start.py cnf-restore.json</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> cnf-compare.py dpll-start.py</span></code></pre></div>
+<p>最後に、単位伝播が元の充足代入を失わない理由、真偽二枝で未定変数の全場合を覆う理由、伝播・分岐で未定変数が減り停止する理由を説明する。テストの通過と、アルゴリズムの根拠を分けて示そう。</p>
+</section>
+</section>
+<section id="colors" class="level2">
+<h2>選択S09a　Booleanによる配色</h2>
+<p>地域ごとの「ちょうど一色」と、辺ごとの「同じ色は不可」を組み合わせる。発展1の別題材として20〜30分を目安に選べる。MiniZinc版の配色や他の発展の完成は前提にしない。</p>
+<section id="地域色辺" class="level3">
+<h3>地域・色・辺</h3>
+<p>地域はWA・NT・SA・Q・NSW・V・T、色は赤・緑・青の三色。各地域をちょうど一色で塗り、次の九つの辺でつながる地域を同じ色にしない。Tに辺はないが、Tにも一色を選ぶ。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>辺</th>
+<th>辺</th>
+<th>辺</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WA–NT</td>
+<td>WA–SA</td>
+<td>NT–SA</td>
+</tr>
+<tr>
+<td>NT–Q</td>
+<td>SA–Q</td>
+<td>SA–NSW</td>
+</tr>
+<tr>
+<td>SA–V</td>
+<td>Q–NSW</td>
+<td>NSW–V</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><a href="../../downloads/session-09/australia.json" data-code-preview="../../previews/session-09/australia.json.json">australia.json</a>に地域・色・辺を用意した。<a href="../../downloads/session-09/color-start.py" data-code-preview="../../previews/session-09/color-start.py.json">color-start.py</a>は、<code class="sourceCode python">x[v,c]</code>を「地域vに色cを使う」というBoolean変数として宣言する。整数の色番号は変数に使わない。</p>
+</section>
+<section id="三種類の条件" class="level3">
+<h3>三種類の条件</h3>
+<p>変数、辺を読む処理、地域・色ペア・辺を巡回する枠、色名の表示は提供する。TODOへ、地域内の色数と、地域間の同色禁止を分けて追加する。</p>
+<ol type="1">
+<li><strong>作業1：</strong> 各地域に少なくとも一色を選ぶ。</li>
+<li><strong>作業2：</strong> 同じ地域の各色ペアを同時には選ばない。</li>
+<li><strong>作業3：</strong> 各辺について、どの色も両地域で同時に選ばない。</li>
+</ol>
+<details class="hint"><summary>ヒントを開く：地域内と地域間の違い</summary><div class="hint-body">
+<p>一地域の候補は<code class="sourceCode python">[x[v,c] <span class="cf">for</span> c <span class="kw">in</span> colors]</code>。地域内のペアc1・c2と、辺u・vに対する同じ色cを区別する。どちらの同時選択も<code class="sourceCode python">Not(And(...))</code>で禁止できるが、比べる添字が異なる。</p>
+</div></details>
+<p>三色では18通りの配色がある。一つの有効な配色が出れば、各地域一色、全九辺で異色を確認する。例えば地域順WA・NT・SA・Q・NSW・V・Tに、赤・緑・青・赤・緑・赤・赤を選べる。</p>
+<p><a href="../../downloads/session-09/color-checks.json" data-code-preview="../../previews/session-09/color-checks.json.json">color-checks.json</a>の固定代入も使う。全地域全色を偽にすると拒否される。上の本土の色を保ち、Tだけ赤・緑を真にした代入も拒否される。前者は少なくとも一色、後者は地域内の同時選択禁止の欠落を見つける。</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> color-start.py <span class="at">--case</span> valid</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> color-start.py <span class="at">--case</span> all-false</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> color-start.py <span class="at">--case</span> T-two</span></code></pre></div>
+<p>Tには隣接条件がないので、辺の条件だけでは二色選択を禁止できない。さらに入力の色リストを赤・緑だけへ減らすと、WA・NT・SAの三角形を二色で塗れずUNSATとなる。元の三色入力はコピーして残す。</p>
+<p>MiniZinc版の豪州配色も試した人は、地域ごとの整数の色番号と、地域×色のBooleanを対応させ、同じ色の割当へ変換できるか比べよう。両版を解くことは、この演習の開始条件ではない。</p>
+<p>Boolean変数は7×3=21個。この符号化の節数は少なくとも一色が7、地域内ペアが21、辺と色の組が27で計55となる。三色18通りという解数と、作った式の個数を混同しない。</p>
+</section>
+</section>
+<section id="maxsat" class="level2">
+<h2>選択S09b　四つの節のMaxSAT</h2>
+<p>必須条件として全部を守る問題と、真になる節の個数を評価する問題を区別する短問である。5〜10分の真理値表で考え、MaxSAT専用APIや整数の最適化の操作は使わない。</p>
+<section id="条件と真理値表" class="level3">
+<h3>条件と真理値表</h3>
+<p>二つのBoolean変数p・qについて、C1=p∨q、C2=p∨¬q、C3=¬p∨q、C4=¬p∨¬qという四節を考える。∨は「または」、¬は否定で、一つの節は∨で結んだ式である。<a href="../../downloads/session-09/maxsat-work.md" data-code-preview="../../previews/session-09/maxsat-work.md.json">記入用の表</a>を手で埋めるか、<a href="../../downloads/session-09/maxsat-start.py" data-code-preview="../../previews/session-09/maxsat-start.py.json">maxsat-start.py</a>を使う。</p>
+<ol type="1">
+<li>四つの代入ごとに、C1〜C4の真偽と、真になる節の個数を調べる。</li>
+<li>四節すべてを必須としたSAT問題に、解があるか説明する。</li>
+<li>別の問題として、真になる節の数を最大にしたときの値と、すべての最適な代入を求める。</li>
+</ol>
+<p>Python版では、入力p・qは確定した通常のboolである。ここではPythonの<code class="sourceCode python"><span class="kw">or</span></code>・<code class="sourceCode python"><span class="kw">not</span></code>を使ってよい。Z3へ渡す未知の記号式に同じ書き方をする場面とは区別する。</p>
+<p>どの代入でも一節だけが偽で、残り三節は真になる。全部を必須にする問題はUNSAT、節数を最大にするMaxSATでは最適値3で四つの代入すべてが最適となる。必須と指定された条件を勝手に希望へ変えてよいという意味ではない。</p>
+</section>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../index.html">講義一覧</a> · <a href="../../sessions/09-sat/index.html">第09回の本文へ</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

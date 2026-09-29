@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第10回　SMTで作業の日程を組む - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+<script defer="" src="../../assets/katex/katex.min.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+</script>
+<link rel="stylesheet" href="../../assets/katex/katex.min.css" />
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 通常講義</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第10回　SMTで作業の日程を組む</h1>
+    <nav class="session-nav" aria-label="第10回の講義資料"><a href="../../sessions/10-smt/index.html" aria-current="page">通常講義</a><a href="../../advanced/scheduling-challenges/index.html">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#目標">目標</a>
+      </li>
+      <li><a href="#問題">1. 問題</a>
+      </li>
+      <li><a href="#定式化">2. 定式化</a>
+      <ul>
+      <li><a href="#開始終了期限">開始・終了・期限</a></li>
+      <li><a href="#先行と非重複">先行と非重複</a></li>
+      <li><a href="#整数の記号と値">整数の記号と値</a></li>
+      </ul>
+      </li>
+      <li><a href="#解説例">3. 解説例</a>
+      <ul>
+      <li><a href="#手順1-開始時刻と境界">手順1　開始時刻と境界</a></li>
+      <li><a href="#手順2-先行と非重複">手順2　先行と非重複</a></li>
+      <li><a href="#手順3-判定と区間の確認">手順3　判定と区間の確認</a></li>
+      </ul>
+      </li>
+      <li><a href="#結果">4. 結果</a>
+      </li>
+      <li><a href="#演習">5. 演習</a>
+      <ul>
+      <li><a href="#必修1-所要時間の変更">必修1　所要時間の変更</a></li>
+      <li><a href="#必修2-二つの完了を待つ作業">必修2　二つの完了を待つ作業</a></li>
+      </ul>
+      </li>
+      <li><a href="#発展">6. 発展</a>
+      </li>
+      <li><a href="#振り返り">7. 振り返り</a>
+      </li>
+      <li><a href="#参照">参照</a>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p>作業をいつ始めるかを整数で決め、必要な順序と装置の使い方を守る日程を探す。作業の開始と終了を時間軸へ戻し、同じ装置の使用が重ならないことと、すべて期限内に終わることを確かめる。</p>
+</header>
+<section id="目標" class="level2 unnumbered sec-goal">
+<h2 class="unnumbered sec-goal">目標</h2>
+<p>この回では、論理式に整数の時刻と不等式を組み合わせる。日程を表示できたら、次の三つを説明できるようになろう。</p>
+<ul>
+<li>開始時刻の意味と、終了期限から導いた安全な上限を説明できる。</li>
+<li>先行関係と、二つの順序を許す非重複を式にできる。</li>
+<li>得られた時刻を区間で確認し、期限不足によるUNSATの理由を説明できる。</li>
+</ul>
+<p>第09回のPython・Z3、条件追加・判定・モデル取得、論理和を使う。<a href="../../downloads/session-10/warmup.py" data-code-preview="../../previews/session-10/warmup.py.json">Booleanの操作例</a>と<a href="../../downloads/session-10/sat_io.py" data-code-preview="../../previews/session-10/sat_io.py.json">判定の足場</a>を再配布し、整数を読む処理は<a href="../../downloads/session-10/integer_io.py" data-code-preview="../../previews/session-10/integer_io.py.json">integer_io.py</a>へ用意した。整数の変数と区間はこの回で説明する。前の発展の完成は不要で、環境は<a href="../../guides/schedule-check/index.html">確認手引き</a>で授業内に確認できる。</p>
+<p>説明・実演に50分、<a href="#演習">5. 演習</a>に45分、振り返りに5分を使う。必修1・2は各20分、残り5分は確認の目安である。通常演習の提出・宿題・完了報告・教員の完了承認は設けない。発展は関心に合わせて選ぶ。</p>
+</section>
+<section id="問題" class="level2 sec-problem">
+<h2 class="sec-problem">1. 問題</h2>
+<p>一つの装置を共有する作業は、同時に実行できない。一方、別の場所で行う作業は、必要な先行関係を守れば重ねられる。すべての作業を順番に並べると決め付けず、指定された関係を読み取ろう。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 三つの作業A・B・Cをすべて実施する。時間の単位を揃え、所要時間と使用場所を次のように与える。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>作業</th>
+<th>内容</th>
+<th style="text-align: right;">所要時間</th>
+<th>場所</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>試料の処理</td>
+<td style="text-align: right;">2</td>
+<td>装置</td>
+</tr>
+<tr>
+<td>B</td>
+<td>結果の確認</td>
+<td style="text-align: right;">3</td>
+<td>別の作業場所</td>
+</tr>
+<tr>
+<td>C</td>
+<td>別試料の処理</td>
+<td style="text-align: right;">2</td>
+<td>Aと同じ装置</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>開始時刻は0以上の整数、作業は途中で中断しない。期限H=7までにすべて終了する。Aが終わってからBを始め、AとCは重ねない。AとCの順序はどちらでもよく、BとCの重なりは禁止しない。</p>
+<p>作業は開始時刻を含み、終了時刻を含まない区間として扱う。終了と次の開始が同じ時刻でもよい。以上を満たす一つの日程を求め、最短化の目的は置かない。</p>
+</div>
+<p>求めるのは各作業の開始時刻で、所要時間は入力である。開始時刻を求めれば、終了時刻は開始と所要時間の和で決まる。場所を共有するA・Cと、順序が指定されたA・Bを分けて読む。</p>
+</section>
+<section id="定式化" class="level2 sec-model">
+<h2 class="sec-model">2. 定式化</h2>
+<p>第09回の真偽値に加え、今回は整数の意味を持つ式を使う。命題論理と、整数の算術などの意味を持つ制約を組み合わせた充足可能性をSMTと呼ぶ。APIの基本的な流れは、変数を作る、式を加える、判定する、値を読むという順のままである。</p>
+<section id="開始終了期限" class="level3">
+<h3>開始・終了・期限</h3>
+<p>作業iの開始時刻を整数 <span class="math inline">s_i</span>、入力の所要時間を <span class="math inline">d_i</span> とする。作業を中断しないので、実行中の区間は <span class="math inline">[s_i,s_i+d_i)</span> になる。左端の開始を含み、右端の終了を含まない<strong>半開区間</strong>である。</p>
+<p>開始の下限と、すべての終了が期限H以下である条件は次のようになる。終了時刻そのものをHへ固定するのではなく、それ以前に終わってもよい。</p>
+<p><span class="math display">0\le s_i,\qquad s_i+d_i\le H\quad(各作業i).</span></p>
+<p>終了上限を移項すると <span class="math inline">s_i\le H-d_i</span> なので、開始時刻の範囲は <span class="math inline">0\le s_i\le H-d_i</span> となる。解説例ではA・Cの上限は5、Bは4。いずれも元の終了条件から導いた上限である。</p>
+<p>Hが所要時間より小さい場合、上限H−dは負になる。開始0以上と両立しないため、その作業だけでも期限内に終えられない。根拠なく狭い上限を置く方法とは異なり、この境界で正しい日程を失うことはない。</p>
+</section>
+<section id="先行と非重複" class="level3">
+<h3>先行と非重複</h3>
+<p>Aが終わってからBを始める条件は <span class="math inline">s_A+d_A\le s_B</span> である。この先行関係では順序が指定される。一方、AとCの装置共有では、どちらを先にするかを決めることも日程の選択に含まれる。</p>
+<p><span class="math display"> (s_A+d_A\le s_C)\ \lor\ (s_C+d_C\le s_A).</span></p>
+<p>左はAの終了後にC、右はCの終了後にAである。いずれかの順序が成り立てば、区間が重ならない。両方を同時に要求する連言ではなく、どちらかを選べる論理和にする。</p>
+<figure>
+<img src="../../figures/session-10/interval-orders.svg" alt="AとCの二つの順序。時刻2で接する日程も許される。" />
+<figcaption aria-hidden="true">AとCの二つの順序。時刻2で接する日程も許される。</figcaption>
+</figure>
+<p>開始時刻が異なるだけでは十分ではない。Aが[0,2)、Cが[1,3)なら開始は違うが、時刻1〜2に重なる。終了まで含めて比べること、端点が接するときに<code class="sourceCode python"><span class="op">&lt;=</span></code>で許すことを確認しよう。</p>
+</section>
+<section id="整数の記号と値" class="level3">
+<h3>整数の記号と値</h3>
+<p>Z3の<code>Int</code>は整数の記号を作り、<code>Ints</code>は複数の整数記号をまとめて作る。開始時刻に整数を選ぶ今回の問題では、例えば0・1・2を使え、0.5という開始時刻は含まない。</p>
+<p>整数の記号自体には、宣言だけで0以上や期限内という範囲が付くわけではない。下限と上限は明示的に加える。実数なら分数の時刻も含み、固定ビット幅の数ならさらに別の意味になるが、今回の入力は整数時刻に揃える。</p>
+<p><code>Or</code>の中には真偽変数だけでなく、整数の比較式も置ける。比較式全体は真偽を持つので、第09回と同じ論理和で二つの順序を結べる。<a href="#解説例">解説例</a>で、どの式がどの時刻を比べているかを追ってみよう。</p>
+</section>
+</section>
+<section id="解説例" class="level2 sec-demo">
+<h2 class="sec-demo">3. 解説例</h2>
+<p>教員が所要時間と期限を読み、整数変数、開始範囲、先行と非重複を順に書く。モデルがSATになったら、値を得るだけでなく、開始と終了を区間として読み直して確認する。</p>
+<section id="手順1-開始時刻と境界" class="level3">
+<h3>手順1　開始時刻と境界</h3>
+<p><a href="../../downloads/session-10/schedule-demo.py" data-code-preview="../../previews/session-10/schedule-demo.py.json">schedule-demo.py</a>を<a href="../../downloads/session-10/demo.json" data-code-preview="../../previews/session-10/demo.json.json">demo.json</a>で実行する。所要時間<code>dA,dB,dC</code>と期限<code>H</code>は入力から読み、開始時刻だけを未知の整数として宣言する。</p>
+<figure class="code"><figcaption>schedule-demo.py</figcaption>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>    sA, sB, sC <span class="op">=</span> Ints(<span class="st">&#39;sA sB sC&#39;</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> Solver()</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    s.add(<span class="dv">0</span> <span class="op">&lt;=</span> sA, sA <span class="op">&lt;=</span> H<span class="op">-</span>dA)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    s.add(<span class="dv">0</span> <span class="op">&lt;=</span> sB, sB <span class="op">&lt;=</span> H<span class="op">-</span>dB)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    s.add(<span class="dv">0</span> <span class="op">&lt;=</span> sC, sC <span class="op">&lt;=</span> H<span class="op">-</span>dC)</span></code></pre></div>
+</figure>
+<p><code class="sourceCode python">H<span class="op">-</span>dA</code>などは、入力が変われば変わる値である。今回の上限5や4を固定で埋め込むよりも、期限と所要時間の関係をそのまま書けばよい。二つの不等式を<code class="sourceCode python">s.add</code>へ別々に渡し、Pythonの連鎖比較<code class="sourceCode python"><span class="dv">0</span> <span class="op">&lt;=</span> sA <span class="op">&lt;=</span> H<span class="op">-</span>dA</code>にはしない。</p>
+</section>
+<section id="手順2-先行と非重複" class="level3">
+<h3>手順2　先行と非重複</h3>
+<p>Aの終了とBの開始を比べて先行関係を加え、装置を共有するA・Cには二つの順序を許す条件を加える。各式の左辺・右辺が、開始か終了かを読み分けよう。</p>
+<figure class="code"><figcaption>schedule-demo.py</figcaption>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>    s.add(sA<span class="op">+</span>dA <span class="op">&lt;=</span> sB)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    s.add(Or(sA<span class="op">+</span>dA <span class="op">&lt;=</span> sC, sC<span class="op">+</span>dC <span class="op">&lt;=</span> sA))</span></code></pre></div>
+</figure>
+<p>BとCの重なりは指定されていないので、そのペアの非重複は追加しない。A→Bの矢印を逆にせず、A・Cの順序を一方向へ決め打ちしていないことを、問題の条件へ戻って確認する。</p>
+</section>
+<section id="手順3-判定と区間の確認" class="level3">
+<h3>手順3　判定と区間の確認</h3>
+<p><a href="../../downloads/session-10/integer_io.py" data-code-preview="../../previews/session-10/integer_io.py.json">integer_io.py</a>が第09回と同じ三分岐で結果を扱う。SATの場合だけモデルを読み、整数の値を<code class="sourceCode python">as_long()</code>でPythonの整数へ取り出す。UNSAT・UNKNOWNでは充足する日程を表示しない。</p>
+<figure class="code"><figcaption>integer_io.py</figcaption>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> solver.check()</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> result <span class="op">==</span> sat:</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>        model <span class="op">=</span> solver.model()</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        values <span class="op">=</span> {name: model.evaluate(var, model_completion<span class="op">=</span><span class="va">True</span>).as_long()</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                  <span class="cf">for</span> name, var <span class="kw">in</span> variables.items()}</span></code></pre></div>
+</figure>
+<p>作業フォルダーにモデル・入力・共通ファイルを置き、次を実行する。出力には開始時刻と、入力の所要時間を足した半開区間が表示される。</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> schedule-demo.py demo.json</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> schedule-demo.py demo-4.json</span></code></pre></div>
+<p>二つ目の<a href="../../downloads/session-10/demo-4.json" data-code-preview="../../previews/session-10/demo-4.json.json">demo-4.json</a>は所要時間を保ち期限だけを4へ変えた入力で、UNSATになる。理由は、Aの2時間の後にBの3時間が必要なためである。単に装置の総使用時間だけを比べても、この先行関係は確かめられない。</p>
+</section>
+</section>
+<section id="結果" class="level2 sec-result">
+<h2 class="sec-result">4. 結果</h2>
+<p>期限7では、次の二つの開始時刻はいずれも条件を満たす。AとCの順序が逆でも許されること、Aが終わってからBを始めることを、それぞれ区間へ戻して確認できる。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>開始(A,B,C)</th>
+<th>Aの区間</th>
+<th>Bの区間</th>
+<th>Cの区間</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>(0,2,2)</td>
+<td>[0,2)</td>
+<td>[2,5)</td>
+<td>[2,4)</td>
+</tr>
+<tr>
+<td>(2,4,0)</td>
+<td>[2,4)</td>
+<td>[4,7)</td>
+<td>[0,2)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>最初の表ではAの終了とB・Cの開始が時刻2で接する。BとCは重なるが、別の場所なのでよい。二つ目の表ではCの終了後にAを行う。両方とも各終了が7以下である。</p>
+<p>一方、開始(A,B,C)=(0,2,1)なら、AとCが途中で重なるため拒否される。開始だけが違うかどうかを調べる条件では、この日程を見逃してしまう。</p>
+<p>この回の本編では、期限内に成立するかを調べている。SATで一つの日程が得られたことから、最短日程を求めたとは言えない。最小の期限を調べる方法は発展で扱う。出力の時刻と条件の照合は<a href="../../guides/schedule-check/index.html">確認手引き</a>にもまとめてある。</p>
+</section>
+<section id="演習" class="level2 sec-exercise">
+<h2 class="sec-exercise">5. 演習</h2>
+<p>必修1では所要時間が変わった入力から同じ種類の条件を書き、必修2ではBが待つ作業を増やす。出力が出る場合と出ない場合の両方を、作業時間と順序から説明してみよう。</p>
+<section id="必修1-所要時間の変更" class="level3">
+<h3>必修1　所要時間の変更</h3>
+<p>入力の所要時間が変わっても、開始と終了の関係は同じである。値を固定で書き換えるのではなく、入力の所要時間を使う式へ写し、端点で接する日程を確かめよう。</p>
+<section id="問題-1" class="level4">
+<h4>問題</h4>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 三作業A・B・Cをすべて実施する。AとCは同じ一台の装置を使い、Bは別の作業場所を使う。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>作業</th>
+<th style="text-align: right;">A</th>
+<th style="text-align: right;">B</th>
+<th style="text-align: right;">C</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>所要時間</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>開始時刻は0以上の整数で、各作業を中断しない。すべて期限H=7までに終える。Aの終了後にBを始め、AとCは重ねない。A・Cの順序はどちらでもよく、BとCの重なりは禁止しない。</p>
+<p>区間は開始を含み終了を含まないものとし、終了と次の開始が同じ時刻でもよい。以上を満たす一つの日程を求め、最短化の目的は置かない。</p>
+</div>
+</section>
+<section id="作業" class="level4">
+<h4>作業</h4>
+<p><a href="../../downloads/session-10/schedule-start.py" data-code-preview="../../previews/session-10/schedule-start.py.json">schedule-start.py</a>、<a href="../../downloads/session-10/practice.json" data-code-preview="../../previews/session-10/practice.json.json">practice.json</a>、<a href="../../downloads/session-10/integer_io.py" data-code-preview="../../previews/session-10/integer_io.py.json">integer_io.py</a>を使う。所要時間と期限の読み込み、作業名ごとの整数変数の辞書<code>starts</code>、判定と区間表示は完成している。<code>H</code> は期限、<code>sA</code>・<code>sB</code>・<code>sC</code> はA・B・Cの開始変数、<code>dA</code>・<code>dB</code>・<code>dC</code> は各所要時間、<code>s</code> は条件を加えるソルバーである。境界は入力の全作業へ、先行と装置共有は指定されたA・B・Cの組へ書き分ける。</p>
+<ol type="1">
+<li><strong>作業1：</strong> 入力の辞書<code>duration</code>のキーを<code class="sourceCode python"><span class="cf">for</span></code>でたどり、各作業について開始下限と、期限から導いた開始上限を追加する。<code class="sourceCode python">starts[name]</code>はその作業の開始変数、<code class="sourceCode python">duration[name]</code>は入力の所要時間である。</li>
+<li><strong>作業2：</strong> A→Bの先行と、A・Cの非重複を追加する。</li>
+<li>実行し、開始に所要時間を足して、期限・先行・装置の使用を確認する。</li>
+</ol>
+<figure class="code"><figcaption>schedule-start.py</figcaption>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>    <span class="co"># </span><span class="al">TODO</span><span class="co">(作業1): durationの各作業について、開始下限と期限からの開始上限を生成する。</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># </span><span class="al">TODO</span><span class="co">(作業2): AからBへの先行と、A・Cの非重複を書く。</span></span></code></pre></div>
+</figure>
+<p>未記入でもPythonとして実行できるが、日程の条件はまだ入っていない。SATの表示だけで完成とせず、所要時間が変わった後も、各条件が入力の値を使っているかを確かめよう。</p>
+</section>
+<section id="自己確認" class="level4">
+<h4>自己確認</h4>
+<p>開始(A,B,C)=(0,3,3)なら、Aは[0,3)、BとCは[3,5)で成立する。共有するA・Cは時刻3で接する。別の日程でも、範囲・先行・非重複のすべてを満たせばよい。</p>
+<figure>
+<img src="../../figures/session-10/practice-intervals.svg" alt="必修1の成立例。Aの終了とB・Cの開始が時刻3で接する。" />
+<figcaption aria-hidden="true">必修1の成立例。Aの終了とB・Cの開始が時刻3で接する。</figcaption>
+</figure>
+<p>図のBとCの重なりは許されている。A・Cだけが同じ装置であり、先行はA→Bだけだからである。全作業のペアへ一律に非重複を加えると、問題が許している日程を失ってしまう。</p>
+<p>続いて <a href="../../downloads/session-10/schedule-checks.json" data-code-preview="../../previews/session-10/schedule-checks.json.json">固定検査データ</a> と <a href="../../downloads/session-10/demo.json" data-code-preview="../../previews/session-10/demo.json.json">demo.json</a> も同じフォルダーへ置き、<code>python3 schedule-start.py --check</code> を実行する。<code>demo.json</code> の所要時間はA・B・Cが2・3・2、期限は7であり、先行と装置の条件はこの問題と同じである。検査は自分の <code class="sourceCode python">build(data)</code> に次の各日程を一つずつ固定する。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>入力</th>
+<th>開始(A,B,C)</th>
+<th>確認する点</th>
+<th>期待</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>demo.json</td>
+<td>(0,2,2)</td>
+<td>Aの後にCが端点で接する</td>
+<td>SAT</td>
+</tr>
+<tr>
+<td>demo.json</td>
+<td>(2,4,0)</td>
+<td>Cの後にAが端点で接する</td>
+<td>SAT</td>
+</tr>
+<tr>
+<td>demo.json</td>
+<td>(0,2,1)</td>
+<td>AとCが重なる</td>
+<td>UNSAT</td>
+</tr>
+<tr>
+<td>demo.json</td>
+<td>(0,1,2)</td>
+<td>BがAの終了前に始まる</td>
+<td>UNSAT</td>
+</tr>
+<tr>
+<td>demo.json</td>
+<td>(0,5,2)</td>
+<td>Bが期限を超える</td>
+<td>UNSAT</td>
+</tr>
+<tr>
+<td>demo.json</td>
+<td>(-1,1,1)</td>
+<td>Aの開始が負</td>
+<td>UNSAT</td>
+</tr>
+<tr>
+<td>practice.json</td>
+<td>(0,3,3)</td>
+<td>所要時間3,2,2でも端点で接してよい</td>
+<td>SAT</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>全7件がPASS、最後が <code>7 checks, 0 failures</code> なら期待と一致する。データ内の <code>model=basic</code> の7件だけを使い、C→Bも加える <code>wait</code> の行はこの検査から除かれる。手動で日程を固定する操作も<a href="../../guides/schedule-check/index.html">確認手引き</a>にある。</p>
+<p>境界を一つのループで生成すると、入力の作業が増えても、その作業の開始と終了の範囲を課せる。ただし先行や装置共有まで自動で決まるわけではない。この必修はその二条件をA・B・Cについて書き、全体の一般化は発展で扱う。</p>
+<details class="hint"><summary>ヒントを開く：入力の各作業をたどる</summary><div class="hint-body">
+<p><code class="sourceCode python"><span class="cf">for</span> name <span class="kw">in</span> duration:</code>の中で、<code class="sourceCode python">starts[name]</code>が0以上、かつ<code class="sourceCode python">H<span class="op">-</span>duration[name]</code>以下という二条件を<code class="sourceCode python">s.add</code>へ渡す。Pythonの連鎖比較を使わず、二つの式として渡す。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：開始と終了の比較</summary><div class="hint-body">
+<p>各作業iについて0≤開始≤H−所要時間。A→BはAの終了≤Bの開始。A・CはAの終了≤Cの開始、またはCの終了≤Aの開始である。上限や終了を固定の数字へ置き換えない。</p>
+</div></details>
+</section>
+</section>
+<section id="必修2-二つの完了を待つ作業" class="level3">
+<h3>必修2　二つの完了を待つ作業</h3>
+<p>今度はBがAだけでなくCの完了も待つ。追加する条件は先行関係一つだが、同じ装置の使用と組み合わさると、必要な期限が変わる。二つの期限を別々に判定し、結果の理由を説明しよう。</p>
+<section id="問題-2" class="level4">
+<h4>問題</h4>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 三作業A・B・Cをすべて実施する。AとCは同じ一台の装置を使い、Bは別の作業場所を使う。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>作業</th>
+<th style="text-align: right;">A</th>
+<th style="text-align: right;">B</th>
+<th style="text-align: right;">C</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>所要時間</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>開始時刻は0以上の整数で、各作業を中断しない。AとCを重ねず、その順序はどちらでもよい。BはAとCの両方が終了してから始める。</p>
+<p>すべて期限Hまでに終了する。まずH=6、次にH=7で成立するかを調べる。区間は開始を含み終了を含まず、端点で接してよい。最短化の目的は置かず、条件を削除して期限に合わせない。</p>
+</div>
+</section>
+<section id="作業-1" class="level4">
+<h4>作業</h4>
+<p><a href="../../downloads/session-10/wait-start.py" data-code-preview="../../previews/session-10/wait-start.py.json">wait-start.py</a>、完成した<a href="../../downloads/session-10/schedule_base.py" data-code-preview="../../previews/session-10/schedule_base.py.json">schedule_base.py</a>、<a href="../../downloads/session-10/integer_io.py" data-code-preview="../../previews/session-10/integer_io.py.json">integer_io.py</a>を使う。入力は<a href="../../downloads/session-10/wait-6.json" data-code-preview="../../previews/session-10/wait-6.json.json">wait-6.json</a>と<a href="../../downloads/session-10/wait-7.json" data-code-preview="../../previews/session-10/wait-7.json.json">wait-7.json</a>。完成モデルには全作業の開始範囲、A→Bの先行、A・Cの非重複がある。<code>starts</code> は作業名から開始変数への辞書で、<code class="sourceCode python">sB<span class="op">=</span>starts[<span class="st">&#39;B&#39;</span>]</code>、<code class="sourceCode python">sC<span class="op">=</span>starts[<span class="st">&#39;C&#39;</span>]</code>、<code>dC</code> はCの所要時間を表す。ソルバー <code>s</code> へC→Bの条件を追加する。必修1の完成は不要である。</p>
+<ol type="1">
+<li><strong>作業1：</strong> Cの終了後にBを始める先行条件を一つ加える。</li>
+<li><strong>作業2：</strong> 二つの期限を別々に実行する。SATなら区間を確認し、UNSATなら必要な時間から説明する。</li>
+</ol>
+<figure class="code"><figcaption>wait-start.py</figcaption>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build(data):</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    s, starts <span class="op">=</span> build_base(data)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    sB, sC <span class="op">=</span> starts[<span class="st">&#39;B&#39;</span>], starts[<span class="st">&#39;C&#39;</span>]</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    dC <span class="op">=</span> data[<span class="st">&#39;duration&#39;</span>][<span class="st">&#39;C&#39;</span>]</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># </span><span class="al">TODO</span><span class="co">(作業1): Cが終わってからBを始める先行条件を追加する。</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> s, starts</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">&#39;__main__&#39;</span>:</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># </span><span class="al">TODO</span><span class="co">(作業2): 期限6・7の入力を別々に実行し、判定と区間を照合する。</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> read_input(<span class="st">&#39;wait-6.json&#39;</span>)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    report_schedule(<span class="op">*</span>build(data), data)</span></code></pre></div>
+</figure>
+<p>作業2の入力読み込みと判定・表示は配布済みであり、追加する制約は作業1の一つでよい。各コマンドは新しいソルバーを作るので、期限6の条件へ期限7を継ぎ足す実行にはならない。</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> wait-start.py wait-6.json</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> wait-start.py wait-7.json</span></code></pre></div>
+</section>
+<section id="自己確認-1" class="level4">
+<h4>自己確認</h4>
+<p>期限6はUNSAT、期限7はSATとなる。期限7の例は開始(A,B,C)=(0,5,3)で、Aが[0,3)、Cが[3,5)、Bが[5,7)。Cを先にする日程も条件が合えばよい。</p>
+<p>同時には進められない作業と、その両方を待つ作業を区別し、必要な時間の下限を自分で説明する。成立する日程を一つ見つけたことだけで、短い期限が不可能な根拠にはしない。説明後に次の確認例を開いて照合する。</p>
+<details class="hint"><summary>ヒントを開く：確認例・時間の下限</summary><div class="hint-body">
+<p>AとCは同じ装置で計5時間かかり、その両方の後にBの2時間が必要になる。開始が0以上なので、全体を7より前に終了できない。期限7の成立例と合わせると、期限6では不可能とわかる。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：終わる作業と待つ作業</summary><div class="hint-body">
+<p>追加する関係だけを時間軸に描く。Cの終了とBの開始のどちらが先かを決め、端点で接してよいことも式へ反映する。CとAの順序を固定する要求はない。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：確認例・追加する先行の式</summary><div class="hint-body">
+<p>Cの終了は<code class="sourceCode python">sC<span class="op">+</span>dC</code>なので、加えるのは<code class="sourceCode python">s.add(sC<span class="op">+</span>dC <span class="op">&lt;=</span> sB)</code>。CをAより後と決める条件ではなく、CとBの関係である。すでにあるA→BとA・Cの非重複は保つ。</p>
+</div></details>
+</section>
+</section>
+</section>
+<section id="発展" class="level2 sec-advanced">
+<h2 class="sec-advanced">6. 発展</h2>
+<p>ここからは、期限を最小にする、装置も選ぶ、入力から一般のモデルを作るという方向へ広げる。<a href="../../advanced/scheduling-challenges/index.html">発展と選択演習</a>には各問題の条件と、独立した出発点を用意している。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>問題</th>
+<th>広げる内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../advanced/scheduling-challenges/index.html#deadline">発展1　最小の期限</a></td>
+<td>期限を変えるSAT判定で最小の期限を求める</td>
+</tr>
+<tr>
+<td><a href="../../advanced/scheduling-challenges/index.html#machines">発展2　装置も選ぶ日程</a></td>
+<td>装置番号と開始時刻を同時に決める</td>
+</tr>
+<tr>
+<td><a href="../../advanced/scheduling-challenges/index.html#jobshop">発展3　一般の日程と独立した検査</a></td>
+<td>小さいジョブショップを一般化し、時刻別の使用数で検査する</td>
+</tr>
+<tr>
+<td><a href="../../advanced/scheduling-challenges/index.html#seats">選択T10　四人の席順</a></td>
+<td>四人の席順を整数と論理和で表す</td>
+</tr>
+<tr>
+<td><a href="../../advanced/scheduling-challenges/index.html#send-more">選択M04のZ3版　覆面算</a></td>
+<td>覆面算の範囲・全相異なり・算術等式を組み合わせる</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="振り返り" class="level2 sec-review">
+<h2 class="sec-review">7. 振り返り</h2>
+<p>作業時間や場所の条件から、変数と式を選び、答えを元の場面へ戻して確認した。日程では特に、開始だけでなく終了を使うこと、共有する場所の組だけに条件を加えることが重要になる。</p>
+<p>まず次の三問から一つを選び、具体例を使って確認する。</p>
+<ul>
+<li>上限H−dは、どの条件から導いた範囲か。</li>
+<li>開始時刻の不一致だけでは、なぜ非重複を表せないか。</li>
+<li><a href="#演習">必修2</a>で期限6を拒否し、7を許せる理由を、装置と作業の順序から説明できるか。</li>
+</ul>
+<p>これまでの「全相異なり」「割当と容量」「集計と最適化」「依存と排他」「時間と非重複」は、自由課題の題材を考える手掛かりになる。例えば席や役割の配置、資源を使う計画、条件付きの構成選択などへ、どの構造を使えそうか考えてみよう。続いて自分の関心対象を一つ選び、「扱う範囲と仮定／入力／決める量／守る条件と良さの基準／モデルに含めないこと／正しい例と拒否したい例」を短くメモする。まだ決まらない欄は疑問として残してよい。提出や完了承認は不要で、自由課題を考えるための手元のメモにする。</p>
+<p>第11〜15回は個別の自由課題を進める。固定の中間提出や一律の工程は設けず、提出は最終課題のみ、評価は合否とする。具体的な提出方法は別途案内される。今回の発展の完成を自由課題の開始条件にはしない。</p>
+</section>
+<section id="参照" class="level2 unnumbered sec-reference">
+<h2 class="unnumbered sec-reference">参照</h2>
+<p>入力と実行の組合せ、固定した日程の検査、開始時刻と終了時刻の読み方は<a href="../../guides/schedule-check/index.html">確認手引き</a>へまとめた。本文中の記号とコードは、次の対応で読み直せる。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>記号・名前</th>
+<th>意味</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>s／<code>sA</code>など</td>
+<td>未知の整数の開始時刻</td>
+</tr>
+<tr>
+<td>d／<code>dA</code>など</td>
+<td>入力の所要時間</td>
+</tr>
+<tr>
+<td>H</td>
+<td>全作業の終了期限</td>
+</tr>
+<tr>
+<td>[s,s+d)</td>
+<td>開始を含み終了を含まない実行区間</td>
+</tr>
+<tr>
+<td><code>Ints</code></td>
+<td>複数の整数記号を作る</td>
+</tr>
+<tr>
+<td><code>Or</code></td>
+<td>比較式の少なくとも一つを成り立たせる</td>
+</tr>
+<tr>
+<td><code class="sourceCode python">as_long()</code></td>
+<td>モデルの整数値をPythonの整数へ取り出す</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>開始の下限を忘れる、開始だけを期限以下にする、同じ装置の開始不一致で済ませる、<code class="sourceCode python"><span class="op">&lt;</span></code>で端点の接触を拒否する、といった誤りを確認する。SAT・UNSAT・UNKNOWNの区別は第09回と同じで、判定不能を解なしと表示しない。</p>
+<p>自由課題で使う道具は、題材名だけで決めず、入力・決定する値・書きたい条件を、通常回で扱った表現へ対応させて選べる。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>道具</th>
+<th>この科目で扱った表し方と参照先</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prolog</td>
+<td>事実と規則から、関係を満たす人や曜日を問い合わせる（第01回）</td>
+</tr>
+<tr>
+<td>MiniZinc</td>
+<td>有限の整数・0/1表へ条件を課し、必要なら集計した量を最適化する（第02・04〜08回）</td>
+</tr>
+<tr>
+<td>Python＋Z3</td>
+<td>真偽値・整数の記号式を組み立て、依存や非重複を含む条件を判定する（第09・10回）</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>これは道具の機能の限界ではなく、この科目で使った入口の比較である。配色や覆面算のように複数の表現を選べる問題もある。まず小さい入力で条件と検査例を対応させ、書きやすさを比べてよい。</p>
+<p>整数と論理演算のAPIは<a href="https://z3prover.github.io/api/html/namespacez3py.html">Z3の公式Python API</a>、判定は<a href="https://z3prover.github.io/api/html/classz3py_1_1_solver.html">Solverの公式参照</a>で確認できる。</p>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../sessions/09-sat/index.html">← 第09回</a> · <a href="../../index.html">講義一覧</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Z3の実行の手引き - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 手引き</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">Z3の実行の手引き</h1>
+    <nav class="session-nav" aria-label="第09回の講義資料"><a href="../../sessions/09-sat/index.html">通常講義</a><a href="../../advanced/sat-challenges/index.html">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#pythonとz3の確認">PythonとZ3の確認</a>
+      </li>
+      <li><a href="#本文のファイルと実行">本文のファイルと実行</a>
+      </li>
+      <li><a href="#必修1の固定検査">必修1の固定検査</a>
+      </li>
+      <li><a href="#判定と出力の意味">判定と出力の意味</a>
+      </li>
+      <li><a href="#必修2の固定値の検査">必修2の固定値の検査</a>
+      </li>
+      <li><a href="#発展のファイル">発展のファイル</a>
+      </li>
+      <li><a href="#学習用satソルバーの入力">学習用SATソルバーの入力</a>
+      </li>
+      <li><a href="#選択演習のファイル">選択演習のファイル</a>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p><a href="../../sessions/09-sat/index.html">本文</a>／<a href="../../advanced/sat-challenges/index.html">発展と選択演習</a>で使うPython環境、ファイル、判定結果を確認する。準備は授業内で扱い、前の回の発展や授業外のインストール作業を前提にしない。</p>
+</header>
+<section id="pythonとz3の確認" class="level2">
+<h2>PythonとZ3の確認</h2>
+<p>授業用のPython環境を開き、次を実行する。Z3のバージョンが表示されれば、このPythonから利用できる。教材の配布実装はPython 3.13とZ3 5.1.0で確認している。</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-c</span> <span class="st">&quot;import z3; print(z3.get_version_string())&quot;</span></span></code></pre></div>
+<p>ここでの<code>python3</code>は授業で使うPythonを指す。環境により起動名が<code>python</code>なら読み替える。別のPythonへ入れたZ3は、そのままでは今のPythonから使えない。エディタの実行環境も同じPythonへ合わせる。</p>
+<p>新しく用意する場合は、作業フォルダーに<a href="../../downloads/session-09/requirements.txt" data-code-preview="../../previews/session-09/requirements.txt.json">requirements.txt</a>を保存する。Linux・macOSのシェルでは、例えば次のように仮想環境を作り、その環境のPythonへインストールできる。</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> venv .venv</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">.venv/bin/python</span> <span class="at">-m</span> pip install <span class="at">-r</span> requirements.txt</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">.venv/bin/python</span> <span class="at">-c</span> <span class="st">&quot;import z3; print(z3.get_version_string())&quot;</span></span></code></pre></div>
+<p>この場合、以降の<code>python3</code>を<code>.venv/bin/python</code>へ読み替えて実行してよい。Windowsでは仮想環境を作るPythonを<code>python</code>で起動し、作成後は<code>.venv\Scripts\python.exe</code>を使える。授業で準備済みの環境がある場合は、そこで最初の確認を行えばよい。</p>
+<p>導入するパッケージ名は<code>z3-solver</code>、インポートする名前は<code>z3</code>である。手順の参照先は<a href="https://github.com/Z3Prover/z3#python">Z3の公式リポジトリ</a>と<a href="https://docs.python.org/3/library/venv.html">Pythonの仮想環境の説明</a>。ファイル名を<code>z3.py</code>にするとライブラリと衝突するので、配布名のまま使う。</p>
+</section>
+<section id="本文のファイルと実行" class="level2">
+<h2>本文のファイルと実行</h2>
+<p>必要なファイルを同じフォルダーへ保存し、そのフォルダーでコマンドを実行する。<code>sat_io.py</code>が判定・代入の表示を、<code>features_base.py</code>が必修1の完成した条件を提供する。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>用途</th>
+<th>ファイル</th>
+<th>実行例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>二変数の操作例</td>
+<td><a href="../../downloads/session-09/warmup.py" data-code-preview="../../previews/session-09/warmup.py.json">warmup.py</a>、<a href="../../downloads/session-09/sat_io.py" data-code-preview="../../previews/session-09/sat_io.py.json">sat_io.py</a></td>
+<td><code>python3 warmup.py</code></td>
+</tr>
+<tr>
+<td>四機能の解説例</td>
+<td><a href="../../downloads/session-09/features-demo.py" data-code-preview="../../previews/session-09/features-demo.py.json">features-demo.py</a>、sat_io.py</td>
+<td><code>python3 features-demo.py</code></td>
+</tr>
+<tr>
+<td>必修1</td>
+<td><a href="../../downloads/session-09/features-start.py" data-code-preview="../../previews/session-09/features-start.py.json">features-start.py</a>、sat_io.py</td>
+<td><code>python3 features-start.py</code></td>
+</tr>
+<tr>
+<td>必修2</td>
+<td><a href="../../downloads/session-09/exclusive-start.py" data-code-preview="../../previews/session-09/exclusive-start.py.json">exclusive-start.py</a>、<a href="../../downloads/session-09/features_base.py" data-code-preview="../../previews/session-09/features_base.py.json">features_base.py</a>、sat_io.py</td>
+<td><code>python3 exclusive-start.py</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>解説例の<code>--case with-D</code>はD必須を加え、<code>--case without-A</code>は最初のA必須だけを外す。通常はA・B・CがTrue、DがFalse。Dも必須ならUNSAT、A必須を外すと全偽も選択肢に含まれる。</p>
+<p>必修の出発ファイルは、TODO未記入でも実行できるが、必要な制約が足りない。実行できたことと、条件をすべて書けたことを区別する。保存せずに実行して古い内容を読んでいないかも確認しよう。</p>
+</section>
+<section id="必修1の固定検査" class="level2">
+<h2>必修1の固定検査</h2>
+<p>編集した<code>features-start.py</code>に<code>--case A-false</code>、<code>--case A-without-B</code>、<code>--case E-without-C</code>を付けて別々に実行する。期待は順にSAT、UNSAT、UNSAT。固定値と検査の意味は<a href="../../sessions/09-sat/index.html#演習">本文の必修1</a>にある。自分の<code class="sourceCode python">build()</code>が作る条件を検査するので、完成した別モデルに切り替えない。</p>
+</section>
+<section id="判定と出力の意味" class="level2">
+<h2>判定と出力の意味</h2>
+<p>SATの場合だけ、<code class="sourceCode python">model()</code>から得た代入を読む。配布の表示処理は、名前と真偽を一行ずつ出す。変数の順や、一つの解の選ばれ方が違っても、元の条件を満たせばよい。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>表示</th>
+<th>意味</th>
+<th>次に読むもの</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SAT</td>
+<td>充足代入がある</td>
+<td>表示された値と元の条件</td>
+</tr>
+<tr>
+<td>UNSAT</td>
+<td>全条件を満たす代入がない</td>
+<td>衝突している条件</td>
+</tr>
+<tr>
+<td>UNKNOWN</td>
+<td>判定できなかった</td>
+<td>表示された理由。解なしとは扱わない</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code class="sourceCode python">check()</code>でSATを確認する前や、UNSAT・UNKNOWNの場合には、SATの代入として<code class="sourceCode python">model()</code>を読まない。Pythonの例外が出た場合は、判定結果ではなくプログラムや実行環境の問題としてメッセージを読む。</p>
+<p>未定のBoolean式を<code class="sourceCode python"><span class="cf">if</span> A:</code>で分岐させず、式を<code>And</code>・<code>Or</code>・<code>Not</code>・<code>Implies</code>で作る。配布の<code class="sourceCode python"><span class="cf">if</span> result <span class="op">==</span> sat:</code>は、判定済みの結果を区別する処理なので、この禁止とは異なる。</p>
+</section>
+<section id="必修2の固定値の検査" class="level2">
+<h2>必修2の固定値の検査</h2>
+<p>二つの固定は別々の実行で行う。<code>fix_pair</code>は、通常の必修2モデルへAとFの値を追加する。<code>both-true</code>と<code>both-false</code>を同じソルバーへ続けて加えない。</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> exclusive-start.py</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> exclusive-start.py <span class="at">--case</span> both-true</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> exclusive-start.py <span class="at">--case</span> both-false</span></code></pre></div>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>AとFに追加した条件</th>
+<th style="text-align: right;">通常の解数</th>
+<th>両方真に固定</th>
+<th>両方偽に固定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>少なくとも一方、両方不可</td>
+<td style="text-align: right;">3</td>
+<td>UNSAT</td>
+<td>UNSAT</td>
+</tr>
+<tr>
+<td>少なくとも一方だけ</td>
+<td style="text-align: right;">4</td>
+<td>SAT</td>
+<td>UNSAT</td>
+</tr>
+<tr>
+<td>両方不可だけ</td>
+<td style="text-align: right;">5</td>
+<td>UNSAT</td>
+<td>SAT</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>固定した真理値表の二行だけでなく、通常の問題がSATであることも確認する。矛盾する条件を誤って加えると、どんな固定でもUNSATになるからである。必修で全解数を数える必要はなく、この表は条件漏れを切り分けるために使える。</p>
+</section>
+<section id="発展のファイル" class="level2">
+<h2>発展のファイル</h2>
+<p>発展1・2はZ3を使い、発展3はPython標準ライブラリだけで動く。新しい出発ファイルと必要な共通部分を保存し、前の発展を完成させずに選べる。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>発展</th>
+<th>出発ファイル</th>
+<th>共通部分</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>多数から一つ</td>
+<td><a href="../../downloads/session-09/one-start.py" data-code-preview="../../previews/session-09/one-start.py.json">one-start.py</a></td>
+<td>sat_io.py</td>
+</tr>
+<tr>
+<td>全代入の列挙</td>
+<td><a href="../../downloads/session-09/enumerate-start.py" data-code-preview="../../previews/session-09/enumerate-start.py.json">enumerate-start.py</a></td>
+<td>features_base.py、sat_io.py</td>
+</tr>
+<tr>
+<td>学習用SATソルバー</td>
+<td><a href="../../downloads/session-09/dpll-start.py" data-code-preview="../../previews/session-09/dpll-start.py.json">dpll-start.py</a></td>
+<td><a href="../../downloads/session-09/cnf_tools.py" data-code-preview="../../previews/session-09/cnf_tools.py.json">cnf_tools.py</a>、JSON入力</td>
+</tr>
+<tr>
+<td>学習用ソルバーの比較</td>
+<td><a href="../../downloads/session-09/cnf-compare.py" data-code-preview="../../previews/session-09/cnf-compare.py.json">cnf-compare.py</a></td>
+<td>cnf_tools.py、自分で完成させたdpll-start.py</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code>read_values</code>は、指定された全変数を<code class="sourceCode python">model.evaluate(..., model_completion<span class="op">=</span><span class="va">True</span>)</code>で読む。モデルで省略されていた変数にも一例の値を与える処理であり、その値を新しい制約として追加したり、唯一の値と判定したりする操作ではない。</p>
+<p>列挙では読み取った一代入だけを除き、UNSATになったときに全列挙完了とする。UNKNOWNなら途中の結果があっても、全解が揃ったと表示しない。</p>
+</section>
+<section id="学習用satソルバーの入力" class="level2">
+<h2>学習用SATソルバーの入力</h2>
+<p>JSONの<code>n</code>が変数数、<code>clauses</code>が節のリスト。正の整数はその変数、負は否定を表し、0は使わない。戻り値は全変数を含むboolの辞書か、UNSATの<code>None</code>である。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>入力</th>
+<th>主に確認すること</th>
+<th>期待</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../downloads/session-09/cnf-empty.json" data-code-preview="../../previews/session-09/cnf-empty.json.json">cnf-empty.json</a></td>
+<td>0変数、節なし</td>
+<td>SAT、空辞書</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-09/cnf-empty-clause.json" data-code-preview="../../previews/session-09/cnf-empty-clause.json.json">cnf-empty-clause.json</a></td>
+<td>空の節が一つ</td>
+<td>UNSAT</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-09/cnf-unit.json" data-code-preview="../../previews/session-09/cnf-unit.json.json">cnf-unit.json</a></td>
+<td>単位伝播の連鎖</td>
+<td>SAT、1〜3が真</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-09/cnf-conflict.json" data-code-preview="../../previews/session-09/cnf-conflict.json.json">cnf-conflict.json</a></td>
+<td>相反する単位節</td>
+<td>UNSAT</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-09/cnf-restore.json" data-code-preview="../../previews/session-09/cnf-restore.json.json">cnf-restore.json</a></td>
+<td>最初の枝からの復元</td>
+<td>SAT、変数1が真、2はどちらでもよい</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-09/cnf-branch-unsat.json" data-code-preview="../../previews/session-09/cnf-branch-unsat.json.json">cnf-branch-unsat.json</a></td>
+<td>両枝の失敗</td>
+<td>UNSAT</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-09/cnf-unused.json" data-code-preview="../../previews/session-09/cnf-unused.json.json">cnf-unused.json</a></td>
+<td>式にない変数の補完</td>
+<td>SAT、変数1は真、2・3は任意</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-09/cnf-tautology.json" data-code-preview="../../previews/session-09/cnf-tautology.json.json">cnf-tautology.json</a></td>
+<td>恒真節と重複リテラル</td>
+<td>SAT、変数2は真</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-09/cnf-free.json" data-code-preview="../../previews/session-09/cnf-free.json.json">cnf-free.json</a></td>
+<td>二変数だが条件なし</td>
+<td>SAT、二変数を含む任意の代入</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>小例を確認してから<code>python3 cnf-compare.py dpll-start.py</code>を実行すると、独立した真理値表と比較する。二変数512式、三変数で三節以下3304式を通過すると<code>PASS {2: 512, 3: 3304}</code>を表示する。判定・返した代入・入力を壊していないことを確認する。</p>
+<p>比較器の例外には、最初に不一致を見つけた変数数・節・返り値を表示する。無限ループしている場合は実行を中断し、伝播や分岐で未定変数が減っているか、同じ状態へ戻り続けていないかを調べる。</p>
+</section>
+<section id="選択演習のファイル" class="level2">
+<h2>選択演習のファイル</h2>
+<p>配色には<a href="../../downloads/session-09/color-start.py" data-code-preview="../../previews/session-09/color-start.py.json">color-start.py</a>、<a href="../../downloads/session-09/australia.json" data-code-preview="../../previews/session-09/australia.json.json">australia.json</a>、<a href="../../downloads/session-09/color-checks.json" data-code-preview="../../previews/session-09/color-checks.json.json">color-checks.json</a>、sat_io.pyを使う。全色が偽の固定と、Tだけ赤・緑を選ぶ固定を別々に試す。</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> color-start.py</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> color-start.py <span class="at">--case</span> all-false</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> color-start.py <span class="at">--case</span> T-two</span></code></pre></div>
+<p>正しいモデルでは通常がSAT、二つの固定がUNSATとなる。<code>--case valid</code>は有効な一配色の固定でSATになる。二色を試す場合はaustralia.jsonをコピーして<code>colors</code>を二色へ変更し、<code>python3 color-start.py コピーした入力.json</code>で実行する。</p>
+<p>MaxSATは<a href="../../downloads/session-09/maxsat-work.md" data-code-preview="../../previews/session-09/maxsat-work.md.json">maxsat-work.md</a>の表を手で埋めてもよい。Pythonで確認する場合は<a href="../../downloads/session-09/maxsat-start.py" data-code-preview="../../previews/session-09/maxsat-start.py.json">maxsat-start.py</a>を使う。これは通常のboolに対する真理値表なのでZ3は不要で、記号式とPythonの真偽値を混ぜない。</p>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../index.html">講義一覧</a> · <a href="../../sessions/09-sat/index.html">第09回の本文へ</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

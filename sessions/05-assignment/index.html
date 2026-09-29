@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第05回　講座の割当を0/1の表で表す - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+<script defer="" src="../../assets/katex/katex.min.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+</script>
+<link rel="stylesheet" href="../../assets/katex/katex.min.css" />
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 通常講義</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第05回　講座の割当を0/1の表で表す</h1>
+    <nav class="session-nav" aria-label="第05回の講義資料"><a href="../../sessions/05-assignment/index.html" aria-current="page">通常講義</a><a href="../../advanced/assignment-challenges/index.html">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#目標">目標</a>
+      </li>
+      <li><a href="#問題">1. 問題</a>
+      </li>
+      <li><a href="#定式化">2. 定式化</a>
+      <ul>
+      <li><a href="#許可表と割当表">許可表と割当表</a></li>
+      <li><a href="#行の和と列の和">行の和と列の和</a></li>
+      <li><a href="#許可と選択の関係">許可と選択の関係</a></li>
+      </ul>
+      </li>
+      <li><a href="#解説例">3. 解説例</a>
+      <ul>
+      <li><a href="#手順1-選択の変数">手順1　選択の変数</a></li>
+      <li><a href="#手順2-一人一講座">手順2　一人一講座</a></li>
+      <li><a href="#手順3-定員と許可">手順3　定員と許可</a></li>
+      </ul>
+      </li>
+      <li><a href="#結果">4. 結果</a>
+      <ul>
+      <li><a href="#三種類の確認">三種類の確認</a></li>
+      <li><a href="#一人一変数との対応">一人一変数との対応</a></li>
+      </ul>
+      </li>
+      <li><a href="#演習">5. 演習</a>
+      <ul>
+      <li><a href="#必修1-五人の講座割当">必修1　五人の講座割当</a></li>
+      <li><a href="#必修2-開催する講座の選択">必修2　開催する講座の選択</a></li>
+      </ul>
+      </li>
+      <li><a href="#発展">6. 発展</a>
+      </li>
+      <li><a href="#振り返り">7. 振り返り</a>
+      </li>
+      <li><a href="#参照">参照</a>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p>同時に開かれる体験講座へ、一人一つずつ参加先を割り当てる。人と講座を縦横に並べた表を使い、「選ぶかどうか」を0と1で表す。行や列の和から、参加先の数や講座の人数を数えよう。</p>
+</header>
+<section id="目標" class="level2 unnumbered sec-goal">
+<h2 class="unnumbered sec-goal">目標</h2>
+<p>この回では、誰に何を割り当てるかを変数の意味として定め、選び方を制約で表す。完成した表を読んで、次の三つを説明できるようになろう。</p>
+<ul>
+<li>許可を表す入力と、実際の選択を表す0/1変数を区別できる。</li>
+<li>行と列を集計し、一人一講座・定員・許可の条件を書ける。</li>
+<li>開催する場合としない場合の人数の条件を、0/1の開催フラグと結べる。</li>
+</ul>
+<p>MiniZincの配列・<code>forall</code>・三項の<code>sum</code>を使う。添字の範囲全体を足す書き方は、この回で説明する。第04回の発展の完成は不要で、<a href="../../downloads/session-05/assignment-base.mzn" data-code-preview="../../previews/session-05/assignment-base.mzn.json">基本モデル</a>と各演習の出発ファイルから再開できる。実行操作は<a href="../../guides/assignment-check/index.html">割当の確認手引き</a>を使って授業内で確かめる。</p>
+<p>説明・実演に50分、<a href="#演習">5. 演習</a>に45分、振り返りに5分を使う。必修1は20分、必修2は確認を含め25分を目安とする。所要時間は授業試行で確かめる。通常演習の提出・宿題・完了報告はなく、教員の完了承認も待たない。発展は関心と進度に合わせて選ぶ。</p>
+</section>
+<section id="問題" class="level2 sec-problem">
+<h2 class="sec-problem">1. 問題</h2>
+<p>参加できる講座が複数あっても、同時開催なので実際に参加するのは一つである。まず、参加可能な組合せを示した入力と、これから決める参加先を分けて読もう。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 4人A〜Dを、講座1〜3へ一人ちょうど一つずつ割り当てる。各講座の人数は定員以下とし、空席を残してもよい。許可表が1の組合せだけを選び、0の組合せは選ばない。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th style="text-align: right;">講座1</th>
+<th style="text-align: right;">講座2</th>
+<th style="text-align: right;">講座3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>B</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>C</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>D</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>定員</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>求めるのは、これらをすべて満たす割当を一つ。希望の順位や、よりよい割当を選ぶ基準は指定しない。</p>
+</div>
+<p>例えばAは講座1か2へ参加できるが、両方へ参加するのではない。Cはどの講座にも参加できる。許可表の1は「選んでもよい」であり、「必ず選ぶ」ではない。</p>
+</section>
+<section id="定式化" class="level2 sec-model">
+<h2 class="sec-model">2. 定式化</h2>
+<p>人と講座の組ごとに、選ぶかどうかを一つの変数で表す。数独では各セルが1〜4の数字だったが、今回は各セルの意味も値の範囲も変わる。表の形が似ていても、同じ制約を移さないようにしよう。</p>
+<section id="許可表と割当表" class="level3">
+<h3>許可表と割当表</h3>
+<p>人の集合を <span class="math inline">P=\{1,2,3,4\}</span>、講座の集合を <span class="math inline">C=\{1,2,3\}</span> とする。人の番号1〜4はA〜Dに対応する。入力 <span class="math inline">a_{p,c}</span> は許可、<span class="math inline">\mathrm{cap}_c</span> は講座cの定員を表す。</p>
+<p>決定変数 <span class="math inline">x_{p,c}\in\{0,1\}</span> を置き、1なら人pを講座cへ割り当て、0なら割り当てないと定義する。数独の入力で使った「0は空欄」という意味とは異なり、今回は0も完成した答えの値である。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>対象</th>
+<th>意味</th>
+<th>MiniZincの名前</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>入力 <span class="math inline">a_{p,c}</span></td>
+<td>許可なら1、禁止なら0</td>
+<td><code class="sourceCode minizinc">allowed[p,c]</code></td>
+</tr>
+<tr>
+<td>入力 <span class="math inline">\mathrm{cap}_c</span></td>
+<td>非負整数の定員</td>
+<td><code class="sourceCode minizinc">cap[c]</code></td>
+</tr>
+<tr>
+<td>決定変数 <span class="math inline">x_{p,c}</span></td>
+<td>選ぶなら1、選ばないなら0</td>
+<td><code class="sourceCode minizinc">x[p,c]</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="行の和と列の和" class="level3">
+<h3>行の和と列の和</h3>
+<p>0と1を足すと、1の個数が得られる。一人を固定して講座について足すと、その人が選んだ講座数になる。講座を固定して人について足すと、その講座の参加人数になる。</p>
+<p><span class="math display">\sum_{c\in C}x_{p,c}=1\quad(p\in P),\qquad
+\sum_{p\in P}x_{p,c}\le\mathrm{cap}_c\quad(c\in C).</span></p>
+<p>左は一人ちょうど一講座なので等号、右は高々定員なので不等号である。左を「1以下」にすると、どこにも参加しない行も許してしまう。右を等号にすると、必要のない満席条件を加えることになる。</p>
+<figure>
+<img src="../../figures/session-05/assignment-sums.svg" alt="行の和は一人の選択数1、列の和は講座の人数2・1・1を表す" />
+<figcaption aria-hidden="true">行の和は一人の選択数1、列の和は講座の人数2・1・1を表す</figcaption>
+</figure>
+<p>図はA〜Dが順に講座1・1・2・3を選んだ表である。横には講座の方向、縦には人の方向へ足している。集計する前に、どちらの添字を固定し、どちらを動かすかを言葉にすると式を読みやすい。</p>
+</section>
+<section id="許可と選択の関係" class="level3">
+<h3>許可と選択の関係</h3>
+<p>許可が0のセルでは選択も0にし、許可が1なら選択は0でも1でもよい。変数の範囲が0/1であることを使うと、この関係を次の不等式で表せる。</p>
+<p><span class="math display">x_{p,c}\le a_{p,c}\quad(p\in P,\ c\in C).</span></p>
+<p><span class="math inline">a_{p,c}=0</span> のときは <span class="math inline">x_{p,c}\le0</span> なので0だけが残る。<span class="math inline">a_{p,c}=1</span> なら <span class="math inline">x_{p,c}\le1</span> で、0と1の両方を許す。実際にどの許可セルを選ぶかは、一人一講座と定員の条件も合わせて決まる。</p>
+</section>
+</section>
+<section id="解説例" class="level2 sec-demo">
+<h2 class="sec-demo">3. 解説例</h2>
+<p>ここでは教員が、入力・変数・三種類の条件を順に実装する。基本モデルの手順1〜3のコメントと対応させて読む。数式で数えたものが、コードでも同じ対象になっているかを確認しよう。</p>
+<section id="手順1-選択の変数" class="level3">
+<h3>手順1　選択の変数</h3>
+<p><a href="../../downloads/session-05/assignment-base.mzn" data-code-preview="../../previews/session-05/assignment-base.mzn.json">assignment-base.mzn</a>を開く。人数と講座数を入力にし、それぞれの番号の範囲へ名前を付けている。人数を変えたときに、モデル内の足し算を一つずつ増やさずに済む。</p>
+<figure class="code"><figcaption>assignment-base.mzn</figcaption>
+<div class="sourceCode" id="cb1"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span>: n_people;</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span>: n_courses;</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="dt">set</span> <span class="dt">of</span> <span class="dt">int</span>: PEOPLE <span class="op">=</span> <span class="dv">1</span><span class="op">..</span>n_people;</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="dt">set</span> <span class="dt">of</span> <span class="dt">int</span>: COURSES <span class="op">=</span> <span class="dv">1</span><span class="op">..</span>n_courses;</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="dt">array</span>[PEOPLE, COURSES] <span class="dt">of</span> <span class="dv">0</span><span class="op">..</span><span class="dv">1</span>: allowed;</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="dt">array</span>[COURSES] <span class="dt">of</span> <span class="dt">int</span>: cap;</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="dt">array</span>[PEOPLE, COURSES] <span class="dt">of</span> <span class="dt">var</span> <span class="dv">0</span><span class="op">..</span><span class="dv">1</span>: x;</span></code></pre></div>
+</figure>
+<p><code>PEOPLE</code>と<code>COURSES</code>は添字の集合であり、未知の参加先ではない。<code>allowed</code>には<code class="sourceCode minizinc"><span class="dt">var</span></code>がなく入力、<code>x</code>には<code class="sourceCode minizinc"><span class="dt">var</span></code>があり決定変数である。許可表の値を、そのまま割当表へ代入するわけではない。</p>
+<p><a href="../../downloads/session-05/base.dzn" data-code-preview="../../previews/session-05/base.dzn.json">base.dzn</a>に4人分の許可表と定員が入っている。配列の第1添字が人、第2添字が講座で、入力の行の並びはA・B・C・D。モデルと入力でこの対応を揃える。</p>
+</section>
+<section id="手順2-一人一講座" class="level3">
+<h3>手順2　一人一講座</h3>
+<p>まず人Aだけを考える。その行の三つを足す式は <code class="sourceCode minizinc"><span class="fu">sum</span>([x[<span class="dv">1</span>,<span class="dv">1</span>], x[<span class="dv">1</span>,<span class="dv">2</span>], x[<span class="dv">1</span>,<span class="dv">3</span>]])</code> である。講座数に合わせて並べる部分を、添字の範囲を使った形に書き換える。</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(c <span class="op">in</span> COURSES)(x[<span class="dv">1</span>,c])</span></code></pre></div>
+<p>この式は、<code>c</code>を<code>COURSES</code>の各要素に置き換えた値を足す。<code>sum</code>は数を作る集約で、<code>forall</code>は条件をすべて満たすことを表す。両者を組み合わせ、各人で一つの等式を課す。</p>
+<figure class="code"><figcaption>assignment-base.mzn</figcaption>
+<div class="sourceCode" id="cb3"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">forall</span>(p <span class="op">in</span> PEOPLE)(<span class="fu">sum</span>(c <span class="op">in</span> COURSES)(x[p,c]) <span class="op">=</span> <span class="dv">1</span>);</span></code></pre></div>
+</figure>
+<p>外側の<code>forall</code>で一人pを選び、内側の<code>sum</code>でその人の講座cを動かす。数式の「各人について行和が1」をそのまま表している。表全体の和を人数にするだけでは、二つ選ぶ人と一つも選ばない人が混ざる場合を除けない。</p>
+</section>
+<section id="手順3-定員と許可" class="level3">
+<h3>手順3　定員と許可</h3>
+<p>講座の参加人数を数えるときは、人と講座の役割が入れ替わる。今度は外側で講座cを固定し、内側で人pを動かす。最後に、すべてのセルで選択と許可の関係を課す。</p>
+<figure class="code"><figcaption>assignment-base.mzn</figcaption>
+<div class="sourceCode" id="cb4"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">forall</span>(c <span class="op">in</span> COURSES)(<span class="fu">sum</span>(p <span class="op">in</span> PEOPLE)(x[p,c]) <span class="op">&lt;=</span> cap[c]);</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">forall</span>(p <span class="op">in</span> PEOPLE, c <span class="op">in</span> COURSES)(x[p,c] <span class="op">&lt;=</span> allowed[p,c]);</span></code></pre></div>
+</figure>
+<p>これで三種類の条件が揃った。<code class="sourceCode minizinc"><span class="kw">solve</span> <span class="kw">satisfy</span>;</code>で条件を満たす割当を求める。モデルと<code>base.dzn</code>を組み合わせ、Gecodeで実行しよう。環境操作は<a href="../../guides/assignment-check/index.html">確認手引き</a>にまとめてある。</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode assignment-base.mzn base.dzn</span></code></pre></div>
+</section>
+</section>
+<section id="結果" class="level2 sec-result">
+<h2 class="sec-result">4. 結果</h2>
+<p>出力の各行は人、各列は講座で、1が参加先を示す。まずその表を人の参加先へ読み替え、行の選択数・列の人数・禁止位置を別々に確認しよう。出力例と同じ並びかどうかだけでは判断しない。</p>
+<section id="三種類の確認" class="level3">
+<h3>三種類の確認</h3>
+<p>次は条件を満たす出力の一例である。上からA・B・C・Dの行で、AとBが講座1、Cが講座2、Dが講座3へ参加する。どの人も一つだけ選んでいる。</p>
+<pre class="text"><code>1 0 0
+1 0 0
+0 1 0
+0 0 1</code></pre>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>調べる条件</th>
+<th>この表の確認</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>一人一講座</td>
+<td>各行の和はすべて1</td>
+</tr>
+<tr>
+<td>定員以下</td>
+<td>列の和は2・1・1で、定員2・1・1以下</td>
+</tr>
+<tr>
+<td>許可</td>
+<td>1を置いたセルは、許可表でもすべて1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>この入力の解は4通りあり、最初に出る表の順序は指定していない。別の表でも三条件を満たせば正しい。必要なら<a href="../../guides/assignment-check/index.html#全解と終了状態">全解の確認</a>で数を調べられるが、必修では各条件との照合を中心にする。</p>
+<p>次に<a href="../../downloads/session-05/roomy.dzn" data-code-preview="../../previews/session-05/roomy.dzn.json">roomy.dzn</a>へ交換する。許可表は同じで、定員が3・2・1になる。上の割当は人数2・1・1のままで正しく、講座1と2には空席が残る。定員を等号で書くと、この正しい割当まで拒否してしまう。<a href="#演習">演習</a>でも「上限」と「ちょうど」を使い分けよう。</p>
+</section>
+<section id="一人一変数との対応" class="level3">
+<h3>一人一変数との対応</h3>
+<p>一人の行には1がちょうど一つあるので、その位置の講座番号だけを保存する表現も考えられる。例えば上の割当は、A〜Dの講座番号を並べた1・1・2・3に対応する。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th>0/1表の一行</th>
+<th style="text-align: right;">講座番号を一つの値で表す場合</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>1, 0, 0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>B</td>
+<td>1, 0, 0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>C</td>
+<td>0, 1, 0</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td>D</td>
+<td>0, 0, 1</td>
+<td style="text-align: right;">3</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>講座番号を <span class="math inline">y_p</span> とすると、<span class="math inline">x_{p,c}=1</span> と <span class="math inline">y_p=c</span> が対応する。ただし、一人一変数へ変えた場合は、定員や許可の数え方も変える必要がある。変数の個数だけで解きやすさを決めず、表したい条件との対応を見る。今回は読む比較までにし、別表現の実装は発展1で扱う。</p>
+</section>
+</section>
+<section id="演習" class="level2 sec-exercise">
+<h2 class="sec-exercise">5. 演習</h2>
+<p>まず人数が増えた割当を同じ構造で書き、次に開催する場合としない場合の人数を条件にする。それぞれ出発ファイルを用意している。行・列のどちらを足すかと、等号・不等号の意味を確かめながら進めよう。</p>
+<section id="必修1-五人の講座割当" class="level3">
+<h3>必修1　五人の講座割当</h3>
+<p>入力の規模が変わっても、条件の種類は解説例と同じである。人数を固定した足し算ではなく、添字の集合を使って変数と制約を書く。入力を交換しても条件が同じ意味になるか考えよう。</p>
+<section id="問題-1" class="level4">
+<h4>問題</h4>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 5人A〜Eを講座1〜3へ、一人ちょうど一つずつ割り当てる。許可表が1の組合せだけを選び、0は選ばない。講座の人数は定員以下とし、満席にする必要はない。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th style="text-align: right;">講座1</th>
+<th style="text-align: right;">講座2</th>
+<th style="text-align: right;">講座3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>B</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>C</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>D</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>E</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>定員</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>すべての条件を満たす割当を一つ求める。人の番号1〜5はA〜Eに対応する。</p>
+</div>
+</section>
+<section id="作業" class="level4">
+<h4>作業</h4>
+<p>表の行は人、列は講座を表す。<code class="sourceCode minizinc">x[p,c]</code> は人pを講座cへ割り当てるなら1、割り当てないなら0の決定変数である。<code class="sourceCode minizinc">allowed[p,c]</code> は表の許可、<code class="sourceCode minizinc">cap[c]</code> は定員の入力。<code>PEOPLE</code> は人の番号の集合（この表では1〜5、四人の確認入力では1〜4）、<code>COURSES</code> は講座番号1〜3の集合を表す。</p>
+<p><a href="../../downloads/session-05/practice-start.mzn" data-code-preview="../../previews/session-05/practice-start.mzn.json">practice-start.mzn</a>には入力宣言・添字の集合・出力を用意した。出力で使う<code>x</code>はまだ宣言されていないため、TODOを埋めてから実行する。</p>
+<figure class="code"><figcaption>practice-start.mzn</figcaption>
+<div class="sourceCode" id="cb7"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業1): 人×講座の0/1決定変数xを宣言する。</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業2): 一人一講座・定員・許可の三条件を書く。</span></span></code></pre></div>
+</figure>
+<ol type="1">
+<li><strong>作業1：</strong> 人と講座を添字に持つ<code>x</code>を、0/1の決定変数として宣言する。</li>
+<li><strong>作業2：</strong> 各人の行和、各講座の列和、各セルの許可に対応する三種類の制約を書く。<a href="../../downloads/session-05/practice.dzn" data-code-preview="../../previews/session-05/practice.dzn.json">practice.dzn</a>と組み合わせて実行し、表を条件と照合する。</li>
+</ol>
+</section>
+<section id="自己確認" class="level4">
+<h4>自己確認</h4>
+<p>例えばA〜Eが順に講座1・1・2・2・3を選べば成立する。各行に1が一つあり、列の人数は2・2・1になる。出力が違っていても、許可された位置だけを選び三条件を満たせばよい。</p>
+<p><a href="../../downloads/session-05/check-valid.dzn" data-code-preview="../../previews/session-05/check-valid.dzn.json">正しい表</a>と<a href="../../downloads/session-05/check-empty-seat.dzn" data-code-preview="../../previews/session-05/check-empty-seat.dzn.json">空席のある表</a>は受理し、<a href="../../downloads/session-05/check-double.dzn" data-code-preview="../../previews/session-05/check-double.dzn.json">二重割当</a>・<a href="../../downloads/session-05/check-unassigned.dzn" data-code-preview="../../previews/session-05/check-unassigned.dzn.json">未割当</a>・<a href="../../downloads/session-05/check-capacity.dzn" data-code-preview="../../previews/session-05/check-capacity.dzn.json">定員超過</a>・<a href="../../downloads/session-05/check-forbidden.dzn" data-code-preview="../../previews/session-05/check-forbidden.dzn.json">禁止選択</a>は拒否する。これらは入力の<code>x</code>を固定して検査するデータで、通常の<code>practice.dzn</code>へ一つずつ交換して使う。空席の検査は4人・定員3・2・1へ入力全体を交換する。5人版の定員2・2・1では列和を等号にしても同じ解が出るので、この交換で上限の意味を確かめる。<code>practice.dzn</code>を全列挙する場合は6解になる。</p>
+<p>検査する具体的な割当は次のとおり。各人の順に参加先を記し、—は未割当、{1,2}は二講座への同時割当を表す。4人のケースではA〜Dだけを使い、許可表はこの問題のA〜Dの行と同じである。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>確認入力</th>
+<th>人の順に並べた参加先</th>
+<th>定員（講座1,2,3）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>正しい表</td>
+<td>1・1・2・2・3</td>
+<td>2・2・1</td>
+</tr>
+<tr>
+<td>空席のある表</td>
+<td>1・1・2・3</td>
+<td>3・2・1</td>
+</tr>
+<tr>
+<td>二重割当</td>
+<td>{1,2}・1・1・3</td>
+<td>3・2・1</td>
+</tr>
+<tr>
+<td>未割当</td>
+<td>—・1・2・2・3</td>
+<td>2・2・1</td>
+</tr>
+<tr>
+<td>定員超過</td>
+<td>1・1・1・2・3</td>
+<td>2・2・1</td>
+</tr>
+<tr>
+<td>禁止選択</td>
+<td>1・1・2・3・2</td>
+<td>2・2・1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="hint"><summary>ヒントを開く：固定する添字と動かす添字</summary><div class="hint-body">
+<p>一人の参加先の数は、人pを固定して講座cを動かす。講座の人数は、講座cを固定して人pを動かす。最後に<code class="sourceCode minizinc">x[p,c] <span class="op">&lt;=</span> allowed[p,c]</code>が、許可0と1のそれぞれで何を許すかを確認する。</p>
+</div></details>
+</section>
+</section>
+<section id="必修2-開催する講座の選択" class="level3">
+<h3>必修2　開催する講座の選択</h3>
+<p>人数が少な過ぎる講座は開かないことにする。参加先に加えて開催の有無も決め、開催する場合としない場合で許される人数を分けて考えよう。基本の三条件は完成したモデルから引き継ぐ。</p>
+<section id="問題-2" class="level4">
+<h4>問題</h4>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 5人A〜Eを講座1〜3へ一人ちょうど一つ割り当てる。許可表が1の組合せだけを選び、定員は各講座3人とする。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th style="text-align: right;">講座1</th>
+<th style="text-align: right;">講座2</th>
+<th style="text-align: right;">講座3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>B</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>C</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>D</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>E</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>定員</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">3</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>開催する講座は2〜3人、開催しない講座は0人とする。人の番号1〜5はA〜Eに対応する。参加先と開催する講座を求める。開催数の最小化や、AとDを分ける条件は置かない。</p>
+</div>
+</section>
+<section id="作業-1" class="level4">
+<h4>作業</h4>
+<p>表の行は人、列は講座を表す。<code class="sourceCode minizinc">x[p,c]</code> は人pを講座cへ割り当てるなら1、割り当てないなら0の決定変数である。<code class="sourceCode minizinc">allowed[p,c]</code> は表の許可、<code class="sourceCode minizinc">cap[c]</code> は定員の入力。<code>PEOPLE</code> は人の番号の集合（1〜5がA〜Eに対応）、<code>COURSES</code> は講座番号1〜3の集合を表す。</p>
+<p><a href="../../downloads/session-05/open-start.mzn" data-code-preview="../../previews/session-05/open-start.mzn.json">open-start.mzn</a>と<a href="../../downloads/session-05/open.dzn" data-code-preview="../../previews/session-05/open.dzn.json">open.dzn</a>を使う。同じフォルダーの<a href="../../downloads/session-05/assignment-base.mzn" data-code-preview="../../previews/session-05/assignment-base.mzn.json">assignment-base.mzn</a>には一人一講座・定員・許可が完成しており、必修1の完成は不要。<code class="sourceCode minizinc">opened[c]</code>は開催なら1、非開催なら0を表す決定変数として用意した。</p>
+<figure class="code"><figcaption>open-start.mzn</figcaption>
+<div class="sourceCode" id="cb8"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業1): 開催時は2人以上にする。</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業2): 非開催時は0人にし、開催時の上限も守る。</span></span></code></pre></div>
+</figure>
+<ol type="1">
+<li><strong>作業1：</strong> 講座cの人数を数え、開催フラグが0と1の場合に許す人数をそれぞれメモする。その表から人数の下限を表す条件を考える。</li>
+<li><strong>作業2：</strong> 人数の上限を開催フラグと結ぶ条件を考え、すべての講座へ適用する。<code>open.dzn</code>で解き、人数とフラグを一緒に確認する。</li>
+</ol>
+<p>フラグで人数の下限・上限を変えることで、「開催した場合だけ」という条件を表せる。フラグそのものは入力でなく、参加先と整合するようソルバーが決める値である。</p>
+</section>
+<section id="自己確認-1" class="level4">
+<h4>自己確認</h4>
+<p>A〜Eが1・3・1・3・1を選ぶと、人数は3・0・2、開催フラグは1・0・1になり成立する。別の割当でも、各行の選択・許可・定員と、開催の条件を満たせばよい。全列挙する場合は12解だが、列挙は必須ではない。</p>
+<p>次の確認入力を通常の<code>open.dzn</code>と一つずつ交換して、編集した同じモデルへ渡す。入力は割当表を固定する。後半の二例は開催フラグも固定し、前半の二例ではフラグをモデルに決めさせる。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>入力</th>
+<th>固定する参加先（A〜E）とフラグ</th>
+<th>期待する結果</th>
+<th>確かめる条件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../downloads/session-05/check-open-valid.dzn" data-code-preview="../../previews/session-05/check-open-valid.dzn.json">開催の正例</a></td>
+<td>1・3・1・3・1。フラグは未固定</td>
+<td>受理</td>
+<td>人数3・0・2、開催1・0・1</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-05/check-open-single.dzn" data-code-preview="../../previews/session-05/check-open-single.dzn.json">1人だけの講座</a></td>
+<td>1・1・1・2・3。フラグは未固定</td>
+<td>拒否</td>
+<td>開催時の最低人数</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-05/check-open-missing.dzn" data-code-preview="../../previews/session-05/check-open-missing.dzn.json">非開催に人がいる</a></td>
+<td>1・3・1・3・1、フラグ0・0・1</td>
+<td>拒否</td>
+<td>非開催なら0人</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-05/check-open-empty.dzn" data-code-preview="../../previews/session-05/check-open-empty.dzn.json">空なのに開催</a></td>
+<td>1・3・1・3・1、フラグ1・1・1</td>
+<td>拒否</td>
+<td>開催フラグと人数の対応</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>後半の二例は割当表だけなら正しい。同じ表でもフラグが違えば拒否する理由を、自分の二つの条件で説明しよう。実行方法は<a href="../../guides/assignment-check/index.html">確認手引き</a>へ。</p>
+<details class="hint"><summary>ヒントを開く：フラグが0と1の場合</summary><div class="hint-body">
+<p>フラグ0と1の二行の表を作り、それぞれで人数の下限と上限を書き出す。片方のフラグで合うだけでなく、もう片方でも許したい範囲になるかを確かめよう。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：二つの条件の式</summary><div class="hint-body">
+<div class="sourceCode" id="cb9"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">forall</span>(c <span class="op">in</span> COURSES)(<span class="dv">2</span><span class="op">*</span>opened[c] <span class="op">&lt;=</span> <span class="fu">sum</span>(p <span class="op">in</span> PEOPLE)(x[p,c]));</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="fu">forall</span>(c <span class="op">in</span> COURSES)(<span class="fu">sum</span>(p <span class="op">in</span> PEOPLE)(x[p,c]) <span class="op">&lt;=</span> cap[c]<span class="op">*</span>opened[c]);</span></code></pre></div>
+<p>下限だけなら非開催に人が入る場合を、上限だけなら空なのに開催する場合を除けない。それぞれ対応する拒否入力で確認する。</p>
+</div></details>
+</section>
+</section>
+</section>
+<section id="発展" class="level2 sec-advanced">
+<h2 class="sec-advanced">6. 発展</h2>
+<p>別の変数表現や特定の二人の分離へ広げるほか、割当できない理由を説明する方向にも進める。<a href="../../advanced/assignment-challenges/index.html">独立した発展ページ</a>には各問題の入力と出発点があり、前の発展の完成は不要である。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>選択</th>
+<th>深めること</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../advanced/assignment-challenges/index.html#value">発展1　一人一変数の表現</a></td>
+<td>一人一変数の表現へ移し、同じ割当集合になるか確かめる</td>
+</tr>
+<tr>
+<td><a href="../../advanced/assignment-challenges/index.html#separate">発展2　二人の参加先の分離</a></td>
+<td>特定の二人を異なる講座へ割り当てる</td>
+</tr>
+<tr>
+<td><a href="../../advanced/assignment-challenges/index.html#obstruction">発展3　割当できない理由</a></td>
+<td>利用できる定員が足りない人の集合から、不可能性を説明する</td>
+</tr>
+<tr>
+<td><a href="../../advanced/assignment-challenges/index.html#series">選択M05　出現回数を表す数列</a></td>
+<td>各数字の出現回数を表す数列を作る</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>次の第06回は4人の基本割当へ戻り、各選択に評価値を付ける。完成した出発モデルを再配布するので、5人版や今回の追加条件を自分で戻す必要はない。</p>
+</section>
+<section id="振り返り" class="level2 sec-review">
+<h2 class="sec-review">7. 振り返り</h2>
+<p>一人を固定した和と、講座を固定した和をそれぞれ指し、何を数えているか説明しよう。コードの添字だけでなく、0と1の意味から条件を読み直すと、別の割当問題にも移しやすくなる。</p>
+<ul>
+<li>許可表が1でも、その講座を選ばなくてよいのはなぜか。</li>
+<li>行には等号、列には不等号を使ったのはなぜか。</li>
+<li>開催フラグと人数を結ぶ二条件は、それぞれどんな誤った組を除くか。</li>
+</ul>
+</section>
+<section id="参照" class="level2 unnumbered sec-reference">
+<h2 class="unnumbered sec-reference">参照</h2>
+<p>作業を再開するときは、モデルと入力の組を確認する。通常の入力は参加先を未知のままにし、確認用入力は<code>x</code>も指定するため、特定の表が受理されるかを調べる実行になる。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>用語・記法</th>
+<th>意味・参照先</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code class="sourceCode minizinc"><span class="dt">var</span> <span class="dv">0</span><span class="op">..</span><span class="dv">1</span></code></td>
+<td>選ぶかどうかを表す決定変数</td>
+</tr>
+<tr>
+<td><code class="sourceCode minizinc"><span class="fu">sum</span>(c <span class="op">in</span> COURSES)(x[p,c])</code></td>
+<td>人pを固定した行の和</td>
+</tr>
+<tr>
+<td><code class="sourceCode minizinc"><span class="fu">sum</span>(p <span class="op">in</span> PEOPLE)(x[p,c])</code></td>
+<td>講座cを固定した列の和</td>
+</tr>
+<tr>
+<td><code>forall</code></td>
+<td>指定範囲のすべてで条件を満たす</td>
+</tr>
+<tr>
+<td>配布と実行</td>
+<td><a href="../../guides/assignment-check/index.html">ファイル一覧と確認手順</a></td>
+</tr>
+<tr>
+<td>記法の原典</td>
+<td><a href="https://docs.minizinc.dev/en/stable/modelling2.html">MiniZinc公式教材：配列と集約</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>行と列の取り違え、定員を等号にする誤り、許可の1を選択義務にする誤りは、<a href="#結果">結果の確認</a>へ戻って見分ける。解が出ないときも、入力が不可能なのか、条件を加え過ぎたのかを分けて調べよう。</p>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../sessions/04-rules/index.html">← 第04回</a> · <a href="../../index.html">講義一覧</a> · <a href="../../sessions/06-optimization/index.html">第06回 →</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

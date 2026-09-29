@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第03回の発展　推論と探索を確かめる - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+<script defer="" src="../../assets/katex/katex.min.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+</script>
+<link rel="stylesheet" href="../../assets/katex/katex.min.css" />
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 発展</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第03回の発展　推論と探索を確かめる</h1>
+    <nav class="session-nav" aria-label="第03回の講義資料"><a href="../../sessions/03-search/index.html">通常講義</a><a href="../../advanced/propagation-challenges/index.html" aria-current="page">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#sets">発展1　候補集合をまとめた推論</a>
+      </li>
+      <li><a href="#check">発展2　完成盤面の検査</a>
+      </li>
+      <li><a href="#search">発展3　伝播と全解探索</a>
+      <ul>
+      <li><a href="#伝播と分岐の組合せ">伝播と分岐の組合せ</a></li>
+      <li><a href="#全解と正しさの確認">全解と正しさの確認</a></li>
+      <li><a href="#探索方針の比較">探索方針の比較</a></li>
+      </ul>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p>候補をまとめて考える推論、渡された盤面の検査、すべての解を探すプログラムを扱う。各問に必要な条件と出発点を示す。<a href="../../sessions/03-search/index.html">第03回の本文</a>の必修は手で追う範囲であり、ここでの実装完成は次回の前提にしない。</p>
+</header>
+<section id="sets" class="level2">
+<h2>発展1　候補集合をまとめた推論</h2>
+<p>一要素集合からしか削らない規則では、候補が二つずつ残る状態で止まることがある。互いに異なる値が必要なマスをまとめると、さらに何が分かるだろう。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">三変数の条件</span> 各変数の候補集合Dは、その変数にまだ許している整数を表す。一要素集合なら、その整数に確定している。比較する基本の削減規則は、確定した変数の値を、同じ重複禁止に属する他の未確定変数の候補から取り除くものとする。</p>
+<p>A・B・Cは互いに異なる整数とし、候補を <span class="math inline">D_A=D_B=\{3,4\}</span>、<span class="math inline">D_C=\{1,3,4\}</span> とする。三つ以外の変数や、別の制約はない。</p>
+<p>比較する別の問題では、X・Y・Zが互いに異なり、すべての候補が <span class="math inline">\{1,2\}</span> であるとする。</p>
+</div>
+<ol type="1">
+<li>確定した値からだけ削る規則では、A・B・Cの候補を減らせない理由を説明する。</li>
+<li>A・Bをまとめて考え、Cから除ける数字を求める。A・Bのどちらがどの値かを仮定せずに説明する。</li>
+<li>X・Y・Zの問題は、候補が空でなくても解なしであることを説明する。</li>
+</ol>
+<p>自己確認では、前半はC=1が必要、後半は解なしとなる。AとBは3・4を一つずつ使うので、Cがそれらを使う余地はない。三つの変数に二つしか異なる値を用意できない場合も、同じ数え方で考えられる。</p>
+<details class="hint"><summary>ヒントを開く：マスと値の個数</summary><div class="hint-body">
+<p>三つの椅子に、互いに異なる二つの番号だけを付けられるだろうか。候補を一つずつ仮定する方法とは別に、必要な値の個数と使える値の個数を比べよう。</p>
+</div></details>
+<p>一般化するなら、同じ全相異なりに属するマスの一部をS、そこで使える候補の和集合をVとする。Vの要素数がSのマス数より小さければ矛盾する。同数ならSがVの数字を使い切るので、同じ全相異なりの残りのマスからVを除ける。</p>
+<p>全相異なりと、すべてのペアの不等号は同じ完成代入を許す。ここで比べたのは、候補から何を推論する規則かという違いである。<a href="https://docs.minizinc.dev/en/stable/lib-globals-alldifferent.html">全相異なりの公式の意味</a>と、ソルバーが用いる伝播の実装を区別しよう。</p>
+</section>
+<section id="check" class="level2">
+<h2>発展2　完成盤面の検査</h2>
+<p>ソルバーが返したという理由だけで正しいとせず、盤面の条件を独立に確かめる関数を作る。解を新しく探すのではなく、与えられた一つの盤面を判定する問題である。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">入出力と条件</span> 入力は <code>given</code> と <code>grid</code> の二つのリスト。行を上から順に、各行を左から右へ並べる。<code>given</code> は0〜4の整数16個で、0は空欄である。<code>grid</code> は検査対象であり、誤った範囲・長さ・値を含む可能性がある。</p>
+<p><code>grid</code> が整数16個で全値1〜4、0以外の初期値を保持し、各行・各列・四つの2×2ブロックの値が互いに異なれば <code class="sourceCode python"><span class="va">True</span></code>、一つでも違反すれば <code class="sourceCode python"><span class="va">False</span></code> を返す。ブロックは行1〜2／3〜4と列1〜2／3〜4で区切る。</p>
+</div>
+<p><a href="../../downloads/session-03/check-start.py" data-code-preview="../../previews/session-03/check-start.py.json">check-start.py</a>の <code class="sourceCode python">is_solution(given, grid)</code> を完成させる。作業1では長さ・整数型・値の範囲と初期値の保持、作業2では行・列・ブロックを検査する。JSONの読込みと、givenの入力形式の確認、判定結果の出力は配布済みである。</p>
+<p>Pythonの添字は0から始まり、授業のr行c列は <code class="sourceCode python"><span class="dv">4</span><span class="op">*</span>(r<span class="op">-</span><span class="dv">1</span>)<span class="op">+</span>(c<span class="op">-</span><span class="dv">1</span>)</code> 番目になる。例えば2行3列は添字6である。値を一行ずつ取り出した集合の要素数を調べれば、重複があるかを確認できる。</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> check-start.py V1.json</span></code></pre></div>
+<p>この実行の期待結果はJSONの <code>true</code> である。次の七入力も実行し、正しい二盤面と、条件ごとに壊した盤面を区別しよう。出力は <code>true</code> または <code>false</code> の一語でよい。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>入力</th>
+<th>検査する例</th>
+<th>期待結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../downloads/session-03/V1.json" data-code-preview="../../previews/session-03/V1.json.json">V1</a></td>
+<td>初期値を保つ正しい完成盤面</td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-03/V2.json" data-code-preview="../../previews/session-03/V2.json.json">V2</a></td>
+<td>空盤面からの別の正しい解</td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-03/V3.json" data-code-preview="../../previews/session-03/V3.json.json">V3</a></td>
+<td>行の重複だけを含む</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-03/V4.json" data-code-preview="../../previews/session-03/V4.json.json">V4</a></td>
+<td>列の重複だけを含む</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-03/V5.json" data-code-preview="../../previews/session-03/V5.json.json">V5</a></td>
+<td>ブロックの重複だけを含む</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-03/V6.json" data-code-preview="../../previews/session-03/V6.json.json">V6</a></td>
+<td>基本の完成盤面だが初期値が違う</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-03/V7.json" data-code-preview="../../previews/session-03/V7.json.json">V7</a></td>
+<td>重複と初期値には反しないが、0を含む</td>
+<td><code>false</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="hint"><summary>ヒントを開く：検査を分ける</summary><div class="hint-body">
+<p>長さ・型・範囲を先に調べれば、その後で16マスの添字を安全に使える。行が正しくても、列やブロックは別に確認する。初期値の0は比較から外すが、完成盤面の0は許さない。</p>
+</div></details>
+<p>一つの拒否例だけで、すべての条件が正しく実装できたとは限らない。長さの違うリストや、一つの数字を文字列に変えた入力も作り、<code class="sourceCode python"><span class="va">False</span></code> を返すことを確かめよう。</p>
+</section>
+<section id="search" class="level2">
+<h2>発展3　伝播と全解探索</h2>
+<p>一つの解を見つけて止めず、基本4×4数独の解をすべて返す探索を実装する。完成した伝播規則を提供するので、発展1・発展2を終えている必要はない。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">探索する問題</span> 各マスは1〜4、入力の0は空欄、0以外の初期値は保持する。各行・各列と、行1〜2／3〜4・列1〜2／3〜4で区切る四つの2×2ブロックを、それぞれ全相異なりとする。追加条件はない。</p>
+<p>各候補集合は、そのマスにまだ許している数字の集合である。初期値のあるマスはその値だけの集合、空欄は{1,2,3,4}から始める。行は上から、列は左から読む。</p>
+<p><code class="sourceCode python">search(domains)</code> の入力は16個の候補集合のリスト、返り値は全完成盤面のリストとする。各盤面は整数16個のリストで、順序は上から各行を左から右へ。解なしは <code class="sourceCode python">[]</code>、同じ盤面を重複して返すことは禁止する。</p>
+</div>
+<p><a href="../../downloads/session-03/search-start.py" data-code-preview="../../previews/session-03/search-start.py.json">search-start.py</a>と<a href="../../downloads/session-03/propagation.py" data-code-preview="../../previews/session-03/propagation.py.json">propagation.py</a>を同じフォルダーに置く。入力は<a href="../../downloads/session-03/branch.json" data-code-preview="../../previews/session-03/branch.json.json">branch.json</a>から始める。JSONの <code>given</code> は上から各行を左から右へ並べた16整数で、この入力の行ごとの値は <code>0021 / 0000 / 0010 / 2100</code>（<code>/</code> は改行）である。</p>
+<p>提供する伝播は、各巡の開始時に確定した値を、同じ行・列・ブロックの別の未確定マスから一斉に除く。新しい確定値は次の巡から使い、変化が止まるか矛盾するまで繰り返す。<code>initial</code> が初期候補を作り、<code>propagate</code> が初期表を含む履歴を返す。最後の表は <code class="sourceCode python">propagate(domains)[<span class="op">-</span><span class="dv">1</span>]</code> で得られる。</p>
+<p><code>status</code> は空集合と確定値同士の衝突を調べ、<code>contradiction</code>（矛盾）・<code>complete</code>（全マス確定で衝突なし）・<code>stalled</code>（未確定のまま停止）を返す。探索では必ず伝播した後で使う。提供された初期候補から削減と仮定だけを行えば、初期値と1〜4の範囲は保たれる。完成時の判定には発展2の関数を使ってもよいが、必須ではない。</p>
+<section id="伝播と分岐の組合せ" class="level3">
+<h3>伝播と分岐の組合せ</h3>
+<p>作業1では伝播後の矛盾・完成・未確定を分け、作業2で未確定マスの全候補を場合分けする。最初は、左上から順に見つかる未確定マスを選べばよい。</p>
+<ol type="1">
+<li>伝播して矛盾なら、その枝の解として空リストを返す。</li>
+<li>完成なら、各一要素集合から値を取り出し、一盤面だけ入ったリストを返す。</li>
+<li>未確定なら一マスを選び、候補を小さい順に一つずつ仮定する。</li>
+<li>各枝には独立した候補表を渡して再帰呼出しし、すべての枝の解を集める。</li>
+</ol>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> search-start.py branch.json</span></code></pre></div>
+<p>期待するのは四つの完成盤面が入ったJSON配列である。一つ見つけた時点で <code class="sourceCode python"><span class="cf">return</span></code> すると、別の枝の解を落とす。<code>status</code> が <code>stalled</code> の表を、そのまま完成盤面に変えて返してもいけない。</p>
+<details class="hint"><summary>ヒントを開く：枝ごとのコピー</summary><div class="hint-body">
+<p><code class="sourceCode python">branch <span class="op">=</span> domains</code> はコピーではない。外側のリストだけをコピーしても、中の集合を共有することがある。<code class="sourceCode python">[<span class="bu">set</span>(d) <span class="cf">for</span> d <span class="kw">in</span> domains]</code> で各集合も独立させ、そのコピーの一マスだけを仮定の一要素集合にする。</p>
+</div></details>
+</section>
+<section id="全解と正しさの確認" class="level3">
+<h3>全解と正しさの確認</h3>
+<p>動いたら、解なし・一解・複数解・空盤面を調べる。件数だけでは重複や取りこぼしを区別できないため、<a href="../../downloads/session-03/solutions.json" data-code-preview="../../previews/session-03/solutions.json.json">確認用の全解データ</a>と集合として比較する。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 42%" />
+<col style="width: 57%" />
+</colgroup>
+<thead>
+<tr>
+<th>入力</th>
+<th style="text-align: right;">期待する全解数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../downloads/session-03/demo.json" data-code-preview="../../previews/session-03/demo.json.json">demo.json</a>：<code>1004 / 0402 / 2040 / 0301</code></td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-03/practice.json" data-code-preview="../../previews/session-03/practice.json.json">practice.json</a>：<code>4300 / 2003 / 0010 / 0004</code></td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-03/branch.json" data-code-preview="../../previews/session-03/branch.json.json">branch.json</a></td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-03/empty.json" data-code-preview="../../previews/session-03/empty.json.json">empty.json</a>：<code>0000 / 0000 / 0000 / 0000</code></td>
+<td style="text-align: right;">288</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-03/conflict.json" data-code-preview="../../previews/session-03/conflict.json.json">conflict.json</a>：<code>1010 / 0000 / 0000 / 0000</code></td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><a href="../../downloads/session-03/compare-solutions.py" data-code-preview="../../previews/session-03/compare-solutions.py.json">compare-solutions.py</a>は、期待する盤面の集合と、出力の重複を確かめる確認用コードである。例えば空盤面の出力をファイルへ保存し、次のように照合できる。</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> search-start.py empty.json <span class="op">&gt;</span> answers.json</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> compare-solutions.py empty answers.json</span></code></pre></div>
+<p>全入力が通ったら、正しい解を削除しない理由、候補をすべて試せば解を漏らさない理由、再帰が有限回で終わる理由を説明する。未確定マスを選んで一要素へ制限するたび、未確定マスの数が減ることが、停止を考える手掛かりになる。</p>
+</section>
+<section id="探索方針の比較" class="level3">
+<h3>探索方針の比較</h3>
+<p>未確定マスのうち候補数が最も少ないものを選ぶ方法も実装する。同数なら左上からの順、値は小さい順に揃える。伝播規則は変えず、探索関数の呼出し数で仕事量を比較しよう。</p>
+<p>呼出し数には、最初の根、矛盾した葉、完成した葉も含める。上の五入力では両方式が同じ回数になるが、<a href="../../downloads/session-03/compare.json" data-code-preview="../../previews/session-03/compare.json.json">compare.json</a>の初期配置 <code>1000 / 0012 / 0000 / 0000</code> では差が出る。どちらも12解で、参照実装の呼出し数は左上優先26回、最少候補優先23回となる。</p>
+<p>結果の集合が同じことを先に確かめ、他の初期配置でも比較する。候補数が少ないマスを選べば常に速くなる、と一例から結論しない。さらに候補集合をまとめる規則を加える場合は、マスの選択だけを変える実験と分ける。伝播自体にも計算が必要なので、呼出し回数と実行時間も別の指標である。</p>
+</section>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../index.html">講義一覧</a> · <a href="../../sessions/03-search/index.html">第03回の本文へ</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

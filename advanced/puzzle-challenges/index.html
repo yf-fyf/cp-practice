@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第04回の発展　合計ヒントと一意性 - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+<script defer="" src="../../assets/katex/katex.min.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+</script>
+<link rel="stylesheet" href="../../assets/katex/katex.min.css" />
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 発展</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第04回の発展　合計ヒントと一意性</h1>
+    <nav class="session-nav" aria-label="第04回の講義資料"><a href="../../sessions/04-rules/index.html">通常講義</a><a href="../../advanced/puzzle-challenges/index.html" aria-current="page">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#multiple">発展1　複数の合計ヒント</a>
+      <ul>
+      <li><a href="#条件と入力">条件と入力</a></li>
+      <li><a href="#作業と自己確認">作業と自己確認</a></li>
+      </ul>
+      </li>
+      <li><a href="#second">発展2　第二解と一意性</a>
+      <ul>
+      <li><a href="#条件と出発点">条件と出発点</a></li>
+      <li><a href="#作業と自己確認-1">作業と自己確認</a></li>
+      </ul>
+      </li>
+      <li><a href="#minimum">発展3　最少の合計ヒント</a>
+      <ul>
+      <li><a href="#問題の範囲">問題の範囲</a></li>
+      <li><a href="#一つずつ外す実験">一つずつ外す実験</a></li>
+      <li><a href="#少ない個数からの探索">少ない個数からの探索</a></li>
+      <li><a href="#別の完成盤面への一般化">別の完成盤面への一般化</a></li>
+      </ul>
+      </li>
+      <li><a href="#send-more">選択M04　SEND+MORE=MONEY</a>
+      <ul>
+      <li><a href="#条件と桁の重み">条件と桁の重み</a></li>
+      <li><a href="#作業と自己確認-2">作業と自己確認</a></li>
+      </ul>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p><a href="../../sessions/04-rules/index.html">第04回の本文</a>では、三マスの合計を一つの条件にした。ここでは複数ヒント、一意性、最少ヒント、覆面算から選んで取り組む。各問題に必要な完成モデルを再配布し、前の発展の完成は求めない。</p>
+<p><a href="../../downloads/session-04/session-04.zip">配布ZIP</a>を展開し、モデルと入力を同じフォルダーに置く。実行・入力の選択・全解の数え方は<a href="../../guides/puzzle-check/index.html">確認手引き</a>を使える。発展1〜3はMiniZincの基本数独、選択M04は数字を文字へ割り当てる別の問題である。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>問題</th>
+<th>出発ファイル</th>
+<th>考える部分</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>発展1</td>
+<td><a href="../../downloads/session-04/multi-start.mzn" data-code-preview="../../previews/session-04/multi-start.mzn.json">multi-start.mzn</a></td>
+<td>ヒントの有効判定と合計</td>
+</tr>
+<tr>
+<td>発展2</td>
+<td><a href="../../downloads/session-04/second-start.mzn" data-code-preview="../../previews/session-04/second-start.mzn.json">second-start.mzn</a>、<a href="../../downloads/session-04/multi-base.mzn" data-code-preview="../../previews/session-04/multi-base.mzn.json">multi-base.mzn</a></td>
+<td>既知の一解だけを除く条件</td>
+</tr>
+<tr>
+<td>発展3</td>
+<td><a href="../../downloads/session-04/clue-search-start.py" data-code-preview="../../previews/session-04/clue-search-start.py.json">clue-search-start.py</a>、<a href="../../downloads/session-04/clue-tools.py" data-code-preview="../../previews/session-04/clue-tools.py.json">clue-tools.py</a></td>
+<td>小さい個数からの探索と最小性</td>
+</tr>
+<tr>
+<td>選択M04</td>
+<td><a href="../../downloads/session-04/send-more-start.mzn" data-code-preview="../../previews/session-04/send-more-start.mzn.json">send-more-start.mzn</a></td>
+<td>先頭の0禁止・数字の重複禁止・加算</td>
+</tr>
+</tbody>
+</table>
+</div>
+</header>
+<section id="multiple" class="level2">
+<h2>発展1　複数の合計ヒント</h2>
+<p>三マスの位置をモデルへ直接書く代わりに、ヒントごとの入力として与える。位置と合計を交換できるようにすると、同じモデルで違うヒントの組を調べられる。</p>
+<section id="条件と入力" class="level3">
+<h3>条件と入力</h3>
+<p>4×4の各マスに1〜4を入れ、各行・各列・四つの2×2ブロックで1〜4を一度ずつ使う。ブロックは行1〜2／3〜4と列1〜2／3〜4の組合せとする。初期値の0は空欄、1〜4ならその数字を保持する。</p>
+<p>各ヒントは異なる三マスと指定合計を持つ。有効なすべてのヒントで合計を満たし、無効なヒントには合計条件を課さない。ヒント同士の重なりを許し、同じヒントに属すことを理由に数字の重複を禁止しない。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>入力</th>
+<th>意味</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>n</code></td>
+<td>ヒントの個数</td>
+</tr>
+<tr>
+<td><code class="sourceCode minizinc">clue_r[k,j]</code>, <code class="sourceCode minizinc">clue_c[k,j]</code></td>
+<td>ヒントkのj番目のマスの行・列。jは1〜3</td>
+</tr>
+<tr>
+<td><code class="sourceCode minizinc">total[k]</code></td>
+<td>ヒントkの指定合計</td>
+</tr>
+<tr>
+<td><code class="sourceCode minizinc">enabled[k]</code></td>
+<td>1なら有効、0なら無効。決定変数ではなく入力</td>
+</tr>
+<tr>
+<td><code class="sourceCode minizinc">given[r,c]</code></td>
+<td>数独の初期値</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><a href="../../downloads/session-04/two-clues.dzn" data-code-preview="../../previews/session-04/two-clues.dzn.json">two-clues.dzn</a>の初期値はすべて0で、ヒントは次の二つである。例えば <code class="sourceCode minizinc">clue_r[<span class="dv">1</span>,<span class="dv">3</span>]<span class="op">=</span><span class="dv">2</span></code>、<code class="sourceCode minizinc">clue_c[<span class="dv">1</span>,<span class="dv">3</span>]<span class="op">=</span><span class="dv">3</span></code> なので、最初のヒントの三番目は2行3列となる。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>k</th>
+<th>三マス</th>
+<th style="text-align: right;">合計</th>
+<th style="text-align: right;">有効</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>(1,2), (1,3), (2,3)</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>2</td>
+<td>(2,2), (3,2), (3,3)</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="作業と自己確認" class="level3">
+<h3>作業と自己確認</h3>
+<p><a href="../../downloads/session-04/multi-start.mzn" data-code-preview="../../previews/session-04/multi-start.mzn.json">multi-start.mzn</a>を作業用に保存し、上の <code>two-clues.dzn</code> と組み合わせて実行する。<code class="sourceCode minizinc">grid[r,c]</code> はr行c列の解の数字で、行は上から、列は左から1〜4と数える。入力宣言・基本条件・出力は用意してあるので、<code>TODO(作業1)</code>へ有効な各ヒントの制約を書く。外側はヒントk、内側はその三マスのjを選ぶ。</p>
+<p>新しい集約の形 <code class="sourceCode minizinc"><span class="fu">sum</span>(j <span class="op">in</span> <span class="dv">1</span><span class="op">..</span><span class="dv">3</span>)(式)</code> は、式のjを1・2・3に置き換えた値を足す。<code class="sourceCode minizinc">grid[clue_r[k,j], clue_c[k,j]]</code> は、ヒントkのj番目のマスの値である。行番号・列番号そのものを足さないようにしよう。</p>
+<details class="hint"><summary>ヒントを開く：二つの添字の役割</summary><div class="hint-body">
+<p>外側を <code class="sourceCode minizinc"><span class="fu">forall</span>(k <span class="op">in</span> <span class="dv">1</span><span class="op">..</span>n <span class="kw">where</span> enabled[k] <span class="op">=</span> <span class="dv">1</span>)(<span class="op">..</span>.)</code> とする。各kについて、内側の <code>sum</code> が三マスの合計を作る。その値が <code class="sourceCode minizinc">total[k]</code> と等しい条件を、外側の括弧内へ置く。</p>
+</div></details>
+<p>二つとも有効なら22解、両方無効なら基本の288解に戻る。確認用の<a href="../../downloads/session-04/checks/M-open.dzn" data-code-preview="../../previews/session-04/checks/M-open.dzn.json">M-open</a>と<a href="../../downloads/session-04/checks/M-off.dzn" data-code-preview="../../previews/session-04/checks/M-off.dzn.json">M-off</a>を使える。全列挙では個数に加え、各出力の合計も照合する。</p>
+<p>次の二つは、全16マスを固定し、上の二ヒントをともに有効にした確認入力である。<code>/</code> は改行を表す。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>確認入力</th>
+<th>固定する盤面</th>
+<th>期待結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../downloads/session-04/checks/M-ok.dzn" data-code-preview="../../previews/session-04/checks/M-ok.dzn.json">M-ok</a></td>
+<td><code>1234 / 3412 / 2143 / 4321</code></td>
+<td>受理</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-04/checks/M-bad.dzn" data-code-preview="../../previews/session-04/checks/M-bad.dzn.json">M-bad</a></td>
+<td><code>1234 / 3421 / 2143 / 4312</code></td>
+<td>解なし</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>M-okでは二番目のヒントに4が二度現れるため、不必要な全相異なりを加えた誤りも検出できる。ヒントの番号kとマスの番号jを紙で二重に展開して、式の意味を説明しよう。</p>
+</section>
+</section>
+<section id="second" class="level2">
+<h2>発展2　第二解と一意性</h2>
+<p>一つ答えが出ただけでは、ほかの答えがあるかは分からない。ここでは既知の完成盤面が正しいことを確かめたうえで、その盤面だけを除き、別の解を探す。</p>
+<section id="条件と出発点" class="level3">
+<h3>条件と出発点</h3>
+<p>4×4の各マスは1〜4。各行・各列・行1〜2／3〜4と列1〜2／3〜4で区切る四つの2×2ブロックは全相異なりとする。初期値はすべて空欄で、有効な各合計ヒントをすべて満たす。ヒント同士の重なりを許し、ヒント内の追加の重複禁止は置かない。</p>
+<p>完成した<a href="../../downloads/session-04/multi-base.mzn" data-code-preview="../../previews/session-04/multi-base.mzn.json">multi-base.mzn</a>には、基本条件と「有効な各ヒントの三マスを足し、指定合計と等しくする」条件が入っている。発展1を実装せず、このファイルから始められる。</p>
+<p>既知の盤面Pは次のとおりで、<a href="../../downloads/session-04/first.dzn" data-code-preview="../../previews/session-04/first.dzn.json">first.dzn</a>では入力 <code>first</code> として与えてある。<code>given</code> にPを入れて固定するためのデータとは異なる。</p>
+<p><span class="math display">P=\begin{array}{cc|cc}1&amp;2&amp;3&amp;4\\3&amp;4&amp;1&amp;2\\\hline2&amp;1&amp;4&amp;3\\4&amp;3&amp;2&amp;1\end{array}.</span></p>
+<p>二つの問題を比較する。<a href="../../downloads/session-04/two-clues.dzn" data-code-preview="../../previews/session-04/two-clues.dzn.json">two-clues.dzn</a>は (1,2),(1,3),(2,3) の合計6と (2,2),(3,2),(3,3) の合計9。<a href="../../downloads/session-04/three-clues.dzn" data-code-preview="../../previews/session-04/three-clues.dzn.json">three-clues.dzn</a>は、<a href="../../downloads/session-04/candidate-list.md" data-code-preview="../../previews/session-04/candidate-list.md.json">36候補の一覧</a>の5・8・15だけが有効で、他は無効である。この三ヒントの実際の内容は次のとおり。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>候補番号</th>
+<th>三マス（行,列）</th>
+<th style="text-align: right;">合計</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5</td>
+<td>(1,2), (1,3), (2,2)</td>
+<td style="text-align: right;">9</td>
+</tr>
+<tr>
+<td>8</td>
+<td>(1,3), (2,2), (2,3)</td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr>
+<td>15</td>
+<td>(2,1), (3,1), (3,2)</td>
+<td style="text-align: right;">6</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>どちらも先にPが全条件を満たすか、対象値を足して確かめる。</p>
+</section>
+<section id="作業と自己確認-1" class="level3">
+<h3>作業と自己確認</h3>
+<p><a href="../../downloads/session-04/second-start.mzn" data-code-preview="../../previews/session-04/second-start.mzn.json">second-start.mzn</a>は同じフォルダーの <code>multi-base.mzn</code> を読み込む。モデルにヒントの入力一つと <code>first.dzn</code> を組み合わせて実行する。<code class="sourceCode minizinc">grid[r,c]</code> はr行c列の解の数字、<code class="sourceCode minizinc">first[r,c]</code> は同じ位置の既知の解Pの数字、<code class="sourceCode minizinc">given[r,c]</code> は初期値である。行は上から、列は左から1〜4と数える。<code>TODO(作業1)</code>へ、「少なくとも一マスで <code>grid</code> と <code>first</code> が異なる」という条件を書く。<code>solve</code>と<code>output</code>は読み込まれる<code>multi-base.mzn</code>にあるので、追加しない。</p>
+<p>新しい <code class="sourceCode minizinc"><span class="fu">exists</span>(r <span class="op">in</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>, c <span class="op">in</span> <span class="dv">1</span><span class="op">..</span><span class="dv">4</span>)(条件)</code> は、指定した組の少なくとも一つで条件が成り立つことを表す。すべてのマスを違わせるのではなく、一つでも違えば別の盤面として残す。</p>
+<details class="hint"><summary>ヒントを開く：除くのは一つの盤面</summary><div class="hint-body">
+<p>本体は <code class="sourceCode minizinc">grid[r,c] <span class="op">!=</span> first[r,c]</code> である。これを <code class="sourceCode minizinc">forall</code> にすると、Pと一マスでも同じ解を除いてしまう。P以外の解をすべて残すため、外側は <code class="sourceCode minizinc">exists</code> とする。</p>
+</div></details>
+<p>二ヒントの問題はPを除くと21解が残る。三ヒントの指定例ではPを除いた問題が解なしになる。<strong>Pが元の問題の解であることと、P以外に解がないこと</strong>の二つを確認できた場合に、一意と結論できる。</p>
+<p>入力をまとめた<a href="../../downloads/session-04/checks/U-many.dzn" data-code-preview="../../previews/session-04/checks/U-many.dzn.json">U-many</a>・<a href="../../downloads/session-04/checks/U-none.dzn" data-code-preview="../../previews/session-04/checks/U-none.dzn.json">U-none</a>を使ってもよい。ここには<code>first</code>も入っているため、さらに<code>first.dzn</code>を足さない。時間切れや探索途中の終了を「第二解なし」と扱わず、終了状態まで確かめる。</p>
+</section>
+</section>
+<section id="minimum" class="level2">
+<h2>発展3　最少の合計ヒント</h2>
+<p>答えを一つに絞るヒントの組を作り、その個数を少なくする。あるヒントを一つ外せないことと、すべての組の中で個数が最少であることを区別し、下限の根拠まで調べる。</p>
+<section id="問題の範囲" class="level3">
+<h3>問題の範囲</h3>
+<p>行は上から、列は左から1〜4と数える。「一意」とは、条件に合う完成盤面がちょうど一つだけであることをいう。基本条件は、4×4の各マスが1〜4、各行・各列・四つの2×2ブロックが全相異なり。ブロックは行1〜2／3〜4と列1〜2／3〜4で区切る。初期値は一つも置かず、選んだ合計ヒントだけで完成盤面Pを一意にする。</p>
+<p><span class="math display">P=\begin{array}{cc|cc}1&amp;2&amp;3&amp;4\\3&amp;4&amp;1&amp;2\\\hline2&amp;1&amp;4&amp;3\\4&amp;3&amp;2&amp;1\end{array}.</span></p>
+<p>ヒント候補は、隣り合う2×2領域から一マスを除いたL形の三マス。領域の左上は (1,1)〜(3,3) の9通り、除く角は4通りなので、候補は36個である。この2×2領域は基本の太線ブロックに限らず、一マスずらした領域も含む。</p>
+<p>合計はPの対象値から計算する。選んだヒントをすべて課し、数字の重複禁止は基本条件だけとする。<a href="../../downloads/session-04/candidate-list.md" data-code-preview="../../previews/session-04/candidate-list.md.json">candidate-list.md</a>が候補の位置と合計、<a href="../../downloads/session-04/candidate-clues.dzn" data-code-preview="../../previews/session-04/candidate-clues.dzn.json">candidate-clues.dzn</a>が全候補を有効にした入力である。<code class="sourceCode minizinc">enabled[k]</code> はk番目のヒントの有効・無効を表す入力で、1ならその合計条件を使い、0なら使わない。モデル中の <code class="sourceCode minizinc">grid[r,c]</code> は解の数字、<code class="sourceCode minizinc">given[r,c]</code> は初期値で、今回は <code>given</code> をすべて0にする。変更するのは <code>enabled</code> だけで、初期値・位置・合計を変えてはいけない。</p>
+</section>
+<section id="一つずつ外す実験" class="level3">
+<h3>一つずつ外す実験</h3>
+<p>完成した<a href="../../downloads/session-04/multi-base.mzn" data-code-preview="../../previews/session-04/multi-base.mzn.json">multi-base.mzn</a>で候補入力を解く。前の発展の完成は不要である。全36ヒントならPだけが残る。次のコマンドで全解を列挙し、探索完了まで確認する。一つの解が出ただけでは、一意とは判断できない。</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode <span class="at">--all-solutions</span> multi-base.mzn candidate-clues.dzn</span></code></pre></div>
+<p>まず数個のヒントで、一つを無効にし、まだ一意なら外したままにする実験を行う。別解が現れたら戻す。選んだ候補番号と解の変化を記録できたら、下のPythonによる探索へ進んでよい。36個すべての手動編集を、プログラムへ進む条件にはしない。</p>
+<p>削除を続ける場合は各ヒントを一度ずつ試し、残った組からどれか一つを外すと別解が出るかを再確認する。この結果と、少ない個数の全組を調べる結果を区別しよう。</p>
+<details class="hint"><summary>ヒントを開く：外せない組と最少の組</summary><div class="hint-body">
+<p>一つずつ外せなくなっても、別の候補へ入れ替えると少ない組があるかもしれない。最少を主張するには、今の個数より少ないすべての組で一意にできない根拠が必要になる。</p>
+</div></details>
+</section>
+<section id="少ない個数からの探索" class="level3">
+<h3>少ない個数からの探索</h3>
+<p><a href="../../downloads/session-04/boards.json" data-code-preview="../../previews/session-04/boards.json.json">boards.json</a>には、基本数独の全288盤面を、行順の16整数のリストとして用意した。合計条件でこれを絞り込む方法なら、何度もMiniZincを起動せずに候補の組を調べられる。</p>
+<p><a href="../../downloads/session-04/clue-search-start.py" data-code-preview="../../previews/session-04/clue-search-start.py.json">clue-search-start.py</a>と<a href="../../downloads/session-04/clue-tools.py" data-code-preview="../../previews/session-04/clue-tools.py.json">clue-tools.py</a>、<code>boards.json</code> を同じフォルダーに置く。<code>clue-tools.py</code> は候補生成・入力読込み・絞り込み・MiniZinc用データの出力を提供する。<code>boards</code> は完成盤面の一覧、<code>target</code> は一意にしたい盤面を表す16整数のタプル、<code>selected</code> は選んだヒントの内部番号の組である。<code class="sourceCode python">clues.remaining(boards, target, selected)</code>は、選んだ合計ヒントをすべて満たす盤面の集合を返す。</p>
+<ol type="1">
+<li><strong>作業1：</strong> <code>minimum</code>内で、個数0、1、2、…の順に36候補の組を試す。<code class="sourceCode python">combinations(<span class="bu">range</span>(<span class="dv">36</span>), size)</code>がその個数の組を一度ずつ生成する。</li>
+<li><strong>作業2：</strong> 残る集合が<code class="sourceCode python">{target}</code>だけなら、その組を返す。すべての候補でも一意にできない場合は<code>None</code>を返す。</li>
+<li><a href="../../downloads/session-04/P.json" data-code-preview="../../previews/session-04/P.json.json">P.json</a>を入力して実行し、出力のデータを完成モデルへ渡す。内部の候補番号は0〜35、候補一覧と画面表示は1〜36なので混同しない。</li>
+</ol>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> clue-search-start.py P.json <span class="op">&gt;</span> selected.dzn</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode <span class="at">--all-solutions</span> multi-base.mzn selected.dzn</span></code></pre></div>
+<p>Pでは、最少個数は3となる。確認用の<a href="../../downloads/session-04/checks/G-three.dzn" data-code-preview="../../previews/session-04/checks/G-three.dzn.json">三候補の入力</a>はPだけ、<a href="../../downloads/session-04/checks/G-two.dzn" data-code-preview="../../previews/session-04/checks/G-two.dzn.json">二候補の入力</a>は8解を残す。三候補は (1,2),(1,3),(2,2) の合計9、(1,3),(2,2),(2,3) の合計8、(2,1),(3,1),(3,2) の合計6で、二候補はこのうち前の二つだけを使う。ただし、この二候補で失敗しただけでは下限の証明にならない。0〜2個の全667組に対して、別解が残ることを自分の探索で確かめる。</p>
+</section>
+<section id="別の完成盤面への一般化" class="level3">
+<h3>別の完成盤面への一般化</h3>
+<p>最少の候補番号やPの合計をコードに埋め込まず、入力から計算する。付属の<a href="../../downloads/session-04/Q.json" data-code-preview="../../previews/session-04/Q.json.json">Q.json</a>は行順で <code>1234 / 3421 / 2143 / 4312</code> の完成盤面である。Qへ交換すると、同じ三マスでも合計が変わり得る。</p>
+<p>Qについても、選んだヒントを満たす全解がQだけであることをMiniZincで照合する。最少個数がPと同じとは仮定せず、より少ない全組の検査をその入力で行う。全36候補の組を無条件に調べると <span class="math inline">2^{36}</span> 通りあるため、各ヒントを満たす盤面集合を先に保存する方法も考えられる。</p>
+</section>
+</section>
+<section id="send-more" class="level2">
+<h2>選択M04　SEND+MORE=MONEY</h2>
+<p>数独から別の題材へ移り、桁を持つ数の足し算を制約にする。目安は15〜25分。数字の範囲・重複禁止・算術等式を組み合わせる演習として、合計ヒントの発展と選べる。</p>
+<section id="条件と桁の重み" class="level3">
+<h3>条件と桁の重み</h3>
+<p>八文字S・E・N・D・M・O・R・Yに0〜9を割り当てる。同じ文字は同じ数字、異なる文字は異なる数字を表す。先頭のSとMは0以外とし、次の足し算を満たす数字の組を求める。数独の行・列・ブロックの条件は使わない。</p>
+<pre class="text"><code>  SEND
++ MORE
+------
+ MONEY</code></pre>
+<p>文字の並びは十進数を表す。例えばSENDは <span class="math inline">1000S+100E+10N+D</span> であり、文字の値を単に四つ足した数ではない。各桁に対応する重みを確認しよう。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>桁</th>
+<th style="text-align: right;">一万</th>
+<th style="text-align: right;">千</th>
+<th style="text-align: right;">百</th>
+<th style="text-align: right;">十</th>
+<th style="text-align: right;">一</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>重み</td>
+<td style="text-align: right;">10000</td>
+<td style="text-align: right;">1000</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>SEND</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">S</td>
+<td style="text-align: right;">E</td>
+<td style="text-align: right;">N</td>
+<td style="text-align: right;">D</td>
+</tr>
+<tr>
+<td>MORE</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">M</td>
+<td style="text-align: right;">O</td>
+<td style="text-align: right;">R</td>
+<td style="text-align: right;">E</td>
+</tr>
+<tr>
+<td>MONEY</td>
+<td style="text-align: right;">M</td>
+<td style="text-align: right;">O</td>
+<td style="text-align: right;">N</td>
+<td style="text-align: right;">E</td>
+<td style="text-align: right;">Y</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="作業と自己確認-2" class="level3">
+<h3>作業と自己確認</h3>
+<p><a href="../../downloads/session-04/send-more-start.mzn" data-code-preview="../../previews/session-04/send-more-start.mzn.json">send-more-start.mzn</a>には八変数の宣言、桁の重みを使った三つの数、表示を用意した。<code class="sourceCode minizinc"><span class="dt">var</span> <span class="dt">int</span>: send <span class="op">=</span> <span class="op">..</span>.;</code>は、決定変数の値に応じた数を別の名前で表す定義である。</p>
+<ol type="1">
+<li><strong>作業1：</strong> SとMが0ではない条件を加える。他の文字には0を許す。</li>
+<li><strong>作業2：</strong> 八文字の全相異なりと、二つの数の和が三つ目の数に等しい条件を加える。</li>
+<li>実行して得た三つの数を筆算でも足す。値の範囲・先頭・八文字間の違いも、加算とは別に確かめる。</li>
+</ol>
+<details class="hint"><summary>ヒントを開く：三種類の条件</summary><div class="hint-body">
+<p>先頭条件はSとMだけ、全相異なりは八文字すべて、加算は<code>send</code>・<code>more</code>・<code>money</code>の関係に課す。異なる文字へ0を繰り返して割り当てても計算だけは合う場合があるため、加算と重複禁止の片方で済ませない。</p>
+</div></details>
+<p>正しい解は9567+1085=10652である。<a href="../../downloads/session-04/send-valid.dzn" data-code-preview="../../previews/session-04/send-valid.dzn.json">正しい割当</a>を固定した実行では受理する。次の固定入力は、どの条件で拒否すべきかを先に考えてから試す。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>入力</th>
+<th>割当を数で表したもの</th>
+<th>拒否する理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../downloads/session-04/send-repeated.dzn" data-code-preview="../../previews/session-04/send-repeated.dzn.json">数字の使い回し</a></td>
+<td>9000+1000=10000</td>
+<td>異なる文字が同じ0を使う</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-04/send-leading-zero.dzn" data-code-preview="../../previews/session-04/send-leading-zero.dzn.json">先頭の0</a></td>
+<td>2817+0368=03185</td>
+<td>Mが0。数字はすべて異なる</td>
+</tr>
+<tr>
+<td><a href="../../downloads/session-04/send-wrong-sum.dzn" data-code-preview="../../previews/session-04/send-wrong-sum.dzn.json">合計のずれ</a></td>
+<td>9567+1085=10653</td>
+<td>範囲・先頭・重複禁止は通るが加算が合わない</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>先頭の0がある数は通常の数値表示では桁が省かれる。固定入力のMそのものも見て確認する。<a href="https://docs.minizinc.dev/en/stable/modelling2.html#global-constraints">MiniZinc公式教材の覆面算</a>にも同じ題材があるが、まず自分で条件を分けて実装してから参照しよう。</p>
+</section>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../index.html">講義一覧</a> · <a href="../../sessions/04-rules/index.html">第04回の本文へ</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

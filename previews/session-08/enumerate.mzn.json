@@ -1,0 +1,1 @@
+{"name": "enumerate.mzn", "language": "minizinc", "label": "MiniZinc", "code": "include \"roster-core.mzn\";\nsolve satisfy;\n", "lines": ["<span class=\"kw\">include</span> <span class=\"st\">&quot;roster-core.mzn&quot;</span>;", "<span class=\"kw\">solve</span> <span class=\"kw\">satisfy</span>;"]}

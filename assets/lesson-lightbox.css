@@ -1,0 +1,77 @@
+/*
+  図の拡大表示。`c-comp` の site/style.css（304〜365行）を引き継いだもの。
+
+  本文のスタイルとは別ファイルにしてある。これはページの上に重なる操作画面であって、
+  本文の階層には属さないからである。分けておくと、lesson-style.css のほうは
+  「面を持つのは節の帯とコードだけ」「色は :root の10変数だけ」という設計案の規則を
+  そのまま検査でき（check_lesson_template.py の H09〜H13）、拡大表示の都合で
+  規則を緩めずに済む。
+*/
+
+/* zoomable は lesson-lightbox.js が付ける。JSが動かない環境では素の図のまま。 */
+.content figure img.zoomable { cursor: zoom-in; }
+
+/* [open] で絞る。付けないとブラウザ標準の dialog:not([open]){display:none} より
+   作者スタイルの display:grid が勝ち、閉じている間もこの 100vw×100vh のボックスが
+   文書の流れに残る。 */
+.lightbox[open] {
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  /* 原寸表示のはみ出しはここでスクロールさせる。パンは自前で持たない。 */
+  overflow: auto;
+  display: grid;
+  place-items: center;
+}
+.lightbox::backdrop { background: rgba(38, 38, 38, 0.85); }
+
+/* fit 表示。縦横比を保ったまま拡大も縮小もする。拡大側も効かせるため
+   max-width だけでは足りず、実寸は lesson-lightbox.js が width/height を
+   インラインで与える。JSが寸法を入れる前の保険として object-fit を置く。 */
+.lightbox img {
+  box-sizing: border-box;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  /* 既定は「これ以上拡大しても意味がない」小さい画像。クリック＝閉じる。 */
+  cursor: zoom-out;
+  /* SVGの図は透明背景で書き出されるので、暗い backdrop が透けて見づらくなる。
+     本文と同じ白地に揃える。 */
+  background: #fff;
+  padding: 0.6rem;
+  border-radius: 0.35rem;
+}
+/* 原寸が表示領域を超える画像だけ、クリックで原寸表示に切り替わる。 */
+.lightbox img.oversized { cursor: zoom-in; }
+.lightbox img.actual {
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  object-fit: none;
+  cursor: zoom-out;
+}
+
+/* 44px はタッチの最小目標寸法。スクロールしても隠れないよう fixed で置く。 */
+.lightbox-close {
+  position: fixed;
+  top: 0.5rem;
+  right: 0.5rem;
+  min-width: 44px;
+  min-height: 44px;
+  background: #fff;
+  color: #583B66;
+  border: 2px solid #583B66;
+  border-radius: 0.35rem;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+@media print {
+  .lightbox { display: none; }
+}

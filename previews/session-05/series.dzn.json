@@ -1,0 +1,1 @@
+{"name": "series.dzn", "language": "minizinc", "label": "MiniZincの入力", "code": "n = 4;\n", "lines": ["n <span class=\"op\">=</span> <span class=\"dv\">4</span>;"]}

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MiniZincの実行の手引き - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 手引き</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">MiniZincの実行の手引き</h1>
+    <nav class="session-nav" aria-label="第02回の講義資料"><a href="../../sessions/02-minizinc/index.html">通常講義</a><a href="../../advanced/sudoku-challenges/index.html">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#最初の実行">最初の実行</a>
+      </li>
+      <li><a href="#モデルと入力">モデルと入力</a>
+      </li>
+      <li><a href="#コマンドでの実行">コマンドでの実行</a>
+      </li>
+      <li><a href="#出力の読み分け">出力の読み分け</a>
+      </li>
+      <li><a href="#全解と一意性">全解と一意性</a>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p>第02回で使うモデルの開き方、入力の交換、結果の読み方をまとめる。最初は小さな二変数モデルで操作を確かめ、数独では同じ手順を使う。<a href="../../sessions/02-minizinc/index.html#解説例">本文の解説例</a>へ戻りながら利用しよう。</p>
+</header>
+<section id="最初の実行" class="level2">
+<h2>最初の実行</h2>
+<p>授業で案内するMiniZincの環境を開く。ブラウザでは<a href="https://play.minizinc.org/">MiniZinc Playground</a>を使える。ローカルに用意されたMiniZinc IDEでも、同じモデルを実行できる。</p>
+<ol type="1">
+<li><a href="../../downloads/session-02/warmup.mzn" data-code-preview="../../previews/session-02/warmup.mzn.json">warmup.mzn</a>を開くか、その内容をモデルの編集欄へ貼り付ける。別の例がある場合は、編集欄の内容を置き換える。</li>
+<li>ソルバーにGecodeを選び、Runを押す。プログラムはモデルの編集欄へ入れ、結果欄は読むために使う。</li>
+<li><code>x = 1, y = 4</code> または <code>x = 2, y = 3</code> が出たら、<code class="sourceCode minizinc">x <span class="op">&lt;</span> y</code> と <code class="sourceCode minizinc">x <span class="op">+</span> y <span class="op">=</span> <span class="dv">5</span></code> を確かめる。</li>
+<li>和の5を6に変えて再実行する。今度は <code>x = 2, y = 4</code> になる。</li>
+</ol>
+<p>画面操作で止まった場合は、その場で教員と一緒に確認する。ネットワークが使えない場合には、授業で用意したローカル環境へ切り替える。環境準備を授業外の必須作業にはしない。</p>
+</section>
+<section id="モデルと入力" class="level2">
+<h2>モデルと入力</h2>
+<p>数独の最初の実行には、<a href="../../downloads/session-02/sudoku4-demo.mzn" data-code-preview="../../previews/session-02/sudoku4-demo.mzn.json">sudoku4-demo.mzn</a>が使える。モデルと入力を一つにまとめてあるので、そのファイルだけを開いてRunを押せばよい。</p>
+<p>入力を交換する演習では、モデルの <code>.mzn</code> と入力の <code>.dzn</code> を分ける。MiniZinc IDEではモデルと入力の両ファイルを開き、モデルのタブでRunを押し、データを選ぶ画面で指定の <code>.dzn</code> を選ぶ。編集後は保存して実行する。データ選択の詳しい操作は<a href="https://docs.minizinc.dev/en/stable/minizinc_ide.html">公式IDE手引き</a>も参照できる。</p>
+<p>ブラウザで一ファイルとして扱う場合は、開始用 <code>.mzn</code> の内容に、指定の <code>.dzn</code> の内容を末尾へ追加して実行する。入力を交換するときは、末尾の <code class="sourceCode minizinc">given <span class="op">=</span> [| <span class="op">..</span>. |];</code> 全体を新しい入力で置き換える。新旧の <code>given</code> を二つ残さない。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>作業</th>
+<th>モデル</th>
+<th>入力</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>解説例</td>
+<td><a href="../../downloads/session-02/sudoku4.mzn" data-code-preview="../../previews/session-02/sudoku4.mzn.json">sudoku4.mzn</a></td>
+<td><a href="../../downloads/session-02/demo.dzn" data-code-preview="../../previews/session-02/demo.dzn.json">demo.dzn</a></td>
+</tr>
+<tr>
+<td>必修1</td>
+<td><a href="../../downloads/session-02/practice-start.mzn" data-code-preview="../../previews/session-02/practice-start.mzn.json">practice-start.mzn</a>に追記</td>
+<td><a href="../../downloads/session-02/practice.dzn" data-code-preview="../../previews/session-02/practice.dzn.json">practice.dzn</a></td>
+</tr>
+<tr>
+<td>必修2</td>
+<td><a href="../../downloads/session-02/diagonal-start.mzn" data-code-preview="../../previews/session-02/diagonal-start.mzn.json">diagonal-start.mzn</a>に追記</td>
+<td><a href="../../downloads/session-02/diagonal.dzn" data-code-preview="../../previews/session-02/diagonal.dzn.json">diagonal.dzn</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>必修1は <code>grid</code> の宣言が未完成なので、配布直後は実行できない。必修2は基本の数独までは実行できるが、追加すべき主対角線の条件はまだ入っていない。どちらも本文の <code>TODO(作業N)</code> を手掛かりに補う。</p>
+</section>
+<section id="コマンドでの実行" class="level2">
+<h2>コマンドでの実行</h2>
+<p>MiniZincを使える端末では、配布ファイルを置いたディレクトリで次のように実行できる。モデルと入力のファイル名を、今取り組んでいる組へ置き換える。</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode warmup.mzn</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode sudoku4.mzn demo.dzn</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode practice-start.mzn practice.dzn</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode diagonal-start.mzn diagonal.dzn</span></code></pre></div>
+<p>発展2は <code>given</code> と <code>first</code> の二つの入力を使う。この場合は <code>minizinc --solver gecode second-start.mzn empty.dzn first.dzn</code> と指定する。ブラウザの一ファイル方式では二つの <code>.dzn</code> の内容を両方追加する。代入先の名前が異なるので重複しない。</p>
+</section>
+<section id="出力の読み分け" class="level2">
+<h2>出力の読み分け</h2>
+<p>実行結果は、解があるかどうかだけでなく、処理が完了したかも見て判断する。次の表で、問題の条件による解なしと、コードや入力の不備を区別しよう。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>表示</th>
+<th>意味と次の確認</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数字の組や盤面、<code>----------</code></td>
+<td>一つの解。元の条件と照合する</td>
+</tr>
+<tr>
+<td><code>UNSATISFIABLE</code></td>
+<td>指定した条件を同時に満たす解がない</td>
+</tr>
+<tr>
+<td><code>UNKNOWN</code>、時間切れ、途中停止</td>
+<td>判定が完了していない。解なしとは言えない</td>
+</tr>
+<tr>
+<td>syntax error、type error、未宣言の名前</td>
+<td>記号・宣言・入力を直してから解き直す</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>例えば操作例の和を9にすると、1〜4の二整数では届かず、解なしになる。コードを誤って壊した場合のエラーとは違う。全角記号、末尾の <code class="sourceCode minizinc">;</code>、二次元配列の <code class="sourceCode minizinc">[|</code>・<code class="sourceCode minizinc">|]</code>、<code>given</code> の重複指定を順に確かめるとよい。</p>
+</section>
+<section id="全解と一意性" class="level2">
+<h2>全解と一意性</h2>
+<p>発展で解の個数を調べる場合は、一解で止める通常の実行から全解の列挙へ切り替える。コマンドでは <code>--all-solutions</code> を付ける。この回の小例はGecodeで確認できる。</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode <span class="at">--all-solutions</span> sudoku4.mzn demo.dzn</span></code></pre></div>
+<p>各 <code>----------</code> が一つの解の区切りになる。この充足問題の全解列挙で最後に <code>==========</code> が出れば、探索が完了している。完了するまでに一盤面だけなら一意である。二盤面見つかれば、その時点で一意ではないと分かる。途中まで一つしか見えていない状態では、一意と判断しない。</p>
+<p>画面から全解を指定する場所が分からなければ、教員が用意した端末で上のコマンドを使う。発展2のように既知の解だけを除外する方法でも別解を探せるが、「除外した盤面が元の問題の解である」という確認が先に必要になる。</p>
+<p>モデル・入力・コマンドの基礎は<a href="https://docs.minizinc.dev/en/stable/modelling.html">公式チュートリアル</a>で確認できる。この手引きでは、第02回に必要な操作だけを使っている。</p>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../index.html">講義一覧</a> · <a href="../../sessions/02-minizinc/index.html">第02回の本文へ</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

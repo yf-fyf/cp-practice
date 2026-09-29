@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第08回の入力と結果の確認 - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 手引き</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第08回の入力と結果の確認</h1>
+    <nav class="session-nav" aria-label="第08回の講義資料"><a href="../../sessions/08-preferences/index.html">通常講義</a><a href="../../advanced/preferences-challenges/index.html">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#本文のモデルと入力">本文のモデルと入力</a>
+      </li>
+      <li><a href="#表と目的値の照合">表と目的値の照合</a>
+      </li>
+      <li><a href="#pythonの配列を使う発展">Pythonの配列を使う発展</a>
+      </li>
+      <li><a href="#個人の違反を比較する発展">個人の違反を比較する発展</a>
+      </li>
+      <li><a href="#全勤務表の出所">全勤務表の出所</a>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p><a href="../../sessions/08-preferences/index.html">本文</a>／<a href="../../advanced/preferences-challenges/index.html">発展</a>で使うファイルの組をまとめる。基本条件、希望、上限、目的を一つずつ確認してから実行する。入力を切り替える場合は、古い入力を同時に残さない。</p>
+</header>
+<section id="本文のモデルと入力" class="level2">
+<h2>本文のモデルと入力</h2>
+<p>ファイルを同じ作業フォルダーへ保存する。MiniZinc IDEではモデルを開き、表の入力ファイルを選び、ソルバーをGecodeにする。コマンドを使う場合は、そのフォルダーで次のように実行できる。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>用途</th>
+<th>モデル</th>
+<th>データ</th>
+<th>希望・上限・目的</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>第07回からの再開</td>
+<td><a href="../../downloads/session-08/roster-basic.mzn" data-code-preview="../../previews/session-08/roster-basic.mzn.json">roster-basic.mzn</a></td>
+<td><a href="../../downloads/session-08/practice.dzn" data-code-preview="../../previews/session-08/practice.dzn.json">practice.dzn</a></td>
+<td>技能なし、希望なし、充足</td>
+</tr>
+<tr>
+<td>解説</td>
+<td><a href="../../downloads/session-08/weighted-demo.mzn" data-code-preview="../../previews/session-08/weighted-demo.mzn.json">weighted-demo.mzn</a></td>
+<td><a href="../../downloads/session-08/request-demo.dzn" data-code-preview="../../previews/session-08/request-demo.dzn.json">request-demo.dzn</a>と重み一つ</td>
+<td>E全日、上限なし、J最小</td>
+</tr>
+<tr>
+<td>必修1</td>
+<td><a href="../../downloads/session-08/weighted-start.mzn" data-code-preview="../../previews/session-08/weighted-start.mzn.json">weighted-start.mzn</a></td>
+<td><a href="../../downloads/session-08/request-practice.dzn" data-code-preview="../../previews/session-08/request-practice.dzn.json">request-practice.dzn</a>と<a href="../../downloads/session-08/weights-12.dzn" data-code-preview="../../previews/session-08/weights-12.dzn.json">weights-12.dzn</a></td>
+<td>Eの4日目、上限なし、J最小</td>
+</tr>
+<tr>
+<td>必修2</td>
+<td><a href="../../downloads/session-08/capped-start.mzn" data-code-preview="../../previews/session-08/capped-start.mzn.json">capped-start.mzn</a></td>
+<td>request-demo.dznと上限一つ</td>
+<td>E全日、V≤k、F最小</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>重みは<a href="../../downloads/session-08/weights-10.dzn" data-code-preview="../../previews/session-08/weights-10.dzn.json">weights-10.dzn</a>が(1,0)、<a href="../../downloads/session-08/weights-11.dzn" data-code-preview="../../previews/session-08/weights-11.dzn.json">weights-11.dzn</a>が(1,1)、weights-12.dznが(1,2)。上限は<a href="../../downloads/session-08/cap-0.dzn" data-code-preview="../../previews/session-08/cap-0.dzn.json">cap-0.dzn</a>がk=0、<a href="../../downloads/session-08/cap-1.dzn" data-code-preview="../../previews/session-08/cap-1.dzn.json">cap-1.dzn</a>がk=1である。</p>
+<p>共通ファイルの<a href="../../downloads/session-08/roster-core.mzn" data-code-preview="../../previews/session-08/roster-core.mzn.json">roster-core.mzn</a>には基本勤務条件、<a href="../../downloads/session-08/metrics-core.mzn" data-code-preview="../../previews/session-08/metrics-core.mzn.json">metrics-core.mzn</a>にはその読み込みとV・日数・Fがある。解説と必修2では両方、必修1ではroster-core.mznを同じ場所へ置く。共通ファイル単体を実行するのではなく、用途欄のモデルを実行する。</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode weighted-demo.mzn request-demo.dzn weights-12.dzn</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode weighted-start.mzn request-practice.dzn weights-12.dzn</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode capped-start.mzn request-demo.dzn cap-0.dzn</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode capped-start.mzn request-demo.dzn cap-1.dzn</span></code></pre></div>
+<p><code>start</code>はTODOを記入してから実行する。必修1は出力で使う変数も未定義なので、入力を選ぶだけでは実行できない。<code>request-*.dzn</code>には基本勤務データも入っており、practice.dznを重ねて指定する必要はない。</p>
+</section>
+<section id="表と目的値の照合" class="level2">
+<h2>表と目的値の照合</h2>
+<p>出力には人名付きの勤務表、日数配列<code>load</code>、V・F、重み付きの場合はJが出る。まず各日の人数と勤務可能性、一人の日数上限を確かめる。次に希望1の位置で勤務した数と、全員の日数の差を再計算する。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>入力・目的</th>
+<th style="text-align: right;">最適値</th>
+<th>最適な(V,F)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>E全日、重み(1,0)</td>
+<td style="text-align: right;">J=0</td>
+<td>(0,2)</td>
+</tr>
+<tr>
+<td>E全日、重み(1,1)</td>
+<td style="text-align: right;">J=2</td>
+<td>(0,2)または(1,1)</td>
+</tr>
+<tr>
+<td>E全日、重み(1,2)</td>
+<td style="text-align: right;">J=3</td>
+<td>(1,1)</td>
+</tr>
+<tr>
+<td>Eの4日目、重み(1,2)</td>
+<td style="text-align: right;">J=2</td>
+<td>(0,1)</td>
+</tr>
+<tr>
+<td>E全日、k=0でF最小</td>
+<td style="text-align: right;">F=2</td>
+<td>(0,2)</td>
+</tr>
+<tr>
+<td>E全日、k=1でF最小</td>
+<td style="text-align: right;">F=1</td>
+<td>(1,1)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>別の勤務表でも条件と最適値が合えばよい。解の区切り<code>----------</code>だけで判断せず、最適化では最後の<code>==========</code>まで確認する。<code>UNSATISFIABLE</code>は解なしで、停止や<code>UNKNOWN</code>は判定未完了である。途中に候補が出ていても最適性を確認済みとは扱わない。</p>
+<p>上限だけの受理・拒否を試すときは、必修2の完成モデルをコピーし、<code class="sourceCode minizinc"><span class="kw">solve</span></code>を<code class="sourceCode minizinc"><span class="kw">solve</span> <span class="kw">satisfy</span>;</code>に切り替える。次の制約でS1（AB／AC／BD／CE）を固定すると、k=0では解なし、k=1では受理される。表の値をデータとして二重定義せず、追加制約として固定する。</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> work <span class="op">=</span> [| <span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">0</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>                  | <span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">0</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>                  | <span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">1</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>                  | <span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">0</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>                  | <span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">1</span> |];</span></code></pre></div>
+<p>S0（AB／AD／CD／BC）を同じ方法で固定すれば、k=0でもk=1でも実行可能である。k=1におけるS0のF=2は最適ではないが、表を固定して解があるかだけを調べる検査では受理する。</p>
+</section>
+<section id="pythonの配列を使う発展" class="level2">
+<h2>Pythonの配列を使う発展</h2>
+<p>Python 3の標準ライブラリで実行でき、追加パッケージは不要である。<a href="../../downloads/session-08/roster_io.py" data-code-preview="../../previews/session-08/roster_io.py.json">roster_io.py</a>がJSONの読み込みと基本条件の確認を提供する。<code>available</code>と<code>request</code>は人×日、<code>required</code>は日ごとの人数、<code>max_days</code>は人ごとの上限である。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>用途</th>
+<th>出発ファイルと共通部分</th>
+<th>入力</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>発展1</td>
+<td><a href="../../downloads/session-08/recalculate-start.py" data-code-preview="../../previews/session-08/recalculate-start.py.json">recalculate-start.py</a>、roster_io.py</td>
+<td><a href="../../downloads/session-08/request-demo.json" data-code-preview="../../previews/session-08/request-demo.json.json">request-demo.json</a>または<a href="../../downloads/session-08/request-practice.json" data-code-preview="../../previews/session-08/request-practice.json.json">request-practice.json</a>、<a href="../../downloads/session-08/examples.json" data-code-preview="../../previews/session-08/examples.json.json">examples.json</a></td>
+</tr>
+<tr>
+<td>発展3</td>
+<td><a href="../../downloads/session-08/frontier-start.py" data-code-preview="../../previews/session-08/frontier-start.py.json">frontier-start.py</a>、<a href="../../downloads/session-08/metric_values.py" data-code-preview="../../previews/session-08/metric_values.py.json">metric_values.py</a>、roster_io.py</td>
+<td>request-demo.json、<a href="../../downloads/session-08/all-rosters.json" data-code-preview="../../previews/session-08/all-rosters.json.json">all-rosters.json</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>examples.jsonは<code>name</code>と<code>work</code>を持つ項目のリスト。S0・S1・P1に加え、発展2のI-sum・I-maxも含む。all-rosters.jsonは勤務表そのもののリストで、形式が異なる。出発ファイルは用途に合う方を読み込む。</p>
+<p>発展1の戻り値は、例えば元の希望のS0、k=0なら次の形になる。<code>valid</code>は基本条件と指定された上限の成否であり、最適性の判定結果ではない。基本検査に失敗した場合は<code>valid</code>と<code>errors</code>のみを返す。</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>{<span class="st">&#39;valid&#39;</span>: <span class="va">True</span>, <span class="st">&#39;errors&#39;</span>: [], <span class="st">&#39;load&#39;</span>: [<span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">0</span>], <span class="st">&#39;V&#39;</span>: <span class="dv">0</span>, <span class="st">&#39;F&#39;</span>: <span class="dv">2</span>}</span></code></pre></div>
+<p>Pythonの添字は0からで、Aは行0、1日目は列0に当たる。各人の日数を求める際に、値が0の行を除外しない。上限k=0も検査するため、未指定の<code>None</code>と0を区別する。</p>
+</section>
+<section id="個人の違反を比較する発展" class="level2">
+<h2>個人の違反を比較する発展</h2>
+<p>発展2では<a href="../../downloads/session-08/individual-start.mzn" data-code-preview="../../previews/session-08/individual-start.mzn.json">individual-start.mzn</a>へ個人の違反とMを定義し、合計Vと最大Mの最小化を別々に実行する。metrics-core.mznとroster-core.mznも同じ場所へ置く。</p>
+<p><a href="../../downloads/session-08/request-individual.dzn" data-code-preview="../../previews/session-08/request-individual.dzn.json">request-individual.dzn</a>が比較用の希望、<a href="../../downloads/session-08/request-all.dzn" data-code-preview="../../previews/session-08/request-all.dzn.json">request-all.dzn</a>が全員全日の希望である。独立な配列計算には<a href="../../downloads/session-08/request-individual.json" data-code-preview="../../previews/session-08/request-individual.json.json">request-individual.json</a>と<a href="../../downloads/session-08/request-all.json" data-code-preview="../../previews/session-08/request-all.json.json">request-all.json</a>を使える。</p>
+<p>第一目的を保って合計を小さくする段階では、完成した<a href="../../downloads/session-08/individual-core.mzn" data-code-preview="../../previews/session-08/individual-core.mzn.json">individual-core.mzn</a>、<a href="../../downloads/session-08/second-stage-start.mzn" data-code-preview="../../previews/session-08/second-stage-start.mzn.json">second-stage-start.mzn</a>、<a href="../../downloads/session-08/best-worst.dzn" data-code-preview="../../previews/session-08/best-worst.dzn.json">best-worst.dzn</a>を使う。共通ファイルには<code class="sourceCode minizinc"><span class="kw">solve</span></code>を置かず、実行モデルへ一つだけ書く。</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode individual-start.mzn request-individual.dzn</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode second-stage-start.mzn request-individual.dzn best-worst.dzn</span></code></pre></div>
+<p>比較用の希望では最小V=3、その場合のMは2。最小M=1の表にはV=4とV=5の両方があり、M=1を固定してVを最小にするとV=4となる。全員全日希望ならV=8・M=2で一定になる。</p>
+</section>
+<section id="全勤務表の出所" class="level2">
+<h2>全勤務表の出所</h2>
+<p>all-rosters.jsonは、<a href="../../downloads/session-08/enumerate.mzn" data-code-preview="../../previews/session-08/enumerate.mzn.json">enumerate.mzn</a>・roster-core.mzn・practice.dznによる基本条件の全解を、日ごとの組合せ列挙とも照合した393表である。希望、V≤k、技能、周期の条件を含まない。発展2・3ではこのファイルをそのまま読めばよい。</p>
+<p>MiniZinc側の列挙を自分で確認する場合は、次を使う。JSON streamには解だけでなく終了状態などの行も出るため、これをそのままall-rosters.jsonへ名前変更して読み込まない。</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode <span class="at">--all-solutions</span> <span class="at">--json-stream</span> <span class="at">--output-mode</span> json enumerate.mzn practice.dzn</span></code></pre></div>
+<p>再生成する場合は、<code>type</code>が<code>solution</code>の各行から<code>output.json.work</code>を集め、最後が<code>ALL_SOLUTIONS</code>であることを確認して、勤務表のリストをJSONとして保存する。途中で止めた列挙結果だけで、候補がすべて揃ったとはしない。</p>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../index.html">講義一覧</a> · <a href="../../sessions/08-preferences/index.html">第08回の本文へ</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

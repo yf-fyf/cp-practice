@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第06回　目的関数で良さを比べる - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+<script defer="" src="../../assets/katex/katex.min.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+</script>
+<link rel="stylesheet" href="../../assets/katex/katex.min.css" />
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 通常講義</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第06回　目的関数で良さを比べる</h1>
+    <nav class="session-nav" aria-label="第06回の講義資料"><a href="../../sessions/06-optimization/index.html" aria-current="page">通常講義</a><a href="../../advanced/optimization-challenges/index.html">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#目標">目標</a>
+      </li>
+      <li><a href="#問題">1. 問題</a>
+      </li>
+      <li><a href="#定式化">2. 定式化</a>
+      <ul>
+      <li><a href="#実行可能な割当">実行可能な割当</a></li>
+      <li><a href="#合計不満度">合計不満度</a></li>
+      <li><a href="#個数と安全な境界">個数と安全な境界</a></li>
+      </ul>
+      </li>
+      <li><a href="#解説例">3. 解説例</a>
+      <ul>
+      <li><a href="#手順1-基本条件の再開">手順1　基本条件の再開</a></li>
+      <li><a href="#手順2-合計不満度">手順2　合計不満度</a></li>
+      <li><a href="#手順3-最小化と終了状態">手順3　最小化と終了状態</a></li>
+      <li><a href="#手順4-個数と最大化">手順4　個数と最大化</a></li>
+      </ul>
+      </li>
+      <li><a href="#結果">4. 結果</a>
+      </li>
+      <li><a href="#演習">5. 演習</a>
+      <ul>
+      <li><a href="#必修1-不満度の変更">必修1　不満度の変更</a></li>
+      <li><a href="#必修2-二種類のキットの生産量">必修2　二種類のキットの生産量</a></li>
+      </ul>
+      </li>
+      <li><a href="#発展">6. 発展</a>
+      </li>
+      <li><a href="#振り返り">7. 振り返り</a>
+      </li>
+      <li><a href="#参照">参照</a>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p>条件を満たす割当が複数あるとき、評価値を使ってその中から選ぶ。講座の合計不満度を小さくする問題から始め、二種類のキットを何個作るかを決める問題へ進む。守る条件と、良くしたい量を分けて考えよう。</p>
+</header>
+<section id="目標" class="level2 unnumbered sec-goal">
+<h2 class="unnumbered sec-goal">目標</h2>
+<p>この回では、実行可能な解を見つけるところから、目的値で比較するところへ進む。結果を表示できたら、次の三つを説明できるようになろう。</p>
+<ul>
+<li>実行可能性・目的値・最適性を区別できる。</li>
+<li>入力の係数と決定変数から合計を作り、最小化・最大化を選べる。</li>
+<li>製作個数の意味と、容量から導いた安全な定義域を説明できる。</li>
+</ul>
+<p>第05回の0/1表、許可と定員、添字付きの和を使う。完成した<a href="../../downloads/session-06/assignment-base.mzn" data-code-preview="../../previews/session-06/assignment-base.mzn.json">4人の基本割当</a>と<a href="../../downloads/session-06/base.dzn" data-code-preview="../../previews/session-06/base.dzn.json">入力</a>を再配布するので、前の必修の完成は不要である。個数の整数変数と最適化は、この回で説明する。操作は<a href="../../guides/optimization-check/index.html">最適化の確認手引き</a>を使って授業内で確認できる。</p>
+<p>説明・実演に50分、<a href="#演習">5. 演習</a>に45分、振り返りに5分を使う。必修1は15分、必修2は25分、残り5分は確認の目安である。通常演習の提出・宿題・完了報告はなく、教員の完了承認も待たない。発展は選んで取り組む。</p>
+</section>
+<section id="問題" class="level2 sec-problem">
+<h2 class="sec-problem">1. 問題</h2>
+<p>同じ許可と定員を守る割当でも、参加先への満足度は異なる。ここでは小さいほど望ましい「不満度」を数で与える。許されるかどうかと、許された中でどれがよいかを分けて読む。</p>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 4人A〜Dを講座1〜3へ一人ちょうど一つ割り当てる。許可が1の組合せだけを選び、各講座の人数は定員以下とする。空席を残してもよい。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th style="text-align: right;">講座1の許可</th>
+<th style="text-align: right;">講座2の許可</th>
+<th style="text-align: right;">講座3の許可</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>B</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>C</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>D</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>定員</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>不満度は次の表とする。実際に選んだ各人の参加先の不満度を足し、その合計が最も小さい割当を求める。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th style="text-align: right;">講座1の不満度</th>
+<th style="text-align: right;">講座2の不満度</th>
+<th style="text-align: right;">講座3の不満度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>B</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr>
+<td>C</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>D</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>禁止位置にも不満度の欄はあるが、その値が小さいから選んでよいわけではない。Aの講座3の不満度は0でも、許可が0なので選べない。許可と定員の条件は、評価値を加えた後も必要である。</p>
+</section>
+<section id="定式化" class="level2 sec-model">
+<h2 class="sec-model">2. 定式化</h2>
+<p>まず元の問題の条件を保ち、条件を満たす割当の中で比べる量を定義する。この順序を意識すると、目的を変えたときにも、守るべき条件が消えていないかを確かめられる。</p>
+<section id="実行可能な割当" class="level3">
+<h3>実行可能な割当</h3>
+<p><span class="math inline">x_{p,c}\in\{0,1\}</span>を、人pが講座cを選ぶかどうかとする。許可の入力を<span class="math inline">a_{p,c}</span>、定員を<span class="math inline">\mathrm{cap}_c</span>とすると、引き継ぐ条件は次の三種類である。</p>
+<p><span class="math display">\sum_c x_{p,c}=1\quad(各人p),\qquad
+\sum_p x_{p,c}\le\mathrm{cap}_c\quad(各講座c),\qquad
+x_{p,c}\le a_{p,c}\quad(各組p,c).</span></p>
+<p>これらをすべて満たす解を<strong>実行可能解</strong>と呼ぶ。第05回ではそのうち一つを求めた。今回は、実行可能解の集合を保ったまま、その中に比較の基準を加える。</p>
+</section>
+<section id="合計不満度" class="level3">
+<h3>合計不満度</h3>
+<p>入力の不満度を<span class="math inline">\mathrm{cost}_{p,c}</span>とし、合計をTと置く。選ばない位置は<span class="math inline">x_{p,c}=0</span>なので寄与が0、選んだ位置は1なのでその不満度が一度だけ加わる。</p>
+<p><span class="math display">T=\sum_{p,c}\mathrm{cost}_{p,c}x_{p,c}.</span></p>
+<p>このように、解の良さを数で表し、比較に使う式を<strong>目的関数</strong>と呼ぶ。ある解におけるTの値が目的値であり、実行可能解全体の中で最も小さい値が最適値である。その値を達成する解を最適解と呼ぶ。</p>
+<p>合計の最小化は、すべての人の不満度を同時に最小にすることとは異なる。誰かの不満度が上がっても、全体の合計が下がる選び方はあり得る。今回の比較基準は、問題で指定された合計Tである。</p>
+</section>
+<section id="個数と安全な境界" class="level3">
+<h3>個数と安全な境界</h3>
+<p>別の題材として、製品の個数qを考える。一つ作ると材料2を使い、材料の容量が8なら、非負の整数qに対して <span class="math inline">2q\le8</span> が必要であり、<span class="math inline">0\le q\le4</span> と分かる。</p>
+<p>qは「作るかどうか」ではなく「何個作るか」を表す。0/1へ狭めると、2個以上作れる正しい解を失ってしまう。一方、容量から導いた上限4は、元の条件を満たす解を失わない<strong>安全な境界</strong>である。</p>
+<p>使用量が容量以下という制約と、その条件から導いた変数の範囲は区別して読む。複数の資源を使う場合は、それぞれの容量を守る必要がある。<a href="#演習">必修2</a>で、二種類の個数と二つの資源を組み合わせる。</p>
+</section>
+</section>
+<section id="解説例" class="level2 sec-demo">
+<h2 class="sec-demo">3. 解説例</h2>
+<p>教員が、完成した基本割当から合計と最小化を加えて実演する。ファイルの手順1〜3を読み、最後に個数変数の短い例を試す。実行中に解が出ることと、最適終了することを分けて確認しよう。</p>
+<section id="手順1-基本条件の再開" class="level3">
+<h3>手順1　基本条件の再開</h3>
+<p><a href="../../downloads/session-06/cost-demo.mzn" data-code-preview="../../previews/session-06/cost-demo.mzn.json">cost-demo.mzn</a>は、<a href="../../downloads/session-06/assignment-core.mzn" data-code-preview="../../previews/session-06/assignment-core.mzn.json">assignment-core.mzn</a>から変数と、一人一講座・許可・定員の三条件を読み込む。基本モデルから<code class="sourceCode minizinc"><span class="kw">solve</span></code>と表示だけを分けたファイルである。</p>
+<figure class="code"><figcaption>cost-demo.mzn</figcaption>
+<div class="sourceCode" id="cb1"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">include</span> <span class="st">&quot;assignment-core.mzn&quot;</span>;</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="dt">array</span>[PEOPLE, COURSES] <span class="dt">of</span> <span class="dt">int</span>: cost;</span></code></pre></div>
+</figure>
+<p>新しく加えた<code>cost</code>も人×講座の入力で、<code class="sourceCode minizinc"><span class="dt">var</span></code>は付けない。<a href="../../downloads/session-06/cost-base.dzn" data-code-preview="../../previews/session-06/cost-base.dzn.json">cost-base.dzn</a>に許可・定員・不満度をまとめてある。5人版や、AとDを分ける条件は含めない。</p>
+</section>
+<section id="手順2-合計不満度" class="level3">
+<h3>手順2　合計不満度</h3>
+<p>すべての人と講座の組について、入力の不満度と選択変数を掛けて足す。数式のTへ、MiniZincでは<code>total</code>という名前を付ける。各セルの値を更新する手続きではなく、値の関係を定義している。</p>
+<figure class="code"><figcaption>cost-demo.mzn</figcaption>
+<div class="sourceCode" id="cb2"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dt">var</span> <span class="dt">int</span>: total <span class="op">=</span> <span class="fu">sum</span>(p <span class="op">in</span> PEOPLE, c <span class="op">in</span> COURSES)(cost[p,c] <span class="op">*</span> x[p,c]);</span></code></pre></div>
+</figure>
+<p>例えばAが講座2を選ぶと、Aの行からは<span class="math inline">0\times0+1\times1+0\times0=1</span>が加わる。同じ計算を各人について行い、選んだ四つの不満度の合計を作る。<code>total</code>は割当に応じて決まる値なので<code class="sourceCode minizinc"><span class="dt">var</span></code>が付く。</p>
+</section>
+<section id="手順3-最小化と終了状態" class="level3">
+<h3>手順3　最小化と終了状態</h3>
+<p><code class="sourceCode minizinc"><span class="kw">solve</span> <span class="kw">satisfy</span>;</code>の代わりに、比較したい量を付けて最小化を指定する。一つのモデルに<code>solve</code>を二つ書くのではなく、今回求める問題の種類を一つ指定する。</p>
+<figure class="code"><figcaption>cost-demo.mzn</figcaption>
+<div class="sourceCode" id="cb3"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">solve</span> <span class="kw">minimize</span> total;</span></code></pre></div>
+</figure>
+<p>Gecodeで実行する。出力には割当表と<code>total</code>が表示される。合計値だけを見ず、参加先を読み取って元の三条件と不満度を照合しよう。</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">minizinc</span> <span class="at">--solver</span> gecode cost-demo.mzn cost-base.dzn</span></code></pre></div>
+<p>解の区切り<code>----------</code>は一つの解が出たことを表す。最適化では、最後の<code>==========</code>が最適性まで確認した終了を示す。実行中や時間制限で停止した場合、表示された候補よりよい解が残っている可能性がある。詳しい操作は<a href="../../guides/optimization-check/index.html">確認手引き</a>で確認できる。</p>
+</section>
+<section id="手順4-個数と最大化" class="level3">
+<h3>手順4　個数と最大化</h3>
+<p><a href="../../downloads/session-06/quantity-demo.mzn" data-code-preview="../../previews/session-06/quantity-demo.mzn.json">quantity-demo.mzn</a>では、先ほど導いた範囲で材料の容量を守り、製作個数qを最大にする。値の範囲が0/1から0〜4へ変わる理由と、目的を大きくする理由を別々に説明しよう。</p>
+<figure class="code"><figcaption>quantity-demo.mzn</figcaption>
+<div class="sourceCode" id="cb5"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="dt">var</span> <span class="dv">0</span><span class="op">..</span><span class="dv">4</span>: q;</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">constraint</span> <span class="dv">2</span><span class="op">*</span>q <span class="op">&lt;=</span> <span class="dv">8</span>;</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">solve</span> <span class="kw">maximize</span> q;</span></code></pre></div>
+</figure>
+<p>この問題の最適解はq=4である。<code class="sourceCode minizinc"><span class="kw">maximize</span></code>は目的値を大きくする指定であり、配列内の最大の要素を取り出す演算ではない。何を良くするかによって、最小化と最大化を選ぶ。</p>
+</section>
+</section>
+<section id="結果" class="level2 sec-result">
+<h2 class="sec-result">4. 結果</h2>
+<p>4人の基本割当には四つの実行可能解がある。それぞれについて選んだ不満度を足すと、どの解が今回の目的にとってよいかを比較できる。参加先はA・B・C・Dの順に並べる。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>参加先</th>
+<th>各人の不満度</th>
+<th style="text-align: right;">合計T</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1, 1, 2, 3</td>
+<td>0, 2, 4, 2</td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr>
+<td>1, 1, 3, 2</td>
+<td>0, 2, 0, 3</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr>
+<td>1, 3, 1, 2</td>
+<td>0, 3, 1, 3</td>
+<td style="text-align: right;">7</td>
+</tr>
+<tr>
+<td>2, 1, 1, 3</td>
+<td>1, 2, 1, 2</td>
+<td style="text-align: right;">6</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>最適値は5で、参加先1・1・3・2が達成する。合計8の割当も条件を満たしているが、今回の目的では最適ではない。「条件違反」と「もっとよい解がある」を区別しよう。</p>
+<p>この小さな例では、四つすべてを並べることでも最適性を確かめられる。一般には、見つけた一解の目的値を手で計算しただけでは最適性の証明にはならない。実行可能性の確認、目的値の再計算、最適終了の確認を順に行う。<a href="#演習">演習</a>では、入力や題材を変えて同じ区別を使う。</p>
+</section>
+<section id="演習" class="level2 sec-exercise">
+<h2 class="sec-exercise">5. 演習</h2>
+<p>必修1は同じ割当で不満度を変更し、必修2は生産量という別の題材へ移る。どちらも出力の値を元の条件と照合する。目的値がよさそうに見えても、容量や許可を落としていないか確認しよう。</p>
+<section id="必修1-不満度の変更" class="level3">
+<h3>必修1　不満度の変更</h3>
+<p>許可と定員を保ち、一つの不満度だけを変える。目的値が変わることと、実行可能な割当が変わることを区別する練習である。出発モデルには基本条件が揃っている。</p>
+<section id="問題-1" class="level4">
+<h4>問題</h4>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 4人A〜Dを講座1〜3へ一人ちょうど一つ割り当てる。許可が1の組合せだけを選び、各講座の人数は定員以下とする。空席は許す。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th style="text-align: right;">講座1の許可</th>
+<th style="text-align: right;">講座2の許可</th>
+<th style="text-align: right;">講座3の許可</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>B</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>C</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>D</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>定員</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>次の不満度で、選んだ参加先の合計を最小にする。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th style="text-align: right;">講座1の不満度</th>
+<th style="text-align: right;">講座2の不満度</th>
+<th style="text-align: right;">講座3の不満度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>B</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr>
+<td>C</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td>D</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>解説例から変えたのはCの講座3の不満度だけで、0から4にした。人の番号はA=1〜D=4とする。</p>
+</div>
+</section>
+<section id="作業" class="level4">
+<h4>作業</h4>
+<p><a href="../../downloads/session-06/cost-start.mzn" data-code-preview="../../previews/session-06/cost-start.mzn.json">cost-start.mzn</a>と<a href="../../downloads/session-06/assignment-core.mzn" data-code-preview="../../previews/session-06/assignment-core.mzn.json">assignment-core.mzn</a>を同じフォルダーへ置く。後者には一人一講座・許可・定員の条件が入っている。<code class="sourceCode minizinc">x[p,c]</code> は人pが講座cを選ぶなら1、選ばないなら0、<code class="sourceCode minizinc">cost[p,c]</code> はその参加先の不満度を表す。<code>PEOPLE</code> は人の番号1〜4、<code>COURSES</code> は講座番号1〜3である。入力宣言と表示は用意してあるが、表示で使う<code>total</code>の定義と<code>solve</code>はまだない。</p>
+<figure class="code"><figcaption>cost-start.mzn</figcaption>
+<div class="sourceCode" id="cb6"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業1): 選んだ位置だけを足し、totalを定義する。</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業2): totalを最小化するsolveを書く。</span></span></code></pre></div>
+</figure>
+<ol type="1">
+<li><strong>作業1：</strong> 不満度と0/1変数を掛けた合計を<code>total</code>として定義する。</li>
+<li><strong>作業2：</strong> 合計の最小化を指定し、<a href="../../downloads/session-06/cost-practice.dzn" data-code-preview="../../previews/session-06/cost-practice.dzn.json">cost-practice.dzn</a>で実行する。選んだ四つの不満度を別に足し、表示と終了状態を確かめる。</li>
+</ol>
+</section>
+<section id="自己確認" class="level4">
+<h4>自己確認</h4>
+<p>最適値は6で、参加先2・1・1・3が達成する。個人の不満度は1・2・1・2である。比較用の割当1・1・3・2は、この問題の不満度では合計9になり、許可と定員には引き続き違反しない。</p>
+<p>続いて評価入力を<a href="../../downloads/session-06/cost-zero.dzn" data-code-preview="../../previews/session-06/cost-zero.dzn.json">cost-zero.dzn</a>へ交換し、同じモデルで実行する。すべての不満度が0のとき、どの割当が最適になるかを先に予想しよう。最適値は0で、この問題の許可・定員・一人一講座を満たす四つの割当はすべて同点になる。新しい割当が許されたのか、比較の結果が変わったのかを説明する。</p>
+<p>出力の表が条件を満たすこと、合計が表示と一致すること、最適終了していることを別々に確認する。Gecodeの出力末尾の <code>==========</code> は最適終了を表す。途中の候補が出ただけ、または時間切れの場合は最適とは判断しない。許可・定員・一人一講座を満たす割当の範囲は変わらず、評価入力を変えたことだけを理由に割当を禁止しない。</p>
+<details class="hint"><summary>ヒントを開く：選んだ四つだけを足す</summary><div class="hint-body">
+<p>出力の各行で1がある講座を選び、不満度表の同じ位置を一つずつ拾う。<code>cost</code>の全欄を足すのではない。コードでも<code class="sourceCode minizinc">cost[p,c]<span class="op">*</span>x[p,c]</code>によって、選んでいない位置の寄与を0にする。</p>
+</div></details>
+</section>
+</section>
+<section id="必修2-二種類のキットの生産量" class="level3">
+<h3>必修2　二種類のキットの生産量</h3>
+<p>今度は参加先の選択ではなく、二種類の製作個数を決める。資源ごとの使用量と、得点の合計を分けて表そう。割当の一人一講座という条件を、この問題へ持ち込まないようにする。</p>
+<section id="問題-2" class="level4">
+<h4>問題</h4>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 二種類のキットを、それぞれ0個以上の整数個だけ作る。端数と負の個数は不可。材料容量と作業時間の容量はいずれも8で、どちらも超えてはいけない。使い切る義務はない。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>キット</th>
+<th style="text-align: right;">1個の材料消費</th>
+<th style="text-align: right;">1個の時間消費</th>
+<th style="text-align: right;">1個の得点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr>
+<td>2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>求めるのは、資源容量を守り、得点合計を最大にする二つの製作個数。どちらか一種類だけを作っても、両方を作ってもよい。</p>
+</div>
+</section>
+<section id="作業-1" class="level4">
+<h4>作業</h4>
+<p><a href="../../downloads/session-06/kits-start.mzn" data-code-preview="../../previews/session-06/kits-start.mzn.json">kits-start.mzn</a>には入力の宣言と使用量の表示を用意した。<code>material_capacity</code> は材料容量、<code>time_capacity</code> は時間容量、<code>score_u</code>・<code>score_v</code> はキット1・2の1個当たりの得点で、この問題では順に8・8・3・4である。出力で使う<code>u</code>・<code>v</code>を二つの個数として宣言し、どちらがどのキットかをコメントにも書こう。</p>
+<figure class="code"><figcaption>kits-start.mzn</figcaption>
+<div class="sourceCode" id="cb7"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業1): u・vの意味と安全な整数範囲を決め、二つの容量制約を書く。</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業2): 得点scoreを定義し、最大化するsolveを書く。</span></span></code></pre></div>
+</figure>
+<ol type="1">
+<li><strong>作業1：</strong> キット1の個数をu、キット2の個数をvとする。非負性と容量から各上限を導き、整数変数を宣言する。材料と時間それぞれの使用量を計算し、容量以下の制約を書く。</li>
+<li><strong>作業2：</strong> 得点合計<code>score</code>を定義し、最大化を指定する。<a href="../../downloads/session-06/kits.dzn" data-code-preview="../../previews/session-06/kits.dzn.json">kits.dzn</a>で実行し、個数・材料・時間・得点を再計算する。</li>
+</ol>
+</section>
+<section id="自己確認-1" class="level4">
+<h4>自己確認</h4>
+<p>最適解はu=2、v=3で、材料7、時間8、得点18になる。材料を使い切っていなくても正しい。u=3、v=3は両資源を9使うので拒否する。u=v=0は実行可能だが、得点0なので元の問題では最適ではない。</p>
+<p>容量を等号にしたり、根拠なく個数を0/1にしたりすると、別の問題になってしまう。<a href="../../guides/optimization-check/index.html#個数の検査">固定して検査する方法</a>で条件の過不足を調べられる。固定した問題で最適と出ても、元の自由に個数を選ぶ問題で最適とは限らない。</p>
+<details class="hint"><summary>ヒントを開く：資源ごとの足し算</summary><div class="hint-body">
+<p>材料はキット1が1個で2、キット2が1個で1を使うので、使用量は<code class="sourceCode minizinc"><span class="dv">2</span><span class="op">*</span>u<span class="op">+</span>v</code>。時間も同じように、その資源の係数と個数を掛けて足す。得点は資源使用量と別の係数を使う。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：片方だけ作る場合</summary><div class="hint-body">
+<p>もう一方の製作個数を0にしたとき、材料と時間それぞれから何個まで作れるかを調べる。もう一方を増やしてもその上限を超えられない理由を、資源を消費する向きと非負性から説明しよう。</p>
+</div></details>
+<details class="hint"><summary>ヒントを開く：確認例・安全な上限</summary><div class="hint-body">
+<p>vが非負なら、材料の条件から<code class="sourceCode minizinc"><span class="dv">2</span><span class="op">*</span>u <span class="op">&lt;=</span> <span class="dv">8</span></code>なのでu≤4。uが非負なら、時間の条件から<code class="sourceCode minizinc"><span class="dv">2</span><span class="op">*</span>v <span class="op">&lt;=</span> <span class="dv">8</span></code>なのでv≤4。<code class="sourceCode minizinc"><span class="dt">var</span> <span class="dv">0</span><span class="op">..</span><span class="dv">4</span></code>という宣言なら、これらの条件を満たす個数を失わない。上限だけで二つの容量制約を省略はできない。</p>
+</div></details>
+</section>
+</section>
+</section>
+<section id="発展" class="level2 sec-advanced">
+<h2 class="sec-advanced">6. 発展</h2>
+<p>一つの最適解から先には、すべての最適解を求める、上限の証明を作る、目的に優先順位を付けるという方向がある。<a href="../../advanced/optimization-challenges/index.html">独立した発展ページ</a>で、必要な出発点から選んで始められる。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>選択</th>
+<th>深めること</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../advanced/optimization-challenges/index.html#all-optima">発展1　すべての最適な割当</a></td>
+<td>最適値を固定し、すべての最適な割当を列挙する</td>
+</tr>
+<tr>
+<td><a href="../../advanced/optimization-challenges/index.html#bound">発展2　上限による最適性の説明</a></td>
+<td>容量の不等式から得点の上限を導き、最適性を説明する</td>
+</tr>
+<tr>
+<td><a href="../../advanced/optimization-challenges/index.html#priority">発展3　目的に優先順位を付ける</a></td>
+<td>得点を優先し、その中で時間を減らす二段階法と重み</td>
+</tr>
+<tr>
+<td><a href="../../advanced/optimization-challenges/index.html#knapsack">選択M06a　各一つだけの持ち物</a></td>
+<td>各一つだけの品物を選ぶ0/1ナップサック</td>
+</tr>
+<tr>
+<td><a href="../../advanced/optimization-challenges/index.html#cakes">選択M06b　二種類のケーキ</a></td>
+<td>五つの材料からケーキの製作個数を決める</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>第07回では勤務表をまず充足問題として作り、第08回で希望などの指標を最適化する。今回の発展の全列挙・優先順位の実装は、次の通常回の前提にしない。</p>
+</section>
+<section id="振り返り" class="level2 sec-review">
+<h2 class="sec-review">7. 振り返り</h2>
+<p>自分のモデルについて、何を決め、何を必ず守り、何を良くするかを順に説明しよう。そのうえで、得られた解の目的値を計算したことと、最適性を確認したことの違いを振り返る。</p>
+<ul>
+<li>不満度が小さくても、許可されていない参加先を選べないのはなぜか。</li>
+<li>キットの変数を0/1にせず、0〜4の整数にした根拠は何か。</li>
+<li>最適化の実行が途中で止まった場合、表示された解について何が言えるか。</li>
+</ul>
+</section>
+<section id="参照" class="level2 unnumbered sec-reference">
+<h2 class="unnumbered sec-reference">参照</h2>
+<p>最適化では、解と目的値だけでなく終了状態も確認する。複数の正解がある場合や、目的値が同じ解がある場合も、問題の条件を満たしていれば正しく扱おう。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>用語・記法</th>
+<th>意味・参照先</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>実行可能解</td>
+<td>すべての制約を満たす解</td>
+</tr>
+<tr>
+<td>目的値／最適値</td>
+<td>一解の評価値／実行可能解全体で最もよい値</td>
+</tr>
+<tr>
+<td><code class="sourceCode minizinc"><span class="kw">solve</span> <span class="kw">minimize</span> total;</code></td>
+<td>totalを最小にする</td>
+</tr>
+<tr>
+<td><code class="sourceCode minizinc"><span class="kw">solve</span> <span class="kw">maximize</span> score;</code></td>
+<td>scoreを最大にする</td>
+</tr>
+<tr>
+<td>安全な境界</td>
+<td>元の条件を満たす解を失わない変数の範囲</td>
+</tr>
+<tr>
+<td>配布と確認</td>
+<td><a href="../../guides/optimization-check/index.html">モデル・入力・終了状態の確認手引き</a></td>
+</tr>
+<tr>
+<td>記法の原典</td>
+<td><a href="https://docs.minizinc.dev/en/stable/modelling.html#an-arithmetic-optimisation-example">MiniZinc公式教材：算術と最適化</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code class="sourceCode minizinc"><span class="kw">solve</span></code>の二重指定、許可制約を削除する誤り、容量を等号にする誤りに注意する。<a href="#結果">結果</a>へ戻り、元の実行可能な解の集合と、比較している目的を確かめよう。</p>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../sessions/05-assignment/index.html">← 第05回</a> · <a href="../../index.html">講義一覧</a> · <a href="../../sessions/07-schedule/index.html">第07回 →</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

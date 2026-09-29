@@ -1,0 +1,11 @@
+% 架空の売店。人はA・B・C・D、日は火・水・木の順。
+n_people = 4;
+n_days = 3;
+person_name = ["A", "B", "C", "D"];
+day_name = ["火", "水", "木"];
+required = [2, 2, 2];
+available = [| 1, 1, 0
+             | 1, 0, 1
+             | 0, 1, 1
+             | 1, 1, 1 |];
+max_days = [2, 2, 2, 2];

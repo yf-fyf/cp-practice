@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第05回の発展　割当の表現と不可能性 - 実践・制約プログラミング</title>
+<link rel="stylesheet" href="../../assets/lesson-style.css">
+<link rel="stylesheet" href="../../assets/site-header.css">
+<link rel="stylesheet" href="../../assets/lesson-syntax.css">
+<link rel="stylesheet" href="../../assets/lesson-lightbox.css">
+<script defer src="../../assets/lesson-lightbox.js"></script>
+<link rel="stylesheet" href="../../assets/code-preview.css">
+<script defer src="../../assets/code-preview.js"></script>
+<script defer="" src="../../assets/katex/katex.min.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+</script>
+<link rel="stylesheet" href="../../assets/katex/katex.min.css" />
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="sitename" href="../../index.html">実践・制約プログラミング</a><nav class="topnav" aria-label="サイト内の移動"><a href="../../index.html#lessons">講義一覧</a></nav></div></header>
+<div class="layout">
+  <nav class="breadcrumb" aria-label="現在の位置"><a href="../../index.html">ホーム</a> / 発展</nav>
+  <main class="content" id="main">
+    <h1 class="page-title">第05回の発展　割当の表現と不可能性</h1>
+    <nav class="session-nav" aria-label="第05回の講義資料"><a href="../../sessions/05-assignment/index.html">通常講義</a><a href="../../advanced/assignment-challenges/index.html" aria-current="page">発展</a></nav>
+    <details class="toc" id="toc">
+      <summary>このページの内容</summary>
+      <ul class="toc-list">
+      <li><a href="#value">発展1　一人一変数の表現</a>
+      <ul>
+      <li><a href="#条件と変数">条件と変数</a></li>
+      <li><a href="#人数と許可の記述">人数と許可の記述</a></li>
+      </ul>
+      </li>
+      <li><a href="#separate">発展2　二人の参加先の分離</a>
+      <ul>
+      <li><a href="#条件と入力">条件と入力</a></li>
+      <li><a href="#作業と自己確認">作業と自己確認</a></li>
+      </ul>
+      </li>
+      <li><a href="#obstruction">発展3　割当できない理由</a>
+      <ul>
+      <li><a href="#条件と障害集合">条件と障害集合</a></li>
+      <li><a href="#探索と一般化">探索と一般化</a></li>
+      </ul>
+      </li>
+      <li><a href="#series">選択M05　出現回数を表す数列</a>
+      <ul>
+      <li><a href="#問題と添字">問題と添字</a></li>
+      <li><a href="#作業と自己確認-1">作業と自己確認</a></li>
+      </ul>
+      </li>
+      </ul>
+    </details>
+<header class="lead">
+<p><a href="../../sessions/05-assignment/index.html">第05回の本文</a>の0/1表から、別表現・二人の分離・不可能性の説明へ進む。各問題に出発点を用意しているので、前の発展を完成していなくても取り組める。選択M05は、条件が成り立つ個数を数える別の題材である。</p>
+<p>実行操作と配布物は<a href="../../guides/assignment-check/index.html">確認手引き</a>にまとめた。0/1表では1の位置を、一人一変数の表現では講座番号を読む。表現を変えても、元の問題で許される割当が変わっていないかを確認しよう。</p>
+<div class="table-scroll">
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>問題</th>
+<th>出発点</th>
+<th>主に考えること</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>発展1</td>
+<td><a href="../../downloads/session-05/value-start.mzn" data-code-preview="../../previews/session-05/value-start.mzn.json">value-start.mzn</a></td>
+<td>講座番号から人数を数え、許可を参照する</td>
+</tr>
+<tr>
+<td>発展2</td>
+<td><a href="../../downloads/session-05/separate-start.mzn" data-code-preview="../../previews/session-05/separate-start.mzn.json">separate-start.mzn</a></td>
+<td>特定の二人の同時選択を禁止する</td>
+</tr>
+<tr>
+<td>発展3</td>
+<td><a href="../../downloads/session-05/obstruction-start.py" data-code-preview="../../previews/session-05/obstruction-start.py.json">obstruction-start.py</a></td>
+<td>最少人数の障害集合を探す</td>
+</tr>
+<tr>
+<td>選択M05</td>
+<td><a href="../../downloads/session-05/series-start.mzn" data-code-preview="../../previews/session-05/series-start.mzn.json">series-start.mzn</a></td>
+<td>数字の出現回数を数える</td>
+</tr>
+</tbody>
+</table>
+</div>
+</header>
+<section id="value" class="level2">
+<h2>発展1　一人一変数の表現</h2>
+<p>一人が選ぶ講座番号を、一つの決定変数で表す。変数の数を減らすだけでは完成しない。0/1表で行っていた人数の集計と許可の確認を、新しい表現に合わせて書こう。</p>
+<section id="条件と変数" class="level3">
+<h3>条件と変数</h3>
+<p>5人A〜Eを講座1〜3へ一人ちょうど一つ割り当てる。各講座の人数は定員以下、許可が1の組合せだけを選ぶ。AとDの分離条件は置かない。人の番号1〜5はA〜Eに対応する。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th style="text-align: right;">講座1</th>
+<th style="text-align: right;">講座2</th>
+<th style="text-align: right;">講座3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>B</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>C</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>D</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>E</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>定員</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>入力は<a href="../../downloads/session-05/practice.dzn" data-code-preview="../../previews/session-05/practice.dzn.json">practice.dzn</a>。変数 <span class="math inline">y_p\in\{1,2,3\}</span> を人pの参加先の講座番号とする。一人に一つの値を割り当てるので、行和=1に当たる条件を別に書く必要はない。</p>
+</section>
+<section id="人数と許可の記述" class="level3">
+<h3>人数と許可の記述</h3>
+<p><a href="../../downloads/session-05/value-start.mzn" data-code-preview="../../previews/session-05/value-start.mzn.json">value-start.mzn</a>には、講座番号を表す変数 <code class="sourceCode minizinc">y[p]</code>、入力と表示がある。<code>PEOPLE</code> は人の番号1〜5、<code>COURSES</code> は講座番号1〜3、<code class="sourceCode minizinc">allowed[p,c]</code> はこの問題の許可表、<code class="sourceCode minizinc">cap[c]</code> は定員である。<code>practice.dzn</code> と組み合わせ、次の二条件を補う。</p>
+<p><code class="sourceCode minizinc"><span class="fu">bool2int</span>(条件)</code>は、条件が真なら1、偽なら0を表す。例えば<code class="sourceCode minizinc">y[<span class="dv">1</span>]<span class="op">=</span><span class="dv">2</span></code>のとき、<code class="sourceCode minizinc"><span class="fu">bool2int</span>(y[<span class="dv">1</span>]<span class="op">=</span><span class="dv">2</span>)</code>は1、<code class="sourceCode minizinc"><span class="fu">bool2int</span>(y[<span class="dv">1</span>]<span class="op">=</span><span class="dv">1</span>)</code>は0である。条件に決定変数を含むので、値は解が決まるのに応じて決まる。</p>
+<p>また、<code class="sourceCode minizinc">allowed[p,y[p]]</code>は、人pの行で、選んだ講座番号の列を参照する。添字が決定変数でも、定義域が講座番号の範囲にあるため、その講座の許可を制約へ使える。</p>
+<ol type="1">
+<li><strong>作業1：</strong> 各講座cについて、<code class="sourceCode minizinc">y[p]<span class="op">=</span>c</code>となる人pを<code>bool2int</code>と<code>sum</code>で数え、定員以下にする。</li>
+<li><strong>作業2：</strong> 各人で、選んだ講座の許可が1である条件を書く。</li>
+<li>全解を求め、0/1表との変換で同じ割当集合になるか調べる。完成した<a href="../../downloads/session-05/assignment-base.mzn" data-code-preview="../../previews/session-05/assignment-base.mzn.json">assignment-base.mzn</a>を同じ入力で実行できる。</li>
+</ol>
+<details class="hint"><summary>ヒントを開く：一つの講座の人数</summary><div class="hint-body">
+<p>講座cを固定して <code class="sourceCode minizinc"><span class="fu">sum</span>(p <span class="op">in</span> PEOPLE)(<span class="fu">bool2int</span>(y[p] <span class="op">=</span> c))</code> を考える。講座番号そのものの合計ではなく、「この講座を選んだ」という真偽を0/1へ変えて足す。</p>
+</div></details>
+<p>変換は、<code class="sourceCode minizinc">y[p]<span class="op">=</span>c</code>のセルだけを1、それ以外を0にする。解は6通りで、0/1表と講座番号の表現は相互に変換できる。件数だけでなく、六つの割当を並べて同じものが揃っているか照合しよう。変数の少なさだけで処理速度の優劣を結論しない。</p>
+</section>
+</section>
+<section id="separate" class="level2">
+<h2>発展2　二人の参加先の分離</h2>
+<p>運営を手伝う二人が同じ講座に集まらないようにする。表全体の行や列だけでなく、同じ列にある特定の二人のセルを取り出して考えよう。基本の三条件は引き続き必要である。</p>
+<section id="条件と入力" class="level3">
+<h3>条件と入力</h3>
+<div class="callout callout-given" role="note">
+<p><span class="callout-label">条件と入力</span> 5人A〜Eを講座1〜3へ一人ちょうど一つ割り当てる。許可が1の組合せだけを選び、各講座の人数は定員以下とする。空席を残してもよい。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th style="text-align: right;">講座1</th>
+<th style="text-align: right;">講座2</th>
+<th style="text-align: right;">講座3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>B</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>C</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>D</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>E</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>定員</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>さらに、運営補助員AとDは異なる講座へ入る。人の番号はA=1、B=2、C=3、D=4、E=5。これらを満たす割当を一つ求める。</p>
+</div>
+</section>
+<section id="作業と自己確認" class="level3">
+<h3>作業と自己確認</h3>
+<p><a href="../../downloads/session-05/separate-start.mzn" data-code-preview="../../previews/session-05/separate-start.mzn.json">separate-start.mzn</a>を使う。同じフォルダーに置く<a href="../../downloads/session-05/assignment-base.mzn" data-code-preview="../../previews/session-05/assignment-base.mzn.json">assignment-base.mzn</a>には一人一講座・定員以下・許可された参加先だけを選ぶ条件が完成している。<code class="sourceCode minizinc">x[p,c]</code> は人pが講座cを選ぶなら1、選ばなければ0を表す。<code>PEOPLE</code> は1〜5、<code>COURSES</code> は1〜3である。入力は、この問題の許可・定員表を収めた<a href="../../downloads/session-05/practice.dzn" data-code-preview="../../previews/session-05/practice.dzn.json">practice.dzn</a>を使う。必修の作業が途中でも、この出発点から追加条件を考えられる。</p>
+<figure class="code"><figcaption>separate-start.mzn</figcaption>
+<div class="sourceCode" id="cb1"><pre class="sourceCode minizinc"><code class="sourceCode minizinc"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業1): 各講座でAとDが同時に選ばれない条件を書く。</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">% TODO(作業2): 通る表と、A・Dが同じ講座の表を固定して確かめる。</span></span></code></pre></div>
+</figure>
+<ol type="1">
+<li><strong>作業1：</strong> 講座cを一つ固定し、AとDの二つの0/1値が同時に1にならない条件を考える。それをすべての講座へ広げ、<code>practice.dzn</code>で実行する。</li>
+<li><strong>作業2：</strong> <a href="../../downloads/session-05/check-valid.dzn" data-code-preview="../../previews/session-05/check-valid.dzn.json">check-valid.dzn</a>と<a href="../../downloads/session-05/check-same.dzn" data-code-preview="../../previews/session-05/check-same.dzn.json">check-same.dzn</a>を別々に指定し、追加条件の効果を確かめる。</li>
+</ol>
+<p>A〜Eが1・1・2・2・3を選ぶ表は、Aが1、Dが2なので受理する。2・1・1・2・3を選ぶ表は、基本の三条件には違反しないがAとDがともに2なので拒否する。追加条件を消すと後者が通る理由も説明しよう。</p>
+<p>全員を異なる講座にする条件へ強めないことにも注意する。講座は3種類で人は5人なので、全員別では解がなくなる。今回分けるのはAとDだけで、ほかの人が同じ講座へ入ることは許される。全列挙する場合は3解になる。</p>
+<details class="hint"><summary>ヒントを開く：二つの0/1値の合計</summary><div class="hint-body">
+<p>同じ講座cでAとDがともに選ばれると、<code class="sourceCode minizinc">x[<span class="dv">1</span>,c] <span class="op">+</span> x[<span class="dv">4</span>,c]</code>は2になる。どちらも選ばない0と、片方だけ選ぶ1は許してよい。各講座でこの和の上限を定める。</p>
+</div></details>
+</section>
+</section>
+<section id="obstruction" class="level2">
+<h2>発展3　割当できない理由</h2>
+<p>定員の総和が人数以上でも、許可の偏りによって割当できない場合がある。ある人たちが参加できる講座だけを集め、そこに十分な枠があるかを調べると、不可能性を短く説明できる。</p>
+<section id="条件と障害集合" class="level3">
+<h3>条件と障害集合</h3>
+<p>5人A〜Eを講座1〜3へ一人ちょうど一つ割り当て、各講座は定員以下とする。許可が1の組合せだけを選ぶ。開催有無や二人の分離などの追加条件はない。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>人</th>
+<th style="text-align: right;">講座1</th>
+<th style="text-align: right;">講座2</th>
+<th style="text-align: right;">講座3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>B</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>C</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>D</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>E</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>定員</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">3</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><a href="../../downloads/session-05/impossible.dzn" data-code-preview="../../previews/session-05/impossible.dzn.json">impossible.dzn</a>と完成した<a href="../../downloads/session-05/assignment-base.mzn" data-code-preview="../../previews/session-05/assignment-base.mzn.json">assignment-base.mzn</a>を実行すると解なしになる。総定員は5なので、総数だけでは原因を説明できない。人の集合Uに対し、その中の誰かに許可された講座の集合を <span class="math inline">C(U)</span> とする。</p>
+<p><span class="math display">\sum_{c\in C(U)}\mathrm{cap}_c &lt; |U|</span></p>
+<p>なら、Uの人たちは利用できる枠に入りきらない。この不等式を満たすUを、ここでは<strong>障害集合</strong>と呼ぶ。同じ講座を複数の人が利用できても、定員は一度だけ数える。</p>
+</section>
+<section id="探索と一般化" class="level3">
+<h3>探索と一般化</h3>
+<p><a href="../../downloads/session-05/obstruction-start.py" data-code-preview="../../previews/session-05/obstruction-start.py.json">obstruction-start.py</a>にはJSONの入力読込みと表示を用意した。実装する <code>minimum_obstruction</code> の返り値は、障害集合に含む人の内部番号の組である。<code>allowed</code>は人×講座の0/1表、<code>cap</code>は非負整数の定員リストである。内部の人・講座番号は0始まり、画面への表示は1始まりにしている。</p>
+<ol type="1">
+<li><strong>作業1：</strong> 人の集合を少ない人数から試す。<code class="sourceCode python">combinations(<span class="bu">range</span>(<span class="bu">len</span>(allowed)), size)</code>で、size人の組を重複なく列挙できる。</li>
+<li><strong>作業2：</strong> その人たちに許された講座の集合を作り、定員総和と人数を比べる。足りなければ人の集合を返し、すべて調べてなければ<code>None</code>を返す。</li>
+<li><a href="../../downloads/session-05/impossible.json" data-code-preview="../../previews/session-05/impossible.json.json">impossible.json</a>と<a href="../../downloads/session-05/repaired.json" data-code-preview="../../previews/session-05/repaired.json.json">repaired.json</a>で実行する。後者は許可を変えず、定員を2・1・3に増やした入力である。</li>
+</ol>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> obstruction-start.py impossible.json</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> obstruction-start.py repaired.json</span></code></pre></div>
+<details class="hint"><summary>ヒントを開く：共有する枠は一度だけ</summary><div class="hint-body">
+<p>A・B・Cの誰もが講座1・2を利用できるが、枠は1+1の2席だけである。人ごとに2席を足して6席と数えてはいけない。先に利用できる講座を集合へまとめ、その集合について定員を足す。</p>
+</div></details>
+<p>最初の入力ではA・B・Cの3人に対して利用できる枠が2であり、最少人数の障害集合になる。修正入力では障害集合が見つからず、MiniZincでも3通りの割当が得られる。<a href="../../downloads/session-05/repaired.dzn" data-code-preview="../../previews/session-05/repaired.dzn.json">repaired.dzn</a>で照合しよう。</p>
+<p>最後に、小さい別入力にも使えるようにする。人数・講座数・許可・定員を変え、返された集合が不等式を満たすことと、より少ない障害集合がないことを確認する。<code class="sourceCode python">product(<span class="bu">range</span>(n_courses), repeat<span class="op">=</span>n_people)</code>で全参加先を列挙し、許可と定員を検査する方法とも比較できる。追加の分離や開催条件まで含む問題では、それらによる不可能性をこの不等式だけで検出できるとは限らない。</p>
+</section>
+</section>
+<section id="series" class="level2">
+<h2>選択M05　出現回数を表す数列</h2>
+<p>講座への割当から離れ、条件が成り立つ回数を数える別の問題を扱う。目安は15〜25分。<code>bool2int</code>と0始まりの添字はここで説明するので、発展1の完成は不要である。</p>
+<section id="問題と添字" class="level3">
+<h3>問題と添字</h3>
+<p>長さ4の整数列 <span class="math inline">s[0],s[1],s[2],s[3]</span> を求める。各要素は0以上4以下とし、s[i]は「この数列の中に数iが現れる回数」と等しくする。講座の定員や許可の条件は使わない。</p>
+<div class="table-scroll">
+<table>
+<thead>
+<tr>
+<th>位置</th>
+<th>その位置の値が表すもの</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>s[0]</td>
+<td>0が現れる個数</td>
+</tr>
+<tr>
+<td>s[1]</td>
+<td>1が現れる個数</td>
+</tr>
+<tr>
+<td>s[2]</td>
+<td>2が現れる個数</td>
+</tr>
+<tr>
+<td>s[3]</td>
+<td>3が現れる個数</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>位置の番号と、その位置に入っている値を区別しよう。<a href="../../downloads/session-05/series-start.mzn" data-code-preview="../../previews/session-05/series-start.mzn.json">series-start.mzn</a>には変数の宣言・入力と表示があり、添字を<code class="sourceCode minizinc"><span class="dv">0</span><span class="op">..</span>n<span class="op">-</span><span class="dv">1</span></code>、値を<code class="sourceCode minizinc"><span class="dv">0</span><span class="op">..</span>n</code>とし、<a href="../../downloads/session-05/series.dzn" data-code-preview="../../previews/session-05/series.dzn.json">series.dzn</a>でn=4を与える。0は正しい数列の値でもある。</p>
+</section>
+<section id="作業と自己確認-1" class="level3">
+<h3>作業と自己確認</h3>
+<p><code class="sourceCode minizinc"><span class="fu">bool2int</span>(s[j] <span class="op">=</span> i)</code>は、位置jの値がiなら1、それ以外なら0を表す。数列が未知なので、この0/1もまだ決まっていない。すべての位置jについて足すと、数iの出現回数になる。</p>
+<ol type="1">
+<li><strong>作業1：</strong> iを一つ固定し、位置jを<code class="sourceCode minizinc"><span class="dv">0</span><span class="op">..</span>n<span class="op">-</span><span class="dv">1</span></code>で動かして出現回数を表す。</li>
+<li><strong>作業2：</strong> 各iについて、その出現回数と<code class="sourceCode minizinc">s[i]</code>が等しいことを<code>forall</code>で課す。</li>
+<li>得られた数列で0・1・2・3を実際に数え直す。全解を求める場合は、異なる二つの数列が得られる。</li>
+</ol>
+<details class="hint"><summary>ヒントを開く：数える値と探す位置</summary><div class="hint-body">
+<p>iは数える数字、jは数列の位置である。例えばi=0なら、四つの位置で<code class="sourceCode minizinc">s[j]<span class="op">=</span><span class="dv">0</span></code>が成り立つ個数を足し、その値を<code class="sourceCode minizinc">s[<span class="dv">0</span>]</code>と等しくする。外側ではiを0〜3のすべてへ広げる。</p>
+</div></details>
+<p>解は(1,2,1,0)と(2,0,2,0)で、どちらも正しい。例えば前者には0が1個、1が2個、2が1個、3が0個ある。<a href="../../downloads/session-05/series-wrong.dzn" data-code-preview="../../previews/session-05/series-wrong.dzn.json">series-wrong.dzn</a>の(1,1,1,1)は、和が4でも出現回数の条件に違反する。和だけに置き換えず、各数字の個数を指定しよう。</p>
+<p>記法は<a href="https://docs.minizinc.dev/en/stable/modelling2.html#complex-constraints">MiniZinc公式教材のBoolean式と出現回数</a>でも確認できる。この選択演習の完成や<code>bool2int</code>の構文を、次の必修の前提にはしない。</p>
+</section>
+</section>
+  </main>
+  <nav class="pager" aria-label="前後の移動"><a href="../../index.html">講義一覧</a> · <a href="../../sessions/05-assignment/index.html">第05回の本文へ</a></nav>
+  <footer class="sitefoot">
+    <p>実践・制約プログラミング — 2026年度</p>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+</div>
+</body>
+</html>

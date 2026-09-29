@@ -1,0 +1,1 @@
+{"name": "cap-0.dzn", "language": "minizinc", "label": "MiniZincの入力", "code": "k = 0;\n", "lines": ["k <span class=\"op\">=</span> <span class=\"dv\">0</span>;"]}
