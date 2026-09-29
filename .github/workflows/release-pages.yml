@@ -1,5 +1,7 @@
 name: Release Pages
 
+# 手動実行専用。Actions の Release Pages で dev を選び、version（例: v1.0.1）を指定する。
+# 成功すると公開物が main へ push され、GitHub Pages が main から配信する。
 on:
   workflow_dispatch:
     inputs:
