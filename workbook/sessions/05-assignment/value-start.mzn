@@ -1,4 +1,4 @@
-% 第05回：人×講座の0/1割当
+% 第05回発展1：一人一変数の表現。y[p]は人pの講座番号。
 int: n_people;
 int: n_courses;
 set of int: PEOPLE = 1..n_people;

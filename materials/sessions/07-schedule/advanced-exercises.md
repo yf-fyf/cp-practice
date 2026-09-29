@@ -1,4 +1,4 @@
-# 勤務表の発展演習
+# 第07回の発展　二人の組・二種類の技能・周期勤務
 
 第07回の内容から、関心に合わせて選ぶ三問である。[必修演習](lesson.md#演習)を写し終えていなくても、各問の出発ファイルから始められる。三問は独立していて、どれから始めてもよい。全部を終えることは前提にしない。次の通常回はこの発展を前提にしないので、途中で止めても差し支えない。
 
@@ -61,7 +61,7 @@ x_{p,d}\le a_{p,d},\qquad
 \sum_{p\in P}q_{p,s}x_{p,d}\ge1.$$
 :::
 
-モデルでは `work[p,d]`{.minizinc} が $x_{p,d}$、`available[p,d]`{.minizinc} が $a_{p,d}$、`required[d]`{.minizinc} が $r_d$、`max_days[p]`{.minizinc} が $u_p$ に対応する。`PEOPLE=1..5`{.minizinc} はA〜E、`DAYS=1..4`{.minizinc} は日1〜4の番号である。 技能は `SKILLS=1..2`{.minizinc} で、`qualified[p,s]`{.minizinc} が $q_{p,s}$、`skill_required[s,d]`{.minizinc} が技能sを持つ人の日dの必要人数である。`skills.dzn` の必要人数は両技能とも全日1である。
+モデルでは `work[p,d]`{.minizinc} が $x_{p,d}$、`available[p,d]`{.minizinc} が $a_{p,d}$、`required[d]`{.minizinc} が $r_d$、`max_days[p]`{.minizinc} が $u_p$ に対応する。`PEOPLE=1..5`{.minizinc} はA〜E、`DAYS=1..4`{.minizinc} は日1〜4の番号である。技能は `SKILLS=1..2`{.minizinc} で、`qualified[p,s]`{.minizinc} が $q_{p,s}$、`skill_required[s,d]`{.minizinc} が技能sを持つ人の日dの必要人数である。`skills.dzn` の必要人数は両技能とも全日1である。
 
 ::: point
 Bが勤務する日は、レジ締めの人数にも発注の人数にも1として数えてよい。一人が二つの条件を同時に満たすことを禁じる必要はない。
@@ -94,7 +94,7 @@ Bが勤務する日は、レジ締めの人数にも発注の人数にも1とし
 
 [周期勤務の出発モデル](../../../workbook/sessions/07-schedule/cycle-start.mzn)には宣言と日ごとの二人を表示する部分を用意した。[14日の入力](../../../workbook/sessions/07-schedule/cycle-14.dzn)で、作業1に各群の人数と各人の日数、作業2に連続日と組の再登場の禁止を書く。その後、[16日の入力](../../../workbook/sessions/07-schedule/cycle-16.dzn)へ切り替える。
 
-`d mod n`{.minizinc}はdをnで割った余りである。`d mod n + 1`{.minizinc}は、d=1なら2、d=nなら1となり、最終日から初日へ戻る添字になる。二人p・qがそろって勤務したかは、0/1の積`work[p,d]*work[q,d]`{.minizinc}で表せる。両方1の場合だけ1、片方でも0なら0になるので、日について足すと同じ組の登場回数を数えられる。
+`d mod n_days`{.minizinc}はdを日数nで割った余りである。`d mod n_days + 1`{.minizinc}は、d=1なら2、d=nなら1となり、最終日から初日へ戻る添字になる。二人p・qがそろって勤務したかは、0/1の積`work[p,d]*work[q,d]`{.minizinc}で表せる。両方1の場合だけ1、片方でも0なら0になるので、日について足すと同じ組の登場回数を数えられる。
 
 まず14日のモデルを作って各人の日数まで数え、次に周期の境界と組の再登場を確認する。ここまでを一つの到達点とし、余裕があれば16日や独立検査へ進める。
 

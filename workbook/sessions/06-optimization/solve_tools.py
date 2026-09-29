@@ -10,13 +10,20 @@ def run(model, datum, extra='', all_solutions=False):
     if all_solutions: args.append('--all-solutions')
     args.extend([str(model),str(datum)])
     if extra: args.extend(['-D',extra])
-    result=subprocess.run(args,text=True,capture_output=True,timeout=20,check=True)
+    result=subprocess.run(args,text=True,capture_output=True,timeout=20)
     events=[json.loads(line) for line in result.stdout.splitlines() if line.strip()]
     errors=[e for e in events if e['type']=='error']
-    if errors: raise RuntimeError(errors)
+    if errors: raise RuntimeError('; '.join(describe(e) for e in errors))
+    if result.returncode!=0: raise RuntimeError(result.stderr.strip() or 'MiniZincが異常終了した')
     statuses=[e['status'] for e in events if e['type']=='status']
     return dict(status=statuses[-1] if statuses else 'UNKNOWN',
                 solutions=[e['output']['json'] for e in events if e['type']=='solution'])
+
+
+def describe(error):
+    loc=error.get('location')
+    where=f" ({Path(loc['filename']).name}:{loc['firstLine']})" if loc else ''
+    return error.get('what','error')+where+': '+error.get('message','')
 
 
 def optimum(result):

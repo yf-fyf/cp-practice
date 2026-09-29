@@ -5,7 +5,7 @@ edge(b, d).
 edge(c, d).
 edge(d, a).
 
-% 発展3　同じ場所を再訪しない経路
+% 発展3　再訪しない経路
 % TODO(作業1): path(Start, Goal, Path) と必要な補助関係を書く。
 % Start と Goal は問い合わせで具体的な場所を指定する。
 

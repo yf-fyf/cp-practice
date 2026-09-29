@@ -11,12 +11,21 @@
 架空の家系図を調べる。この問題では、`parent(P,C)`{.prolog} を「PはCの親」、`male(P)`{.prolog} と `female(P)`{.prolog} を人物の属性として与える。父は男性属性を持つ親、母は女性属性を持つ親として定義し、下記の全事実だけを使う。
 
 ```{.prolog filename="family-start.pl"}
-male(ren). male(kai). male(nao).
-female(emi). female(mio). female(yui).
+% 架空の家系図。この問題で使う属性と親子関係の全事実。
+male(ren).
+male(kai).
+male(nao).
+female(emi).
+female(mio).
+female(yui).
 
-parent(ren, kai). parent(emi, kai).
-parent(ren, mio). parent(emi, mio).
-parent(kai, nao). parent(yui, nao).
+% parent(親, 子)。
+parent(ren, kai).
+parent(emi, kai).
+parent(ren, mio).
+parent(emi, mio).
+parent(kai, nao).
+parent(yui, nao).
 ```
 
 ::: {.given label="求める関係"}
@@ -137,7 +146,7 @@ XからZへの直接の辺があり、ZからYへ到達できるなら、Xから
 
 aからの到達先の集合はb・c・dである。ただしdにはa→b→dとa→c→dの二つの経路があるため、上の小例と同じ形の規則ではdが二度現れる。表示回数と到達先の種類の数を区別しよう。
 
-dから先の辺はないので、`reach(d,Y).`{.prolog} は答えなしとなる。一辺以上という条件なので、移動せずにd自身へいることはこの関係の答えに含めない。この入力では辺をたどると先へ進み、同じ場所へ戻らないため、探索が有限で終わる。
+dから先の辺はないので、`reach(d,Y).`{.prolog} は答えなしとなる。一辺以上という条件なので、移動せずにd自身にいることはこの関係の答えに含めない。この入力では辺をたどると先へ進み、同じ場所へ戻らないため、探索が有限で終わる。
 
 ## 発展3　再訪しない経路 {#paths}
 

@@ -2,7 +2,7 @@
 
 [第04回の本文](lesson.md)では、三マスの合計を一つの条件にした。ここでは複数ヒント、一意性、最少ヒント、覆面算から選んで取り組む。各問題に必要な完成モデルを再配布し、前の発展の完成は求めない。
 
-[配布ZIP](../../../workbook/sessions/04-rules/session-04.zip)を展開し、モデルと入力を同じフォルダに置く。実行・入力の選択・全解の数え方は[確認手引き](guides/puzzle-check.md)を使える。発展1〜3はMiniZincの基本数独、選択M04は数字を文字へ割り当てる別の問題である。
+[配布ZIP](../../../workbook/sessions/04-rules/session-04.zip)を展開し、モデルと入力を同じフォルダーに置く。実行・入力の選択・全解の数え方は[確認手引き](guides/puzzle-check.md)を使える。発展1〜3はMiniZincの基本数独、選択M04は数字を文字へ割り当てる別の問題である。
 
 | 問題 | 出発ファイル | 考える部分 |
 |---|---|---|
@@ -83,7 +83,7 @@ $$P=\begin{array}{cc|cc}1&2&3&4\\3&4&1&2\\\hline2&1&4&3\\4&3&2&1\end{array}.$$
 
 ### 作業と自己確認
 
-[second-start.mzn](../../../workbook/sessions/04-rules/second-start.mzn)は同じフォルダの `multi-base.mzn` を読み込む。モデルにヒントの入力一つと `first.dzn` を組み合わせて実行する。`grid[r,c]`{.minizinc} はr行c列の解の数字、`first[r,c]`{.minizinc} は同じ位置の既知の解Pの数字、`given[r,c]`{.minizinc} は初期値である。行は上から、列は左から1〜4と数える。`TODO(作業1)`へ、「少なくとも一マスで `grid` と `first` が異なる」という条件を書く。`solve`と`output`は読み込む側にあるので、追加しない。
+[second-start.mzn](../../../workbook/sessions/04-rules/second-start.mzn)は同じフォルダーの `multi-base.mzn` を読み込む。モデルにヒントの入力一つと `first.dzn` を組み合わせて実行する。`grid[r,c]`{.minizinc} はr行c列の解の数字、`first[r,c]`{.minizinc} は同じ位置の既知の解Pの数字、`given[r,c]`{.minizinc} は初期値である。行は上から、列は左から1〜4と数える。`TODO(作業1)`へ、「少なくとも一マスで `grid` と `first` が異なる」という条件を書く。`solve`と`output`は読み込まれる`multi-base.mzn`にあるので、追加しない。
 
 新しい `exists(r in 1..4, c in 1..4)(条件)`{.minizinc} は、指定した組の少なくとも一つで条件が成り立つことを表す。すべてのマスを違わせるのではなく、一つでも違えば別の盤面として残す。
 
@@ -129,7 +129,7 @@ minizinc --solver gecode --all-solutions multi-base.mzn candidate-clues.dzn
 
 [boards.json](../../../workbook/sessions/04-rules/boards.json)には、基本数独の全288盤面を、行順の16整数のリストとして用意した。合計条件でこれを絞り込む方法なら、何度もMiniZincを起動せずに候補の組を調べられる。
 
-[clue-search-start.py](../../../workbook/sessions/04-rules/clue-search-start.py)と[clue-tools.py](../../../workbook/sessions/04-rules/clue-tools.py)、`boards.json` を同じフォルダに置く。`clue-tools.py` は候補生成・入力読込み・絞り込み・MiniZinc用データの出力を提供する。`boards` は完成盤面の一覧、`target` は一意にしたい盤面を表す16整数のタプル、`selected` は選んだヒントの内部番号の組である。`clues.remaining(boards, target, selected)`{.python}は、選んだ合計ヒントをすべて満たす盤面の集合を返す。
+[clue-search-start.py](../../../workbook/sessions/04-rules/clue-search-start.py)と[clue-tools.py](../../../workbook/sessions/04-rules/clue-tools.py)、`boards.json` を同じフォルダーに置く。`clue-tools.py` は候補生成・入力読込み・絞り込み・MiniZinc用データの出力を提供する。`boards` は完成盤面の一覧、`target` は一意にしたい盤面を表す16整数のタプル、`selected` は選んだヒントの内部番号の組である。`clues.remaining(boards, target, selected)`{.python}は、選んだ合計ヒントをすべて満たす盤面の集合を返す。
 
 1. **作業1：** `minimum`内で、個数0、1、2、…の順に36候補の組を試す。`combinations(range(36), size)`{.python}がその個数の組を一度ずつ生成する。
 2. **作業2：** 残る集合が`{target}`{.python}だけなら、その組を返す。すべての候補でも一意にできない場合は`None`を返す。
@@ -192,4 +192,4 @@ Qについても、選んだヒントを満たす全解がQだけであること
 | [先頭の0](../../../workbook/sessions/04-rules/send-leading-zero.dzn) | 2817+0368=03185 | Mが0。数字はすべて異なる |
 | [合計のずれ](../../../workbook/sessions/04-rules/send-wrong-sum.dzn) | 9567+1085=10653 | 範囲・先頭・重複禁止は通るが加算が合わない |
 
-先頭の0がある数は通常の数値表示では桁が省かれる。固定入力のMそのものも見て確認する。[MiniZinc公式教材の覆面算](https://docs.minizinc.dev/en/stable/modelling2.html#more-modelling-examples)にも同じ題材があるが、まず自分で条件を分けて実装してから参照しよう。
+先頭の0がある数は通常の数値表示では桁が省かれる。固定入力のMそのものも見て確認する。[MiniZinc公式教材の覆面算](https://docs.minizinc.dev/en/stable/modelling2.html#global-constraints)にも同じ題材があるが、まず自分で条件を分けて実装してから参照しよう。

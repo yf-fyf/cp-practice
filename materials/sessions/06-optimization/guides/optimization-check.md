@@ -2,7 +2,7 @@
 
 [本文](../lesson.md)／[発展](../advanced-exercises.md)
 
-モデルと入力を同じフォルダに保存し、Gecodeで実行する。複数ファイルを読み込むモデルは、読み込むファイルも一緒に必要になる。入力が違う結果や、最適化の途中の解を取り違えないようにしよう。
+モデルと入力を同じフォルダーに保存し、Gecodeで実行する。複数ファイルを読み込むモデルは、読み込むファイルも一緒に必要になる。入力が違う結果や、最適化の途中の解を取り違えないようにしよう。
 
 ## 配布物と入力
 
@@ -82,7 +82,7 @@ constraint v = 3;
 
 ## 複数入力をPythonで比較
 
-[lex-general-start.py](../../../../workbook/sessions/06-optimization/lex-general-start.py)と[solve_tools.py](../../../../workbook/sessions/06-optimization/solve_tools.py)を同じフォルダへ置き、[lex-cases.json](../../../../workbook/sessions/06-optimization/lex-cases.json)を指定する。Python標準ライブラリと、コマンドとして実行できるMiniZincが必要である。
+[lex-general-start.py](../../../../workbook/sessions/06-optimization/lex-general-start.py)と[solve_tools.py](../../../../workbook/sessions/06-optimization/solve_tools.py)を同じフォルダーへ置き、[lex-cases.json](../../../../workbook/sessions/06-optimization/lex-cases.json)を指定する。Python標準ライブラリと、コマンドとして実行できるMiniZincが必要である。
 
 ```sh
 python3 lex-general-start.py lex-cases.json

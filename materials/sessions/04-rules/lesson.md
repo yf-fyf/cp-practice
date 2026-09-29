@@ -44,7 +44,7 @@
 | 役割 | MiniZincの名前 | 今回の指定 |
 |---|---|---|
 | 初期値の入力 | `given[r,c]`{.minizinc} | 空盤面ならすべて0 |
-| 指定合計の入力 | `clue_total` | 解説例では6 |
+| 指定合計の入力 | `clue_total`{.minizinc} | 解説例では6 |
 | 決定変数 | `grid[r,c]`{.minizinc} | 各マス1〜4 |
 
 ### 三項の和と等式
@@ -149,7 +149,7 @@ $$P=\begin{array}{cc|cc}1&2&3&4\\3&4&1&2\\\hline2&1&4&3\\4&3&2&1\end{array}.$$
 
 #### 作業
 
-位置 `(r,c)` は上からr行目・左からc列目で、行・列は1〜4とする。`grid[r,c]`{.minizinc} はそのマスの解の数字、`given[r,c]`{.minizinc} は初期値（0なら空欄）、`clue_total` は指定合計を表す。
+位置 `(r,c)` は上からr行目・左からc列目で、行・列は1〜4とする。`grid[r,c]`{.minizinc} はそのマスの解の数字、`given[r,c]`{.minizinc} は初期値（0なら空欄）、`clue_total`{.minizinc} は指定合計を表す。
 
 [sum-start.mzn](../../../workbook/sessions/04-rules/sum-start.mzn)を自分の作業用に保存する。基本条件・入力宣言・出力は用意してある。追加するのは一つの等式であり、`grid` の値をPに直接固定する制約ではない。
 
@@ -158,8 +158,8 @@ $$P=\begin{array}{cc|cc}1&2&3&4\\3&4&1&2\\\hline2&1&4&3\\4&3&2&1\end{array}.$$
 % TODO(作業2): P固定と合計8・10の入力で受理・拒否を確かめる。
 ```
 
-1. **作業1：** `sum` は配列に並べた値を足す。対象の三マスをその配列へ並べ、`clue_total` と等しい制約を書く。初期値は全マス0、指定合計は9の[practice.dzn](../../../workbook/sessions/04-rules/practice.dzn)で実行し、出力の合計を確かめる。
-2. **作業2：** [P・合計9](../../../workbook/sessions/04-rules/P-practice.dzn)、[P・合計8](../../../workbook/sessions/04-rules/P-practice-low.dzn)、[P・合計10](../../../workbook/sessions/04-rules/P-practice-high.dzn)へ一つずつ交換する。いずれも `given` の全16マスに問題のPを入れ、`clue_total` だけを9・8・10へ変えた入力である。モデルは変えず、受理する場合と解なしになる場合を記録する。
+1. **作業1：** `sum` は配列に並べた値を足す。対象の三マスをその配列へ並べ、`clue_total`{.minizinc} と等しい制約を書く。初期値は全マス0、指定合計は9の[practice.dzn](../../../workbook/sessions/04-rules/practice.dzn)で実行し、出力の合計を確かめる。
+2. **作業2：** [P・合計9](../../../workbook/sessions/04-rules/P-practice.dzn)、[P・合計8](../../../workbook/sessions/04-rules/P-practice-low.dzn)、[P・合計10](../../../workbook/sessions/04-rules/P-practice-high.dzn)へ一つずつ交換する。いずれも `given` の全16マスに問題のPを入れ、`clue_total`{.minizinc} だけを9・8・10へ変えた入力である。モデルは変えず、受理する場合と解なしになる場合を記録する。
 
 #### 自己確認
 
@@ -190,7 +190,7 @@ Q=\begin{array}{cc|cc}1&2&3&4\\3&4&2&1\\\hline2&1&4&3\\4&3&1&2\end{array}.$$
 
 #### 作業
 
-位置 `(r,c)` は上からr行目・左からc列目で、行・列は1〜4とする。`grid[r,c]`{.minizinc} はそのマスの解の数字、`given[r,c]`{.minizinc} は初期値（0なら空欄）、`clue_total` は指定合計を表す。
+位置 `(r,c)` は上からr行目・左からc列目で、行・列は1〜4とする。`grid[r,c]`{.minizinc} はそのマスの解の数字、`given[r,c]`{.minizinc} は初期値（0なら空欄）、`clue_total`{.minizinc} は指定合計を表す。
 
 [design-start.mzn](../../../workbook/sessions/04-rules/design-start.mzn)を使う。三マスを決めたらPでの合計を入力の値としてモデル内へ書く。ここでは固定した合計を使って、P・Q・空盤面の入力を交換する。
 
@@ -199,8 +199,8 @@ int: clue_total = 0; % TODO(作業1): 異なる三マスを選び、Pでの合�
 % TODO(作業2): 選んだ三マスの合計制約を一つ書く。
 ```
 
-1. **作業1：** 三つの位置、Pの三つの値と合計、Qの三つの値と合計をメモする。合計が等しければ位置を選び直し、`clue_total` の0をPの合計へ変更する。
-2. **作業2：** 選んだ三マスの合計を `clue_total` と等しくする。[P.dzn](../../../workbook/sessions/04-rules/P.dzn)・[Q.dzn](../../../workbook/sessions/04-rules/Q.dzn)・[empty.dzn](../../../workbook/sessions/04-rules/empty.dzn)を別々に指定して実行する。P・Qの入力は `given` の全16マスをそれぞれの完成盤面に固定し、空盤面の入力は全マスを0にする。
+1. **作業1：** 三つの位置、Pの三つの値と合計、Qの三つの値と合計をメモする。合計が等しければ位置を選び直し、`clue_total`{.minizinc} の0をPの合計へ変更する。
+2. **作業2：** 選んだ三マスの合計を `clue_total`{.minizinc} と等しくする。[P.dzn](../../../workbook/sessions/04-rules/P.dzn)・[Q.dzn](../../../workbook/sessions/04-rules/Q.dzn)・[empty.dzn](../../../workbook/sessions/04-rules/empty.dzn)を別々に指定して実行する。P・Qの入力は `given` の全16マスをそれぞれの完成盤面に固定し、空盤面の入力は全マスを0にする。
 
 #### 自己確認
 

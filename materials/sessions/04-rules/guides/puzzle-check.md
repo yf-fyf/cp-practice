@@ -2,13 +2,13 @@
 
 [本文](../lesson.md)／[発展](../advanced-exercises.md)／[配布ZIP](../../../../workbook/sessions/04-rules/session-04.zip)
 
-モデルを直した後は、そのモデルと入力の組を確認して実行する。同じファイル名を別のフォルダで編集していないかにも注意しよう。出発ファイルのTODOは未完成部分であり、そのまま実行できても必要な条件はまだ揃っていない。
+モデルを直した後は、そのモデルと入力の組を確認して実行する。同じファイル名を別のフォルダーで編集していないかにも注意しよう。出発ファイルのTODOは未完成部分であり、そのまま実行できても必要な条件はまだ揃っていない。
 
 ## モデルと入力の指定
 
-MiniZinc IDEではモデルの `.mzn` を開き、Gecodeを選んで実行する。入力を尋ねられたら対応する `.dzn` を選ぶ。ZIPを展開し、複数ファイルを同じフォルダに置いておく。環境が未準備なら授業内で教員と確認し、[MiniZinc公式ダウンロード](https://www.minizinc.org/downloads/)からIDEを含む環境を用意する。
+MiniZinc IDEではモデルの `.mzn` を開き、Gecodeを選んで実行する。入力を尋ねられたら対応する `.dzn` を選ぶ。ZIPを展開し、複数ファイルを同じフォルダーに置いておく。環境が未準備なら授業内で教員と確認し、[MiniZinc公式ダウンロード](https://www.minizinc.org/downloads/)からIDEを含む環境を用意する。
 
-ブラウザで試す場合は[MiniZinc Playground](https://play.minizinc.dev/)を使える。最初は[一ファイルの解説例](../../../../workbook/sessions/04-rules/sum-demo-inline.mzn)を貼り付ける。標準ライブラリの `include "alldifferent.mzn";`{.minizinc} は残す。自作ファイルを読み込む発展2では、`include "multi-base.mzn";`{.minizinc}を配布の`multi-base.mzn`の中身へ置き換え、入力を末尾へ一度だけ貼る。
+ブラウザで試す場合は[MiniZinc Playground](https://play.minizinc.dev/)を使える。最初は[一ファイルの解説例](../../../../workbook/sessions/04-rules/sum-demo-inline.mzn)を貼り付ける。標準ライブラリの `include "alldifferent.mzn";`{.minizinc} は残す。標準ライブラリ以外のファイルを読み込む発展2では、`include "multi-base.mzn";`{.minizinc}を配布の`multi-base.mzn`の中身へ置き換え、入力を末尾へ一度だけ貼る。
 
 | 作業 | モデル | 入力 |
 |---|---|---|
@@ -20,9 +20,9 @@ MiniZinc IDEではモデルの `.mzn` を開き、Gecodeを選んで実行する
 | 発展3 | multi-base.mzn | candidate-clues.dzn、または自作selected.dzn |
 | 選択M04 | 編集したsend-more-start.mzn | 最初はなし。検査時はsend系の一つ |
 
-必修2の`clue_total`はモデル内で定義する。そこへ`practice.dzn`など合計値も含む入力を渡すと二重定義になる。発展2のU系入力は`first`も含むので、さらに`first.dzn`を指定しない。
+必修2の`clue_total`{.minizinc}はモデル内で定義する。そこへ`practice.dzn`など合計値も含む入力を渡すと二重定義になる。発展2のU系入力は`first`も含むので、さらに`first.dzn`を指定しない。
 
-コマンドを使う場合は、配布物のフォルダで次のように実行する。複数の入力に分けてある発展2では、ヒントと`first`を一度ずつ指定する。
+コマンドを使う場合は、配布物のフォルダーで次のように実行する。複数の入力に分けてある発展2では、ヒントと`first`を一度ずつ指定する。
 
 ```sh
 minizinc --solver gecode sum-demo.mzn demo.dzn
@@ -50,7 +50,7 @@ minizinc --solver gecode --all-solutions sum-demo.mzn demo.dzn
 | 解説例 | [合計6](../../../../workbook/sessions/04-rules/P-demo.dzn) | [合計5](../../../../workbook/sessions/04-rules/P-demo-low.dzn)、[合計7](../../../../workbook/sessions/04-rules/P-demo-high.dzn) |
 | 必修1 | [合計9](../../../../workbook/sessions/04-rules/P-practice.dzn) | [合計8](../../../../workbook/sessions/04-rules/P-practice-low.dzn)、[合計10](../../../../workbook/sessions/04-rules/P-practice-high.dzn) |
 
-次の表は、別の固定盤面や複数ヒントも含む確認入力である。0解は解なし、1解以上なら条件を満たす出力がある。期待出力のテキストは一例なので、複数解の入力ではその盤面との文字列一致を求めない。
+次の表は、別の固定盤面や複数ヒントも含む確認入力である。0解は解なし、1解以上なら条件を満たす出力がある。期待出力のテキストは一例なので、複数解の入力ではその盤面との文字列一致を求めない。`checks/` の期待出力（`.expected.txt`）は盤面の数字だけを示し、MiniZincが表示する行末の空白と区切り線 `----------` は省いている。
 
 | 入力 | 対応 | 解数 | 調べること |
 |---|---|---:|---|
@@ -78,7 +78,7 @@ Dは解説例、Rは必修1、Mは複数ヒント、Uは第二解、Gはヒン�
 
 PとQの入力は別々に指定する。一つの入力でPとQを同時に固定すると、合計条件を調べる前に矛盾してしまう。Pを受理、Qを拒否、空盤面でも解あり、という三つの結果を確認する。
 
-編集したモデルを保ったまま、配布フォルダで次の三つを別々に実行する。選んだ三マスと合計値は途中で変更しない。
+編集したモデルを保ったまま、配布フォルダーで次の三つを別々に実行する。選んだ三マスと合計値は途中で変更しない。
 
 ```sh
 minizinc --solver gecode design-start.mzn P.dzn
@@ -94,7 +94,7 @@ minizinc --solver gecode design-start.mzn empty.dzn
 
 ## Pythonによるヒント選択
 
-発展3の `clue-search-start.py` はPython標準ライブラリだけで動く。`clue-tools.py`・`boards.json`・入力盤面を同じフォルダへ置く。最初はTODOを埋める必要があり、未実装なら `NotImplementedError` で止まる。
+発展3の `clue-search-start.py` はPython標準ライブラリだけで動く。`clue-tools.py`・`boards.json`・入力盤面を同じフォルダーへ置く。最初はTODOを埋める必要があり、未実装なら `NotImplementedError` で止まる。
 
 ```sh
 python3 clue-search-start.py P.json > selected.dzn

@@ -10,7 +10,7 @@
 - 先行関係と、二つの順序を許す非重複を式にできる。
 - 得られた時刻を区間で確認し、期限不足によるUNSATの理由を説明できる。
 
-第09回のPython・Z3、条件追加・判定・モデル取得、論理和を使う。[Booleanの操作例](../../../workbook/sessions/10-smt/warmup.py)と[判定の足場](../../../workbook/sessions/10-smt/sat_io.py)を再配布し、整数を読む処理は[integer_io.py](../../../workbook/sessions/10-smt/integer_io.py)へ用意した。整数の変数と区間はこの回で説明する。前の発展の完成は不要で、環境は[実行手引き](guides/schedule-check.md)で授業内に確認できる。
+第09回のPython・Z3、条件追加・判定・モデル取得、論理和を使う。[Booleanの操作例](../../../workbook/sessions/10-smt/warmup.py)と[判定の足場](../../../workbook/sessions/10-smt/sat_io.py)を再配布し、整数を読む処理は[integer_io.py](../../../workbook/sessions/10-smt/integer_io.py)へ用意した。整数の変数と区間はこの回で説明する。前の発展の完成は不要で、環境は[確認手引き](guides/schedule-check.md)で授業内に確認できる。
 
 説明・実演に50分、[5. 演習](#演習)に45分、振り返りに5分を使う。必修1・2は各20分、残り5分は確認の目安である。通常演習の提出・宿題・完了報告・教員の完了承認は設けない。発展は関心に合わせて選ぶ。
 
@@ -192,7 +192,7 @@ python3 schedule-demo.py demo-4.json
 | demo.json | (-1,1,1) | Aの開始が負 | UNSAT |
 | practice.json | (0,3,3) | 所要時間3,2,2でも端点で接してよい | SAT |
 
-全7件がPASS、最後が `7 checks, 0 failures` なら期待と一致する。データ内の `model=basic` の7件だけを使い、C→Bも加える `wait` の行はこの検査から除かれる。手動で日程を固定する操作も [手引き](guides/schedule-check.md) にある。
+全7件がPASS、最後が `7 checks, 0 failures` なら期待と一致する。データ内の `model=basic` の7件だけを使い、C→Bも加える `wait` の行はこの検査から除かれる。手動で日程を固定する操作も[確認手引き](guides/schedule-check.md)にある。
 
 境界を一つのループで生成すると、入力の作業が増えても、その作業の開始と終了の範囲を課せる。ただし先行や装置共有まで自動で決まるわけではない。この必修はその二条件をA・B・Cについて書き、全体の一般化は発展で扱う。
 
@@ -230,8 +230,18 @@ python3 schedule-demo.py demo-4.json
 2. **作業2：** 二つの期限を別々に実行する。SATなら区間を確認し、UNSATなら必要な時間から説明する。
 
 ```{.python filename="wait-start.py"}
+def build(data):
+    s, starts = build_base(data)
+    sB, sC = starts['B'], starts['C']
+    dC = data['duration']['C']
     # TODO(作業1): Cが終わってからBを始める先行条件を追加する。
+    return s, starts
+
+
+if __name__ == '__main__':
     # TODO(作業2): 期限6・7の入力を別々に実行し、判定と区間を照合する。
+    data = read_input('wait-6.json')
+    report_schedule(*build(data), data)
 ```
 
 作業2の入力読み込みと判定・表示は配布済みであり、追加する制約は作業1の一つでよい。各コマンドは新しいソルバーを作るので、期限6の条件へ期限7を継ぎ足す実行にはならない。

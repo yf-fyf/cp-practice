@@ -2,7 +2,7 @@
 
 [本文](../lesson.md)／[発展](../advanced-exercises.md)
 
-配布モデルと入力を同じフォルダへ保存し、編集したモデルを実行する。入力は一度に一組を指定する。普通の入力と、特定の割当表を固定する確認入力の違いを先に確かめよう。
+配布モデルと入力を同じフォルダーへ保存し、編集したモデルを実行する。入力は一度に一組を指定する。普通の入力と、特定の割当表を固定する確認入力の違いを先に確かめよう。
 
 ## モデルと入力
 
@@ -19,9 +19,9 @@ MiniZinc IDEではモデルの`.mzn`を開き、Gecodeを選んで実行する�
 | 発展3の割当検査 | assignment-base.mzn | [impossible.dzn](../../../../workbook/sessions/05-assignment/impossible.dzn)／[repaired.dzn](../../../../workbook/sessions/05-assignment/repaired.dzn) |
 | 選択M05 | [series-start.mzn](../../../../workbook/sessions/05-assignment/series-start.mzn)を編集 | [series.dzn](../../../../workbook/sessions/05-assignment/series.dzn) |
 
-必修2・発展2は`assignment-base.mzn`を読み込むため、このファイルも同じフォルダへ保存する。基本モデルは完成済みなので、前の演習の完成を待つ必要はない。`solve`{.minizinc}の指定を追加して二重にしない。
+必修2・発展2は`assignment-base.mzn`を読み込むため、このファイルも同じフォルダーへ保存する。基本モデルは完成済みなので、前の演習の完成を待つ必要はない。`solve`{.minizinc}の指定を追加して二重にしない。
 
-コマンドを使う場合は、配布物のフォルダで次のように実行する。入力が変わったら、古い結果を見ていないかも確認しよう。
+コマンドを使う場合は、配布物のフォルダーで次のように実行する。入力が変わったら、古い結果を見ていないかも確認しよう。
 
 ```sh
 minizinc --solver gecode assignment-base.mzn base.dzn

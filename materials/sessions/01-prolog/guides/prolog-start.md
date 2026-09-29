@@ -4,7 +4,7 @@
 
 ## ファイルと問い合わせの場所
 
-プログラムはテキストエディタで `.pl` ファイルへ書き、問い合わせはSWI-Prologの入力欄へ書く。まず[event-basic.pl](../../../../workbook/sessions/01-prolog/event-basic.pl)を保存し、そのファイルのあるフォルダで端末を開いて次を実行する。
+プログラムはテキストエディタで `.pl` ファイルへ書き、問い合わせはSWI-Prologの入力欄へ書く。まず[event-basic.pl](../../../../workbook/sessions/01-prolog/event-basic.pl)を保存し、そのファイルのあるフォルダーで端末を開いて次を実行する。
 
 ```sh
 swipl -q -s event-basic.pl

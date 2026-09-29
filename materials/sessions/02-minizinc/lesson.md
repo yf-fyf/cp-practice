@@ -334,10 +334,10 @@ $$
 
 | 題材 | 考えること |
 |---|---|
-| [発展1　不等号付き数独](advanced-exercises.md#不等号付き数独) | 三組のマスの大小関係を加える |
-| [発展2　既知の解の除外](advanced-exercises.md#既知の解の除外) | 少なくとも一マスが異なる条件 |
-| [発展3　手掛かりの削減](advanced-exercises.md#手掛かりの削減) | 一意性と最小性の根拠 |
-| [選択M02　近畿の三色塗り分け](advanced-exercises.md#近畿の三色塗り分け) | 変数を地域に、制約を隣接する組に対応させる |
+| [発展1　不等号付き数独](advanced-exercises.md#inequality) | 三組のマスの大小関係を加える |
+| [発展2　既知の解の除外](advanced-exercises.md#second) | 少なくとも一マスが異なる条件 |
+| [発展3　手掛かりの削減](advanced-exercises.md#clues) | 一意性と最小性の根拠 |
+| [選択M02　近畿の三色塗り分け](advanced-exercises.md#kinki) | 変数を地域に、制約を隣接する組に対応させる |
 
 ## 振り返り
 
@@ -358,7 +358,7 @@ $$
 | `var 1..4`{.minizinc} | 値を決める変数と、その定義域 |
 | `constraint`{.minizinc} / `solve satisfy`{.minizinc} | 満たす条件／すべて満たす解の要求 |
 | `alldifferent`{.minizinc} | 指定した配列の値を互いに異ならせる |
-| `[grid[r,c] \| c in 1..4]`{.minizinc} | 行rの四マスを集める内包記法 |
+| `[grid[r,c] | c in 1..4]`{.minizinc} | 行rの四マスを集める内包記法 |
 | `forall`{.minizinc} / `where` | 全対象への条件／ここでは入力による対象選択 |
 | [数独の完成モデル](../../../workbook/sessions/02-minizinc/sudoku4.mzn)・[入力](../../../workbook/sessions/02-minizinc/demo.dzn) | 解説例の分離版 |
 | [入力込みの完成例](../../../workbook/sessions/02-minizinc/sudoku4-demo.mzn) | 一ファイルで操作を確かめる版 |

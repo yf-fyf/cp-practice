@@ -1,10 +1,10 @@
-# 勤務表の実行と検査
+# 第07回の勤務表の実行と検査
 
 第07回の[本文](../lesson.md)と[発展演習](../advanced-exercises.md)の操作をまとめる。入力は問題の条件であり、出力される勤務表とは別である。前回や前の演習のファイルがなくても、以下の完成した基本モデルから再開できる。
 
 ## 基本と技能
 
-MiniZinc IDEでモデルを開き、データファイルを選んで実行する。コマンドを使う場合は、配布ファイルを同じフォルダへ保存し、そこで次を実行する。`-a` は全解を列挙する指定で、一つの勤務表を見るだけなら不要である。
+MiniZinc IDEでモデルを開き、データファイルを選んで実行する。コマンドを使う場合は、配布ファイルを同じフォルダーへ保存し、そこで次を実行する。`-a` は全解を列挙する指定で、一つの勤務表を見るだけなら不要である。
 
 ```sh
 minizinc --solver gecode roster-basic.mzn base.dzn
@@ -78,12 +78,12 @@ minizinc --solver gecode pair-start.mzn practice.dzn
 ```sh
 minizinc --solver gecode cycle-start.mzn cycle-14.dzn
 minizinc --solver gecode cycle-start.mzn cycle-16.dzn
-python cycle-check-start.py cycle-14.json pairs.json
+python3 cycle-check-start.py cycle-14.json pairs.json
 ```
 
 最後のコマンドはPython側のTODOを記入してから使う。16日の出力には `cycle-16.json` を渡す。`.dzn` はMiniZinc用、`.json` は独立検査用で、同じ群人数・期間・勤務日数の境界を持つ。検査結果 `VALID` は全条件を満たし、`INVALID` は少なくとも一つに違反するという意味である。
 
-`cycle-cases.json` は確認用の三つの表と期待判定を持つ。検査関数を記入した後に、同じフォルダで次を実行できる。自分で作った16日の表についても検査し、各人の日数と16組の使い方から上限に達したことを説明する。
+`cycle-cases.json` は確認用の三つの表と期待判定を持つ。検査関数を記入した後に、同じフォルダーで次を実行できる。自分で作った16日の表についても検査し、各人の日数と16組の使い方から上限に達したことを説明する。
 
 ```python
 import importlib.util
@@ -108,7 +108,7 @@ minizinc --solver gecode --time-limit 10000 cycle-start.mzn cycle-17.dzn
 
 ## 配布一覧
 
-同じフォルダへ保存する。周期勤務の検査に外部のPythonパッケージは必要ない。開始モデルと検査器のTODOは学習者が記入し、完成解答はこの一覧に含めない。
+同じフォルダーへ保存する。周期勤務の検査に外部のPythonパッケージは必要ない。開始モデルと検査器のTODOは学習者が記入し、完成解答はこの一覧に含めない。
 
 - [roster-basic.mzn](../../../../workbook/sessions/07-schedule/roster-basic.mzn)
 - [base.dzn](../../../../workbook/sessions/07-schedule/base.dzn)

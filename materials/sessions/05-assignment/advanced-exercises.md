@@ -71,7 +71,7 @@
 
 ### 作業と自己確認
 
-[separate-start.mzn](../../../workbook/sessions/05-assignment/separate-start.mzn)を使う。同じフォルダに置く[assignment-base.mzn](../../../workbook/sessions/05-assignment/assignment-base.mzn)には一人一講座・定員以下・許可された参加先だけを選ぶ条件が完成している。`x[p,c]`{.minizinc} は人pが講座cを選ぶなら1、選ばなければ0を表す。`PEOPLE` は1〜5、`COURSES` は1〜3である。入力は、この問題の許可・定員表を収めた[practice.dzn](../../../workbook/sessions/05-assignment/practice.dzn)を使う。必修の作業が途中でも、この出発点から追加条件を考えられる。
+[separate-start.mzn](../../../workbook/sessions/05-assignment/separate-start.mzn)を使う。同じフォルダーに置く[assignment-base.mzn](../../../workbook/sessions/05-assignment/assignment-base.mzn)には一人一講座・定員以下・許可された参加先だけを選ぶ条件が完成している。`x[p,c]`{.minizinc} は人pが講座cを選ぶなら1、選ばなければ0を表す。`PEOPLE` は1〜5、`COURSES` は1〜3である。入力は、この問題の許可・定員表を収めた[practice.dzn](../../../workbook/sessions/05-assignment/practice.dzn)を使う。必修の作業が途中でも、この出発点から追加条件を考えられる。
 
 ```{.minizinc filename="separate-start.mzn"}
 % TODO(作業1): 各講座でAとDが同時に選ばれない条件を書く。
@@ -164,4 +164,4 @@ iは数える数字、jは数列の位置である。例えばi=0なら、四つ
 
 解は(1,2,1,0)と(2,0,2,0)で、どちらも正しい。例えば前者には0が1個、1が2個、2が1個、3が0個ある。[series-wrong.dzn](../../../workbook/sessions/05-assignment/series-wrong.dzn)の(1,1,1,1)は、和が4でも出現回数の条件に違反する。和だけに置き換えず、各数字の個数を指定しよう。
 
-記法は[MiniZinc公式教材のBoolean式と出現回数](https://docs.minizinc.dev/en/stable/modelling2.html#boolean-variables)でも確認できる。この選択演習の完成や`bool2int`の構文を、次の必修の前提にはしない。
+記法は[MiniZinc公式教材のBoolean式と出現回数](https://docs.minizinc.dev/en/stable/modelling2.html#complex-constraints)でも確認できる。この選択演習の完成や`bool2int`の構文を、次の必修の前提にはしない。

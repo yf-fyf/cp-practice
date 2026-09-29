@@ -10,7 +10,7 @@
 - 入力の係数と決定変数から合計を作り、最小化・最大化を選べる。
 - 製作個数の意味と、容量から導いた安全な定義域を説明できる。
 
-第05回の0/1表、許可と定員、添字付きの和を使う。完成した[4人の基本割当](../../../workbook/sessions/06-optimization/assignment-base.mzn)と[入力](../../../workbook/sessions/06-optimization/base.dzn)を再配布するので、前の必修の完成は不要である。個数の整数変数と最適化は、この回で説明する。操作は[最適化の実行手引き](guides/optimization-check.md)を使って授業内で確認できる。
+第05回の0/1表、許可と定員、添字付きの和を使う。完成した[4人の基本割当](../../../workbook/sessions/06-optimization/assignment-base.mzn)と[入力](../../../workbook/sessions/06-optimization/base.dzn)を再配布するので、前の必修の完成は不要である。個数の整数変数と最適化は、この回で説明する。操作は[最適化の確認手引き](guides/optimization-check.md)を使って授業内で確認できる。
 
 説明・実演に50分、[5. 演習](#演習)に45分、振り返りに5分を使う。必修1は15分、必修2は25分、残り5分は確認の目安である。通常演習の提出・宿題・完了報告はなく、教員の完了承認も待たない。発展は選んで取り組む。
 
@@ -79,7 +79,7 @@ qは「作るかどうか」ではなく「何個作るか」を表す。0/1へ�
 
 ### 手順1　基本条件の再開
 
-[cost-demo.mzn](../../../workbook/sessions/06-optimization/cost-demo.mzn)は、[assignment-core.mzn](../../../workbook/sessions/06-optimization/assignment-core.mzn)から変数・許可・定員の三条件を読み込む。基本モデルから`solve`{.minizinc}と表示だけを分けたファイルである。
+[cost-demo.mzn](../../../workbook/sessions/06-optimization/cost-demo.mzn)は、[assignment-core.mzn](../../../workbook/sessions/06-optimization/assignment-core.mzn)から変数と、一人一講座・許可・定員の三条件を読み込む。基本モデルから`solve`{.minizinc}と表示だけを分けたファイルである。
 
 ```{.minizinc filename="cost-demo.mzn"}
 include "assignment-core.mzn";
@@ -112,7 +112,7 @@ Gecodeで実行する。出力には割当表と`total`が表示される。合�
 minizinc --solver gecode cost-demo.mzn cost-base.dzn
 ```
 
-解の区切り`----------`は一つの解が出たことを表す。最適化では、最後の`==========`が最適性まで確認した終了を示す。実行中や時間制限で停止した場合、表示された候補よりよい解が残っている可能性がある。詳しい操作は[実行手引き](guides/optimization-check.md)で確認できる。
+解の区切り`----------`は一つの解が出たことを表す。最適化では、最後の`==========`が最適性まで確認した終了を示す。実行中や時間制限で停止した場合、表示された候補よりよい解が残っている可能性がある。詳しい操作は[確認手引き](guides/optimization-check.md)で確認できる。
 
 ### 手順4　個数と最大化
 
@@ -176,7 +176,7 @@ solve maximize q;
 
 #### 作業
 
-[cost-start.mzn](../../../workbook/sessions/06-optimization/cost-start.mzn)と[assignment-core.mzn](../../../workbook/sessions/06-optimization/assignment-core.mzn)を同じフォルダへ置く。後者には一人一講座・許可・定員の条件が入っている。`x[p,c]`{.minizinc} は人pが講座cを選ぶなら1、選ばないなら0、`cost[p,c]`{.minizinc} はその参加先の不満度を表す。`PEOPLE` は人の番号1〜4、`COURSES` は講座番号1〜3である。入力宣言と表示は用意してあるが、表示で使う`total`の定義と`solve`はまだない。
+[cost-start.mzn](../../../workbook/sessions/06-optimization/cost-start.mzn)と[assignment-core.mzn](../../../workbook/sessions/06-optimization/assignment-core.mzn)を同じフォルダーへ置く。後者には一人一講座・許可・定員の条件が入っている。`x[p,c]`{.minizinc} は人pが講座cを選ぶなら1、選ばないなら0、`cost[p,c]`{.minizinc} はその参加先の不満度を表す。`PEOPLE` は人の番号1〜4、`COURSES` は講座番号1〜3である。入力宣言と表示は用意してあるが、表示で使う`total`の定義と`solve`はまだない。
 
 ```{.minizinc filename="cost-start.mzn"}
 % TODO(作業1): 選んだ位置だけを足し、totalを定義する。
@@ -205,7 +205,7 @@ solve maximize q;
 #### 問題
 
 ::: {.given label="条件と入力"}
-二種類のキットを、それぞれ0個以上の整数個だけ作る。端数と負の個数は不可。材料容量と作業時間の容量はいずれも8で、両方を超えてはいけない。使い切る義務はない。
+二種類のキットを、それぞれ0個以上の整数個だけ作る。端数と負の個数は不可。材料容量と作業時間の容量はいずれも8で、どちらも超えてはいけない。使い切る義務はない。
 
 | キット | 1個の材料消費 | 1個の時間消費 | 1個の得点 |
 |---|---:|---:|---:|
@@ -278,7 +278,7 @@ vが非負なら、材料の条件から`2*u <= 8`{.minizinc}なのでu≤4。u�
 | `solve minimize total;`{.minizinc} | totalを最小にする |
 | `solve maximize score;`{.minizinc} | scoreを最大にする |
 | 安全な境界 | 元の条件を満たす解を失わない変数の範囲 |
-| 配布と確認 | [モデル・入力・終了状態の手引き](guides/optimization-check.md) |
+| 配布と確認 | [モデル・入力・終了状態の確認手引き](guides/optimization-check.md) |
 | 記法の原典 | [MiniZinc公式教材：算術と最適化](https://docs.minizinc.dev/en/stable/modelling.html#an-arithmetic-optimisation-example) |
 
 `solve`{.minizinc}の二重指定、許可制約を削除する誤り、容量を等号にする誤りに注意する。[結果](#結果)へ戻り、元の実行可能な解の集合と、比較している目的を確かめよう。

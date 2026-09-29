@@ -97,7 +97,7 @@ Mだけを最小にした最適表にはV=5のものもある。最大違反が1
 
 最大違反を最小にした後、その値を保ったまま合計も小さくしたい場合は、二段階に分ける。第一段階の最適値を制約へ移せば、第二段階で目的を切り替えても、最初の改善を失わずに済む。
 
-完成した[individual-core.mzn](../../../workbook/sessions/08-preferences/individual-core.mzn)と[second-stage-start.mzn](../../../workbook/sessions/08-preferences/second-stage-start.mzn)を使う。前者には個人の違反とMの定義まであり、`solve`{.minizinc}はない。[best-worst.dzn](../../../workbook/sessions/08-preferences/best-worst.dzn)に第一段階で確認した値1を入れてある。先に挙げた `metrics-core.mzn`・`roster-core.mzn` も同じフォルダに置き、次の組合せで実行する。
+完成した[individual-core.mzn](../../../workbook/sessions/08-preferences/individual-core.mzn)と[second-stage-start.mzn](../../../workbook/sessions/08-preferences/second-stage-start.mzn)を使う。前者には個人の違反とMの定義まであり、`solve`{.minizinc}はない。[best-worst.dzn](../../../workbook/sessions/08-preferences/best-worst.dzn)に第一段階で確認した値1を入れてある。先に挙げた `metrics-core.mzn`・`roster-core.mzn` も同じフォルダーに置き、次の組合せで実行する。
 
 ```sh
 minizinc --solver gecode second-stage-start.mzn request-individual.dzn best-worst.dzn

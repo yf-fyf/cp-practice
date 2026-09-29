@@ -2,7 +2,7 @@
 
 [第06回の本文](lesson.md)の最適化から、全最適解、上限による証明、目的の優先順位へ進む。各問題に必要な条件と完成した出発モデルを用意するので、前の発展の完成は不要である。選択M06a・M06bも、関心に合わせて選べる。
 
-モデルと入力の組、終了状態、複数ファイルの操作は[実行手引き](guides/optimization-check.md)を参照する。一つの最適解を見つけたこと、全最適解を列挙したこと、最適性の別の根拠を得たことを区別しよう。
+モデルと入力の組、終了状態、複数ファイルの操作は[確認手引き](guides/optimization-check.md)を参照する。一つの最適解を見つけたこと、全最適解を列挙したこと、最適性の別の根拠を得たことを区別しよう。
 
 ## 発展1　すべての最適な割当 {#all-optima}
 
@@ -24,7 +24,7 @@
 
 ### 二段階の実行
 
-`x[p,c]`{.minizinc} は人pが講座cを選ぶなら1、選ばないなら0、`cost[p,c]`{.minizinc} はその不満度、`total` は選んだ四つの不満度の合計Tである。`PEOPLE` はA〜Dに対応する1〜4、`COURSES` は1〜3。`cost-core.mzn` も `assignment-core.mzn` を読み込むので、両方を作業モデルと同じフォルダに置く。Gecodeでは出力末尾の `==========` まで確認し、途中の候補や時間切れを最適終了とは扱わない。
+`x[p,c]`{.minizinc} は人pが講座cを選ぶなら1、選ばないなら0、`cost[p,c]`{.minizinc} はその不満度、`total` は選んだ四つの不満度の合計Tである。`PEOPLE` はA〜Dに対応する1〜4、`COURSES` は1〜3。`cost-core.mzn` も `assignment-core.mzn` を読み込むので、両方を作業モデルと同じフォルダーに置く。Gecodeでは出力末尾の `==========` まで確認し、途中の候補や時間切れを最適終了とは扱わない。
 
 `cost-demo.mzn`で最適終了を確認し、最適値を記録する。次に[optimal-start.mzn](../../../workbook/sessions/06-optimization/optimal-start.mzn)と[cost-core.mzn](../../../workbook/sessions/06-optimization/cost-core.mzn)を使う。後者には基本条件とTの定義が完成しており、`solve`{.minizinc}は含まない。
 
@@ -63,7 +63,7 @@ $$2u+v\le8,\qquad u+2v\le8,\qquad \text{得点}=3u+4v.$$
 
 完成した[kits-base.mzn](../../../workbook/sessions/06-optimization/kits-base.mzn)・[kits-core.mzn](../../../workbook/sessions/06-optimization/kits-core.mzn)と[kits.dzn](../../../workbook/sessions/06-optimization/kits.dzn)から確認できる。必修2を自分で実装していなくてもよい。u=2、v=3なら材料7、時間8、得点18を達成する。
 
-配布モデルの`div`{.minizinc}は整数除算で、非負の値なら割り算の小数部分を切り捨てる。材料容量の入力 `material_capacity` と時間容量の入力 `time_capacity` を使い、`material_capacity div 2`{.minizinc}と`time_capacity div 2`{.minizinc}をそれぞれu・vの安全な上限に使い、入力を変えても範囲が追従する。
+配布モデルの`div`{.minizinc}は整数除算で、非負の値なら割り算の小数部分を切り捨てる。uの安全な上限には材料容量の入力 `material_capacity` から`material_capacity div 2`{.minizinc}を、vには時間容量の入力 `time_capacity` から`time_capacity div 2`{.minizinc}を使う。そのため入力を変えても範囲が追従する。
 
 ### 不等式を足す方法
 
@@ -112,7 +112,7 @@ minizinc --solver gecode lex-start.mzn kits-lex.dzn best-start.dzn
 
 ### 重みで優先する方法
 
-[weighted-start.mzn](../../../workbook/sessions/06-optimization/weighted-start.mzn)では、重みWを使った $W S-R$ の最大化を実装する。[weight-start.dzn](../../../workbook/sessions/06-optimization/weight-start.dzn)のWを変えて、二段階法と比較しよう。作業モデルに `kits-lex.dzn` と `weight-start.dzn` を合わせて渡し、共通の `kits-core.mzn` も同じフォルダへ置く。
+[weighted-start.mzn](../../../workbook/sessions/06-optimization/weighted-start.mzn)では、重みWを使った $W S-R$ の最大化を実装する。[weight-start.dzn](../../../workbook/sessions/06-optimization/weight-start.dzn)のWを変えて、二段階法と比較しよう。作業モデルに `kits-lex.dzn` と `weight-start.dzn` を合わせて渡し、共通の `kits-core.mzn` も同じフォルダーへ置く。
 
 Sは整数、Rは0〜8なので、W>8ならSが1増えた効果が、Rの変化による損失を必ず上回る。同じSではRが小さいほどよくなるため、W=9は今回の優先順位を守る十分な重みである。
 
@@ -138,7 +138,7 @@ W=9なら二段階法と同じ3・2を選ぶ。W=1ではv=0、u=0〜4の五つ�
 | 0 | 4 | 1 | 2 |
 | 8 | 8 | 1 | 2 |
 
-[lex-general-start.py](../../../workbook/sessions/06-optimization/lex-general-start.py)と[solve_tools.py](../../../workbook/sessions/06-optimization/solve_tools.py)を使い、完成させた`lex-start.mzn`・`weighted-start.mzn`を同じフォルダに置く。`run`は終了状態と解、`optimum`は最適終了した結果の目的値を返す。MiniZinc CLIをPythonから呼ぶ部分は用意してある。
+[lex-general-start.py](../../../workbook/sessions/06-optimization/lex-general-start.py)と[solve_tools.py](../../../workbook/sessions/06-optimization/solve_tools.py)を使い、完成させた`lex-start.mzn`・`weighted-start.mzn`を同じフォルダーに置く。`run`は終了状態と解、`optimum`は最適終了した結果の目的値を返す。MiniZinc CLIをPythonから呼ぶ部分は用意してある。
 
 1. **作業1：** 第一目的の最適値を得て、その値を固定した第二段階を実行する。
 2. **作業2：** 各入力の時間容量からRの上限を読み、十分なWを導き直す。重み付き法の結果と二段階法を比較する。

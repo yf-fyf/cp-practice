@@ -218,7 +218,6 @@ minizinc --solver gecode assignment-base.mzn base.dzn
 | 定員超過 | 1・1・1・2・3 | 2・2・1 |
 | 禁止選択 | 1・1・2・3・2 | 2・2・1 |
 
-
 ::: {.hint summary="ヒントを開く：固定する添字と動かす添字"}
 一人の参加先の数は、人pを固定して講座cを動かす。講座の人数は、講座cを固定して人pを動かす。最後に`x[p,c] <= allowed[p,c]`{.minizinc}が、許可0と1のそれぞれで何を許すかを確認する。
 :::
@@ -248,7 +247,7 @@ minizinc --solver gecode assignment-base.mzn base.dzn
 
 表の行は人、列は講座を表す。`x[p,c]`{.minizinc} は人pを講座cへ割り当てるなら1、割り当てないなら0の決定変数である。`allowed[p,c]`{.minizinc} は表の許可、`cap[c]`{.minizinc} は定員の入力。`PEOPLE` は人の番号の集合（1〜5がA〜Eに対応）、`COURSES` は講座番号1〜3の集合を表す。
 
-[open-start.mzn](../../../workbook/sessions/05-assignment/open-start.mzn)と[open.dzn](../../../workbook/sessions/05-assignment/open.dzn)を使う。同じフォルダの[assignment-base.mzn](../../../workbook/sessions/05-assignment/assignment-base.mzn)には一人一講座・定員・許可が完成しており、必修1の完成は不要。`opened[c]`{.minizinc}は開催なら1、非開催なら0を表す決定変数として用意した。
+[open-start.mzn](../../../workbook/sessions/05-assignment/open-start.mzn)と[open.dzn](../../../workbook/sessions/05-assignment/open.dzn)を使う。同じフォルダーの[assignment-base.mzn](../../../workbook/sessions/05-assignment/assignment-base.mzn)には一人一講座・定員・許可が完成しており、必修1の完成は不要。`opened[c]`{.minizinc}は開催なら1、非開催なら0を表す決定変数として用意した。
 
 ```{.minizinc filename="open-start.mzn"}
 % TODO(作業1): 開催時は2人以上にする。
