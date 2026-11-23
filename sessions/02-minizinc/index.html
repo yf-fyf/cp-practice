@@ -91,14 +91,12 @@
 <p>まず、盤面のルールを確認しよう。点は空欄、太い区切りに相当する縦線・横線は2×2のブロックを表す。完成したときに、どの範囲で数字が異なればよいだろう。</p>
 <div class="callout callout-given" role="note">
 <p><span class="callout-label">盤面と条件</span> 次の空欄を埋めた4×4の完成盤面を一つ求める。</p>
-<p><span class="math display">
-\begin{array}{cc|cc}
+<p><span class="math display">\begin{array}{cc|cc}
 1&amp;\cdot&amp;\cdot&amp;4\\
 \cdot&amp;4&amp;\cdot&amp;2\\\hline
 2&amp;\cdot&amp;4&amp;\cdot\\
 \cdot&amp;3&amp;\cdot&amp;1
-\end{array}
-</span></p>
+\end{array}</span></p>
 <p>各マスは1〜4。初めからある数字は変えない。各行・各列・四つの2×2ブロックには、それぞれ1〜4が一度ずつ現れる。ブロックは行1〜2／3〜4と列1〜2／3〜4を組み合わせた四領域とする。</p>
 </div>
 <p>上から1行目、左から1列目と数える。1行2列の空欄では、同じ行の1・4と同じ列の3・4を避けると2だけが残る。人が解くときは、このように候補を絞る。今回は、マスを埋める順番ではなく、どの完成盤面でも守る条件を記述する。</p>
@@ -140,12 +138,10 @@
 <p>互いに異なることを<strong>全相異なり</strong>と呼び、数式では <span class="math inline">\operatorname{AllDifferent}</span> と書く。四つの値が1〜4の範囲にあり、互いに異なれば、1〜4が一度ずつ現れる。</p>
 <p>すべての <span class="math inline">r,c\in\{1,2,3,4\}</span> について <span class="math inline">x_{r,c}\in\{1,2,3,4\}</span> とする。初期値があるマスには、<span class="math inline">g_{r,c}&gt;0</span> のとき <span class="math inline">x_{r,c}=g_{r,c}</span> を課す。</p>
 <p>各行・各列には、次の条件を課す。</p>
-<p><span class="math display">
-\begin{aligned}
+<p><span class="math display">\begin{aligned}
 \operatorname{AllDifferent}(x_{r,1},x_{r,2},x_{r,3},x_{r,4})&amp;\quad(r=1,2,3,4),\\
 \operatorname{AllDifferent}(x_{1,c},x_{2,c},x_{3,c},x_{4,c})&amp;\quad(c=1,2,3,4).
-\end{aligned}
-</span></p>
+\end{aligned}</span></p>
 <p>四つのブロックにも、それぞれの四マスの全相異なりを課す。例えば左上は <span class="math inline">\operatorname{AllDifferent}(x_{1,1},x_{1,2},x_{2,1},x_{2,2})</span> である。</p>
 <p>合計が10という条件だけでは、1・1・4・4も通ってしまう。今回は合計ではなく、対象の四マスを選んで重複を禁止する。盤面全体の16マスを一度に全相異なりにするのも、別の条件である。</p>
 </section>
@@ -239,14 +235,12 @@
 <h4>問題</h4>
 <div class="callout callout-given" role="note">
 <p><span class="callout-label">条件と入力</span> 次の4×4盤面の0を空欄として埋め、完成盤面を一つ求める。行は上から、列は左から1〜4と数え、各マスの数字を1〜4とする。0以外の初期値は保持する。各行・各列、および行1〜2／3〜4と列1〜2／3〜4で区切った四つの2×2ブロックの数字を、それぞれ互いに異ならせる。</p>
-<p><span class="math display">
-\begin{array}{cc|cc}
+<p><span class="math display">\begin{array}{cc|cc}
 4&amp;3&amp;0&amp;0\\
 2&amp;0&amp;0&amp;3\\\hline
 0&amp;0&amp;1&amp;0\\
 0&amp;0&amp;0&amp;4
-\end{array}
-</span></p>
+\end{array}</span></p>
 </div>
 </section>
 <section id="作業" class="level4">
@@ -315,14 +309,12 @@
 <h4>問題</h4>
 <div class="callout callout-given" role="note">
 <p><span class="callout-label">条件と入力</span> 次の0を空欄として埋め、条件をすべて満たす完成盤面を一つ求める。行は上から、列は左から、それぞれ1〜4と数える。</p>
-<p><span class="math display">
-\begin{array}{cc|cc}
+<p><span class="math display">\begin{array}{cc|cc}
 1&amp;2&amp;0&amp;0\\
 0&amp;0&amp;1&amp;0\\\hline
 0&amp;3&amp;0&amp;0\\
 0&amp;0&amp;0&amp;3
-\end{array}
-</span></p>
+\end{array}</span></p>
 <ul>
 <li>各マスに入れる数字は1〜4。0以外の初期値は変えない。</li>
 <li>各行と各列には、それぞれ1〜4を一度ずつ入れる。</li>
@@ -379,14 +371,12 @@
 <p>最後に、条件に合わない盤面を拒否するかも確かめる。モデルはそのままにして、入力の <code>diagonal.dzn</code> を次の<a href="../../downloads/session-02/demo.dzn" data-code-preview="../../previews/session-02/demo.dzn.json">demo.dzn</a>へ交換する。二つの初期配置を同時に指定しない。</p>
 <div class="callout callout-given" role="note">
 <p><span class="callout-label">確認用の入力</span> 0は空欄で、0以外の数字を保持する。</p>
-<p><span class="math display">
-\begin{array}{cc|cc}
+<p><span class="math display">\begin{array}{cc|cc}
 1&amp;0&amp;0&amp;4\\
 0&amp;4&amp;0&amp;2\\\hline
 2&amp;0&amp;4&amp;0\\
 0&amp;3&amp;0&amp;1
-\end{array}
-</span></p>
+\end{array}</span></p>
 </div>
 <p>この入力は、行・列・ブロックの条件だけなら解けるが、主対角線の条件を加えると <code>UNSATISFIABLE</code>（解なし）になる。主対角線の初期値が1・4・4・1と重複しているためである。エラーや、探索が終わっていない <code>UNKNOWN</code> は、解なしとは区別する。</p>
 <details class="hint"><summary>ヒントを開く：盤面上で対象をたどる</summary><div class="hint-body">
@@ -502,7 +492,7 @@
   <nav class="pager" aria-label="前後の移動"><a href="../../sessions/01-prolog/index.html">← 第01回</a> · <a href="../../index.html">講義一覧</a> · <a href="../../sessions/03-search/index.html">第03回 →</a></nav>
   <footer class="sitefoot">
     <p>実践・制約プログラミング — 2026年度</p>
-  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.1 · 1371798d14f102e5e95e774c937defd468b059fb</p></footer>
 </div>
 </body>
 </html>

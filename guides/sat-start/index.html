@@ -45,15 +45,9 @@
 </header>
 <section id="pythonとz3の確認" class="level2">
 <h2>PythonとZ3の確認</h2>
-<p>授業用のPython環境を開き、次を実行する。Z3のバージョンが表示されれば、このPythonから利用できる。教材の配布実装はPython 3.13とZ3 5.1.0で確認している。</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-c</span> <span class="st">&quot;import z3; print(z3.get_version_string())&quot;</span></span></code></pre></div>
-<p>ここでの<code>python3</code>は授業で使うPythonを指す。環境により起動名が<code>python</code>なら読み替える。別のPythonへ入れたZ3は、そのままでは今のPythonから使えない。エディタの実行環境も同じPythonへ合わせる。</p>
-<p>新しく用意する場合は、作業フォルダーに<a href="../../downloads/session-09/requirements.txt" data-code-preview="../../previews/session-09/requirements.txt.json">requirements.txt</a>を保存する。Linux・macOSのシェルでは、例えば次のように仮想環境を作り、その環境のPythonへインストールできる。</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> venv .venv</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">.venv/bin/python</span> <span class="at">-m</span> pip install <span class="at">-r</span> requirements.txt</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">.venv/bin/python</span> <span class="at">-c</span> <span class="st">&quot;import z3; print(z3.get_version_string())&quot;</span></span></code></pre></div>
-<p>この場合、以降の<code>python3</code>を<code>.venv/bin/python</code>へ読み替えて実行してよい。Windowsでは仮想環境を作るPythonを<code>python</code>で起動し、作成後は<code>.venv\Scripts\python.exe</code>を使える。授業で準備済みの環境がある場合は、そこで最初の確認を行えばよい。</p>
-<p>導入するパッケージ名は<code>z3-solver</code>、インポートする名前は<code>z3</code>である。手順の参照先は<a href="https://github.com/Z3Prover/z3#python">Z3の公式リポジトリ</a>と<a href="https://docs.python.org/3/library/venv.html">Pythonの仮想環境の説明</a>。ファイル名を<code>z3.py</code>にするとライブラリと衝突するので、配布名のまま使う。</p>
+<p>環境の用意は<a href="../../guides/python-start/index.html">Pythonの環境構築</a>にまとめた。pyproject.tomlのあるフォルダーで次を実行し、Z3のバージョンが表示されることを確かめる。</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run python <span class="at">-c</span> <span class="st">&quot;import z3; print(z3.get_version_string())&quot;</span></span></code></pre></div>
+<p>本文とこの手引きの<code>python3</code>は、<code>uv run python</code>へ読み替える。</p>
 </section>
 <section id="本文のファイルと実行" class="level2">
 <h2>本文のファイルと実行</h2>
@@ -140,9 +134,9 @@
 <section id="必修2の固定値の検査" class="level2">
 <h2>必修2の固定値の検査</h2>
 <p>二つの固定は別々の実行で行う。<code>fix_pair</code>は、通常の必修2モデルへAとFの値を追加する。<code>both-true</code>と<code>both-false</code>を同じソルバーへ続けて加えない。</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> exclusive-start.py</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> exclusive-start.py <span class="at">--case</span> both-true</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> exclusive-start.py <span class="at">--case</span> both-false</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> exclusive-start.py</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> exclusive-start.py <span class="at">--case</span> both-true</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> exclusive-start.py <span class="at">--case</span> both-false</span></code></pre></div>
 <div class="table-scroll">
 <table>
 <thead>
@@ -293,9 +287,9 @@
 <section id="選択演習のファイル" class="level2">
 <h2>選択演習のファイル</h2>
 <p>配色には<a href="../../downloads/session-09/color-start.py" data-code-preview="../../previews/session-09/color-start.py.json">color-start.py</a>、<a href="../../downloads/session-09/australia.json" data-code-preview="../../previews/session-09/australia.json.json">australia.json</a>、<a href="../../downloads/session-09/color-checks.json" data-code-preview="../../previews/session-09/color-checks.json.json">color-checks.json</a>、sat_io.pyを使う。全色が偽の固定と、Tだけ赤・緑を選ぶ固定を別々に試す。</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> color-start.py</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> color-start.py <span class="at">--case</span> all-false</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> color-start.py <span class="at">--case</span> T-two</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> color-start.py</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> color-start.py <span class="at">--case</span> all-false</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> color-start.py <span class="at">--case</span> T-two</span></code></pre></div>
 <p>正しいモデルでは通常がSAT、二つの固定がUNSATとなる。<code>--case valid</code>は有効な一配色の固定でSATになる。二色を試す場合はaustralia.jsonをコピーして<code>colors</code>を二色へ変更し、<code>python3 color-start.py コピーした入力.json</code>で実行する。</p>
 <p>MaxSATは<a href="../../downloads/session-09/maxsat-work.md" data-code-preview="../../previews/session-09/maxsat-work.md.json">maxsat-work.md</a>の表を手で埋めてもよい。Pythonで確認する場合は<a href="../../downloads/session-09/maxsat-start.py" data-code-preview="../../previews/session-09/maxsat-start.py.json">maxsat-start.py</a>を使う。これは通常のboolに対する真理値表なのでZ3は不要で、記号式とPythonの真偽値を混ぜない。</p>
 </section>
@@ -303,7 +297,7 @@
   <nav class="pager" aria-label="前後の移動"><a href="../../index.html">講義一覧</a> · <a href="../../sessions/09-sat/index.html">第09回の本文へ</a></nav>
   <footer class="sitefoot">
     <p>実践・制約プログラミング — 2026年度</p>
-  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.1 · 1371798d14f102e5e95e774c937defd468b059fb</p></footer>
 </div>
 </body>
 </html>

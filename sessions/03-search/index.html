@@ -95,14 +95,12 @@
 <p>第02回の盤面をもう一度使い、完成させるまでの途中に注目する。最初からある数字は確定しているが、空欄の数字はまだ分からない。それぞれに残せる候補を考えよう。</p>
 <div class="callout callout-given" role="note">
 <p><span class="callout-label">盤面と条件</span> 4×4の各マスは1〜4とし、初期値を変えない。各行・各列、および行1〜2／3〜4と列1〜2／3〜4で区切る四つの2×2ブロックを、それぞれ全相異なりとする。点は空欄である。</p>
-<p><span class="math display">
-\begin{array}{cc|cc}
+<p><span class="math display">\begin{array}{cc|cc}
 1&amp;\cdot&amp;\cdot&amp;4\\
 \cdot&amp;4&amp;\cdot&amp;2\\\hline
 2&amp;\cdot&amp;4&amp;\cdot\\
 \cdot&amp;3&amp;\cdot&amp;1
-\end{array}
-</span></p>
+\end{array}</span></p>
 <p>この盤面について、確定した値から他の候補を除く過程を調べる。主対角線などの追加条件は使わない。</p>
 </div>
 <p>例えば1行2列に1を置くと、同じ行の1と重なるので不適合である。だから1を候補から除ける。一方、「まだ衝突を見つけていない数字」が、必ず完成解の一部になるとは限らない。</p>
@@ -120,9 +118,7 @@
 <h3>一巡の更新規則</h3>
 <p><strong>一斉更新</strong>では、全マスが同じ更新前の候補表を参照する。未確定マスから、その巡の開始時に一要素集合だった近隣マスの値を除き、別の表へ書く。すでに確定したマスは変えない。</p>
 <p>マスを一つの記号iで表すと、未確定マスへの規則は次のように書ける。<span class="math inline">\setminus</span> は集合から指定の要素を除く記号で、右辺の候補集合はいずれも更新前のものを指す。</p>
-<p><span class="math display">
-D_i&#39;=D_i\setminus\{v\mid j\text{ はiの近隣マス},\ D_j=\{v\}\}.
-</span></p>
+<p><span class="math display">D_i&#39;=D_i\setminus\{v\mid j\text{ はiの近隣マス},\ D_j=\{v\}\}.</span></p>
 <p>この削減を<strong>伝播</strong>と呼ぶ。同じ巡で新しく確定した値は、次の巡から使う。手元で一マスずつすぐ反映する方法もあり得るが、この教材の途中表を比較するときは一斉更新に揃える。</p>
 <p>更新の前後に矛盾を調べる。候補が空集合 <span class="math inline">\varnothing</span> になるか、同じ行・列・ブロックに同じ値の確定マスが二つあれば矛盾である。候補が空でなくても、後者の衝突だけで止める。これは学習用の規則であり、Gecode内部の処理順を再現したものではない。</p>
 </section>
@@ -133,14 +129,12 @@ D_i&#39;=D_i\setminus\{v\mid j\text{ はiの近隣マス},\ D_j=\{v\}\}.
 <section id="手順1-初期値からの削減" class="level3">
 <h3>手順1　初期値からの削減</h3>
 <p>1行2列では、同じ行から1・4、同じ列から4・3を除けるので2だけが残る。全マスを初期状態から一斉に更新すると、次の表になる。一要素集合は数字だけで略記する。</p>
-<p><span class="math display">
-\begin{array}{cc|cc}
+<p><span class="math display">\begin{array}{cc|cc}
 1&amp;2&amp;3&amp;4\\
 3&amp;4&amp;\{1,3\}&amp;2\\\hline
 2&amp;1&amp;4&amp;3\\
 4&amp;3&amp;2&amp;1
-\end{array}
-</span></p>
+\end{array}</span></p>
 <p>2行3列には1と3が残る。同じ行の2行1列はこの巡で新しく3になったため、まだ削除の根拠には使わない。<a href="../../downloads/session-03/demo-work.txt" data-code-preview="../../previews/session-03/demo-work.txt.json">初期表のメモ</a>と見比べ、どの表の数字を参照したか確かめよう。</p>
 </section>
 <section id="手順2-次の巡で使う値" class="level3">
@@ -313,14 +307,12 @@ D_i&#39;=D_i\setminus\{v\mid j\text{ はiの近隣マス},\ D_j=\{v\}\}.
 <h4>問題</h4>
 <div class="callout callout-given" role="note">
 <p><span class="callout-label">条件と入力</span> 各マスは1〜4、0は空欄、0以外の初期値は保持する。各行・各列と、行1〜2／3〜4・列1〜2／3〜4で区切る四つの2×2ブロックでは、それぞれ1〜4を一度ずつ使う。</p>
-<p><span class="math display">
-\begin{array}{cc|cc}
+<p><span class="math display">\begin{array}{cc|cc}
 4&amp;3&amp;0&amp;0\\
 2&amp;0&amp;0&amp;3\\\hline
 0&amp;0&amp;1&amp;0\\
 0&amp;0&amp;0&amp;4
-\end{array}
-</span></p>
+\end{array}</span></p>
 <p>空欄の候補は初めに{1,2,3,4}、初期値は一要素集合とする。行は上から、列は左から1〜4と数える。候補が一つだけのマスを確定マスと呼び、近隣とは同じ行・列・ブロックのいずれかを共有する別のマスを指す。各巡の開始時に確定した近隣の値を、未確定マスだけから一斉に除く。同じ巡で新しく確定した値は次の巡から使い、確定済みのマスは変えない。自分自身は近隣に含めない。空集合か確定値同士の衝突があれば矛盾として止める。</p>
 </div>
 </section>
@@ -522,7 +514,7 @@ TODO(作業2): D*全体へ戻し、C=1を仮定したときの状態を記す。
   <nav class="pager" aria-label="前後の移動"><a href="../../sessions/02-minizinc/index.html">← 第02回</a> · <a href="../../index.html">講義一覧</a> · <a href="../../sessions/04-rules/index.html">第04回 →</a></nav>
   <footer class="sitefoot">
     <p>実践・制約プログラミング — 2026年度</p>
-  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.1 · 1371798d14f102e5e95e774c937defd468b059fb</p></footer>
 </div>
 </body>
 </html>

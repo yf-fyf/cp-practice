@@ -93,14 +93,12 @@
 <li>主対角線の重複禁止や、マス同士の大小関係は条件に加えない。</li>
 </ul>
 <p>次の盤面は、このルールを満たす既知の解である。これと<strong>少なくとも一マスで数字が異なる完成盤面を一つ</strong>求める。同じ数字のままのマスがあってもよい。違いは同じ位置のマス同士、つまり行も列も同じマスで比べる。</p>
-<p><span class="math display">
-\begin{array}{cc|cc}
+<p><span class="math display">\begin{array}{cc|cc}
 1&amp;2&amp;3&amp;4\\
 3&amp;4&amp;1&amp;2\\\hline
 2&amp;1&amp;4&amp;3\\
 4&amp;3&amp;2&amp;1
-\end{array}
-</span></p>
+\end{array}</span></p>
 <p>この既知の盤面は比較するための入力であり、その16個の数字に答えを固定するものではない。</p>
 </div>
 </section>
@@ -146,14 +144,12 @@
 <p>次に、別解がない場合を調べる。比較用の <code>first.dzn</code> はそのままにして、初期配置の <code>empty.dzn</code> だけを次の<a href="../../downloads/session-02/demo.dzn" data-code-preview="../../previews/session-02/demo.dzn.json">demo.dzn</a>へ交換する。</p>
 <div class="callout callout-given" role="note">
 <p><span class="callout-label">確認用の入力</span> 0は空欄で、0以外の数字を保持する。行・列・ブロックのルールは、この問題に示したものを使う。</p>
-<p><span class="math display">
-\begin{array}{cc|cc}
+<p><span class="math display">\begin{array}{cc|cc}
 1&amp;0&amp;0&amp;4\\
 0&amp;4&amp;0&amp;2\\\hline
 2&amp;0&amp;4&amp;0\\
 0&amp;3&amp;0&amp;1
-\end{array}
-</span></p>
+\end{array}</span></p>
 </div>
 <p>まず、問題に示した既知の完成盤面が、この初期値と行・列・ブロックの条件をすべて満たすことを確認する。続いて、除外条件を書いたモデルを <code>demo.dzn</code> と <code>first.dzn</code> で実行する。結果は <code>UNSATISFIABLE</code>（解なし）となる。元の条件を満たす解が一つあることと、その解を除くと別の解がないことを合わせて、この初期配置の解は一意だと判断できる。エラーや探索未完了の <code>UNKNOWN</code> は、別解なしを示すものではない。</p>
 <p>追加条件の意味も読み直そう。<code>forall</code> は「指定した対象のすべてで成り立つ」を表す。これで全マスを異ならせると、既知の解と同じ数字を一部に残した別解まで除いてしまう。全解を数えて調べたい場合、初期配置が全空欄の数独には完成盤面が288個あり、正しい除外条件では指定の1個だけが減って287個になる。<a href="../../guides/minizinc-start/index.html#全解と一意性">全解の確認方法</a>は任意の追加確認に利用できる。</p>
@@ -167,14 +163,12 @@
 <p>完成盤面の数字をいくつ残せば、その盤面に一意に決まるだろう。「一意」とは、初期値と数独の条件に合う完成盤面がちょうど一つだけ存在することである。発展2を終えていなくても、基本モデルの全解を表示する方法で、別解の有無を確認できる。</p>
 <div class="callout callout-given" role="note">
 <p><span class="callout-label">設計するもの</span> 目標の完成盤面は次のとおり。行は上から、列は左から1〜4と数える。この16個の数字の一部を残し、残りを0（空欄）にした初期配置を作る。</p>
-<p><span class="math display">
-\begin{array}{cc|cc}
+<p><span class="math display">\begin{array}{cc|cc}
 1&amp;2&amp;3&amp;4\\
 3&amp;4&amp;1&amp;2\\\hline
 2&amp;1&amp;4&amp;3\\
 4&amp;3&amp;2&amp;1
-\end{array}
-</span></p>
+\end{array}</span></p>
 <p>解の条件は、全マスが1〜4、0以外の初期値を保持、各行・各列・四つの2×2ブロックの数字が、それぞれすべて互いに異なること。ブロックは行1〜2／3〜4と列1〜2／3〜4で区切る。主対角線や不等号は使わない。解がこの盤面だけになる初期配置で、残す数字をできるだけ減らす。</p>
 </div>
 <p><a href="../../downloads/session-02/sudoku4.mzn" data-code-preview="../../previews/session-02/sudoku4.mzn.json">sudoku4.mzn</a>と、完成盤面を初期値にした<a href="../../downloads/session-02/complete.dzn" data-code-preview="../../previews/session-02/complete.dzn.json">complete.dzn</a>から始める。モデル中の <code class="sourceCode minizinc">given[r,c]</code> はr行c列の初期値、<code class="sourceCode minizinc">grid[r,c]</code> はその位置の解の数字を表す。入力の <code>given</code> の値を編集し、モデルの条件はそのまま使う。</p>
@@ -218,7 +212,7 @@
   <nav class="pager" aria-label="前後の移動"><a href="../../index.html">講義一覧</a> · <a href="../../sessions/02-minizinc/index.html">第02回の本文へ</a></nav>
   <footer class="sitefoot">
     <p>実践・制約プログラミング — 2026年度</p>
-  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.0 · 0a912b782d1eb9fdec09bd39890f9cba2b9286df</p></footer>
+  <p><a href="../../legal/LICENSE-MATERIALS">教材のライセンス</a> · <a href="../../legal/THIRD_PARTY_NOTICES.md">第三者ソフトウェア</a></p><p>Release v1.0.1 · 1371798d14f102e5e95e774c937defd468b059fb</p></footer>
 </div>
 </body>
 </html>
