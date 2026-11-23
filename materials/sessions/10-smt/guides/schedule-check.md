@@ -4,21 +4,13 @@
 
 ## 環境と再開用の足場
 
-授業で使うPythonから`import z3`{.python}できる環境を使う。[requirements.txt](../../../../workbook/sessions/10-smt/requirements.txt)に検証した依存を固定してある。環境準備は授業内に扱い、前の発展の完成を待つ必要はない。
+第09回と同じ環境を使う。用意の手順は[Pythonの環境構築](../../09-sat/guides/python-start.md)にまとめた。第09回で作った環境はそのまま使える。環境準備は授業内に扱い、前の発展の完成を待つ必要はない。pyproject.tomlのあるフォルダーで次を実行し、Z3のバージョンが表示されることを確かめる。
 
 ```sh
-python3 -c "import z3; print(z3.get_version_string())"
+uv run python -c "import z3; print(z3.get_version_string())"
 ```
 
-この手引きの`python3`は授業で使うPythonを指す。別の起動名や仮想環境を使う場合は、そのPythonへ読み替える。新しく用意する場合、Linux・macOSでは次のように作業フォルダーの仮想環境へ入れられる。
-
-```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
-.venv/bin/python -c "import z3; print(z3.get_version_string())"
-```
-
-作成後は本文の`python3`を`.venv/bin/python`へ読み替えてよい。Windowsでの仮想環境は、作成に使う`python`と、作成後の`.venv\Scripts\python.exe`を区別する。Z3のパッケージ名は`z3-solver`、インポート名は`z3`である。[公式の導入案内](https://github.com/Z3Prover/z3#python)と[Pythonの仮想環境](https://docs.python.org/3/library/venv.html)を参照できる。
+本文とこの手引きの`python3`は、`uv run python`へ読み替える。
 
 [Booleanの小例](../../../../workbook/sessions/10-smt/warmup.py)と[sat_io.py](../../../../workbook/sessions/10-smt/sat_io.py)は第09回と同じものを再配布する。整数のモデルは[integer_io.py](../../../../workbook/sessions/10-smt/integer_io.py)を使う。前者のboolの読み取りを、そのまま整数の値の読み取りに使わない。
 

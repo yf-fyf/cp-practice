@@ -10,7 +10,7 @@
 - SAT・UNSAT・判定不能を区別し、SATの代入を元の条件と照合できる。
 - 固定した二つの代入で、「ちょうど一方」の条件漏れを調べられる。
 
-命題論理式・真理値表・論理回路とPythonの基本を使う。Z3の環境操作とAPIは授業内で説明する。[操作用の小例](../../../workbook/sessions/09-sat/warmup.py)、[判定と表示の共通部分](../../../workbook/sessions/09-sat/sat_io.py)、[実行の手引き](guides/sat-start.md)から始められる。第08回のPython発展や、MiniZincからの変換は前提にしない。
+命題論理式・真理値表・論理回路とPythonの基本を使う。Z3の環境操作とAPIは授業内で説明する。[操作用の小例](../../../workbook/sessions/09-sat/warmup.py)、[判定と表示の共通部分](../../../workbook/sessions/09-sat/sat_io.py)、[実行の手引き](guides/sat-start.md)から始められる。環境の用意は[Pythonの環境構築](guides/python-start.md)にまとめた。第08回のPython発展や、MiniZincからの変換は前提にしない。
 
 説明・実演に55分、[5. 演習](#演習)に40分、振り返りに5分を使う。必修1は15分、必修2は20分、残り5分は確認の目安である。環境準備を事前の宿題にはせず、通常演習の提出・宿題・完了報告・教員の完了承認も設けない。発展は選んで取り組む。
 

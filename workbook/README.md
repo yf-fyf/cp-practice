@@ -16,3 +16,14 @@
 | 第10回 | [第10回　SMTで作業の日程を組む](../materials/sessions/10-smt/lesson.md) | [演習ファイル](sessions/10-smt/) |
 
 ファイル間の相対参照を保って使ってください。通常演習の提出や宿題はありません。第11〜15回の自由課題の提出方法は、決まり次第案内します。
+
+## Pythonの環境
+
+第09回・第10回はPythonからZ3を使います。このフォルダーの[pyproject.toml](pyproject.toml)と[uv.lock](uv.lock)は、[uv](https://docs.astral.sh/uv/)で使う全回共通の環境です。WindowsでもmacOSでも、このフォルダーで次を実行すれば同じ版のZ3が入ります。
+
+```sh
+uv sync
+uv run python -c "import z3; print(z3.get_version_string())"
+```
+
+演習では、本文の`python3`を`uv run python`へ読み替えて、`sessions/09-sat`などの中で実行します。uvの入れ方は、[Pythonの環境構築](../materials/sessions/09-sat/guides/python-start.md)にあります。

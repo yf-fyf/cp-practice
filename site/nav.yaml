@@ -297,6 +297,7 @@ sessions:
   slug: 09-sat
   advanced_slug: sat-challenges
   guides:
+  - python-start
   - sat-start
   handouts:
   - australia.json

@@ -4,25 +4,13 @@
 
 ## PythonとZ3の確認
 
-授業用のPython環境を開き、次を実行する。Z3のバージョンが表示されれば、このPythonから利用できる。教材の配布実装はPython 3.13とZ3 5.1.0で確認している。
+環境の用意は[Pythonの環境構築](python-start.md)にまとめた。pyproject.tomlのあるフォルダーで次を実行し、Z3のバージョンが表示されることを確かめる。
 
 ```sh
-python3 -c "import z3; print(z3.get_version_string())"
+uv run python -c "import z3; print(z3.get_version_string())"
 ```
 
-ここでの`python3`は授業で使うPythonを指す。環境により起動名が`python`なら読み替える。別のPythonへ入れたZ3は、そのままでは今のPythonから使えない。エディタの実行環境も同じPythonへ合わせる。
-
-新しく用意する場合は、作業フォルダーに[requirements.txt](../../../../workbook/sessions/09-sat/requirements.txt)を保存する。Linux・macOSのシェルでは、例えば次のように仮想環境を作り、その環境のPythonへインストールできる。
-
-```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
-.venv/bin/python -c "import z3; print(z3.get_version_string())"
-```
-
-この場合、以降の`python3`を`.venv/bin/python`へ読み替えて実行してよい。Windowsでは仮想環境を作るPythonを`python`で起動し、作成後は`.venv\Scripts\python.exe`を使える。授業で準備済みの環境がある場合は、そこで最初の確認を行えばよい。
-
-導入するパッケージ名は`z3-solver`、インポートする名前は`z3`である。手順の参照先は[Z3の公式リポジトリ](https://github.com/Z3Prover/z3#python)と[Pythonの仮想環境の説明](https://docs.python.org/3/library/venv.html)。ファイル名を`z3.py`にするとライブラリと衝突するので、配布名のまま使う。
+本文とこの手引きの`python3`は、`uv run python`へ読み替える。
 
 ## 本文のファイルと実行
 
