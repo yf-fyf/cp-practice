@@ -31,7 +31,7 @@
 
 ## ローカルで読む・確認する
 
-依存は Python 3.11以上、PyYAML、Pandoc（検証版3.10.2）です。図のSVGは同梱済みなので、通常のサイト生成にTeXは不要です。
+依存は Python 3.11以上、PyYAML、Pandoc（検証版3.14）です。図のSVGは同梱済みなので、通常のサイト生成にTeXは不要です。
 
 ```sh
 make serve                         # http://127.0.0.1:8000/ を開く
@@ -45,7 +45,7 @@ make pages VERSION=v0.1.0-preview # ローカルに .pages/ と配布ZIPを組�
 
 プログラムや入力・出力例のリンクは、本文の上に読み取り専用のプレビューを開きます。全文コピーと元ファイルのダウンロードができ、「閉じる」またはEscで元の位置に戻ります。ZIPは直接ダウンロードします。
 
-CIとリリース処理は `.github/actions/setup-pandoc/action.yml` でPandoc 3.10.2とSHA-256を固定しています。構文強調は `--syntax-highlighting=tango` を使います。
+CIとリリース処理は `.github/actions/setup-pandoc/action.yml` でPandoc 3.14とSHA-256を固定しています。構文強調は `--syntax-highlighting=tango` を使います。
 
 [回割りと方針](design/curriculum-2026.md)、[保守手順](design/maintaining.md)、[レビュー手順](design/quality_guide.md)も参照してください。旧版教材はGit履歴から確認できます。
 

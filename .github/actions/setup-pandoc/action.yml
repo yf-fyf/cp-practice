@@ -7,8 +7,8 @@ runs:
     - name: Download and verify Pandoc
       shell: bash
       env:
-        PANDOC_VERSION: "3.10.2"
-        PANDOC_SHA256: "c7edd535941c48be6a362081a748272837de81ae11777202d9c341d3d8261c9a"
+        PANDOC_VERSION: "3.14"
+        PANDOC_SHA256: "c5f4720cdefb3f7bdc5d07202ef579feef0d1370773c873804dd8fdaa8c4f1b8"
       run: |
         archive="$RUNNER_TEMP/pandoc-${PANDOC_VERSION}-linux-amd64.tar.gz"
         curl --fail --location --silent --show-error --retry 3 \

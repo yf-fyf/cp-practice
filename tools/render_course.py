@@ -162,7 +162,7 @@ def build_pages(sample: LessonSample, output: Path = OUTPUT, *, website: bool = 
                 # トークンを生成する。配色はテンプレートが読む lesson-syntax.css に集約。
                 "--syntax-highlighting=tango",
                 f"--syntax-definition={TOOLS / 'syntax/minizinc.xml'}",
-                f"--katex={base}assets/katex/",
+                f"--math-method=katex:{base}assets/katex/",
                 "--metadata", f"pagetitle={title}",
                 "--metadata", f"page-kind={kind}",
                 "--variable", f"base={base}",

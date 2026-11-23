@@ -23,7 +23,7 @@ make figures        # 図のソースを変更した場合だけ
 make pages VERSION=vX.Y.Z # ローカルにリリースを組み立てる
 ```
 
-Python 3.11以上・PyYAML・Pandoc 3.10.2で検証する。Pandocの固定値は `.github/actions/setup-pandoc/action.yml` に集約する。
+Python 3.11以上・PyYAML・Pandoc 3.14で検証する。Pandocの固定値は `.github/actions/setup-pandoc/action.yml` に集約する。
 図を変更したらソースとSVGを揃える。具体的な手順は [保守手順](design/maintaining.md)。
 
 モデル・ソルバーの実行と授業試行は静的検査とは別に記録する。レビューは [品質ガイド](design/quality_guide.md) に沿って行う。
