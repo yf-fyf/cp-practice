@@ -78,4 +78,25 @@ def load_sessions():
     return sessions
 
 
+# 全回で共通の配布物（uv の環境定義など）。workbook/ 直下に置き、ここへ出す。
+COURSE_DOWNLOADS = "downloads/course"
+
+
+def load_course_handouts():
+    names = yaml.safe_load((ROOT / "site/nav.yaml").read_text(encoding="utf-8")).get("course_handouts") or []
+    if len(names) != len(set(names)):
+        raise ValueError("duplicate course handout")
+    for name in names:
+        if (not isinstance(name, str) or name == "README.md"
+                or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", name)):
+            raise ValueError(f"invalid course handout: {name}")
+    return tuple(names)
+
+
+def course_handout(name: str) -> Path:
+    """全回共通の配布物の置き場所。テストで ROOT を差し替えられるよう、呼出し時に解決する。"""
+    return ROOT / "workbook" / name
+
+
 SAMPLES = load_sessions()
+COURSE_HANDOUTS = load_course_handouts()

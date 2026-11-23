@@ -24,3 +24,6 @@ materials/figures/_build/
 *~
 .vscode/
 .idea/
+
+# uv の環境（workbook/pyproject.toml）
+.venv/

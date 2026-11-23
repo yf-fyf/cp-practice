@@ -1,4 +1,8 @@
 # URL・原稿・配布範囲の登録。handouts 以外はダウンロードへコピーしない。
+# course_handouts は全回で共通の配布物。workbook/ 直下に置き、downloads/course/ へ出す。
+course_handouts:
+- pyproject.toml
+- uv.lock
 sessions:
 - number: '01'
   slug: 01-prolog

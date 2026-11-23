@@ -18,6 +18,8 @@
 
 サイト生成は Python 3.11以上、PyYAML、Pandoc 3.14で確認する。CIとリリースは `.github/actions/setup-pandoc/action.yml` に公式配布版・SHA-256を固定する。旧オプションの互換処理は入れず、`--syntax-highlighting=tango` と `--math-method=katex:URL` に対応したPandocを使う。Pandoc 3.12では `--syntax-definition` のキーワード一覧が解決されず、MiniZincを強調しないまま警告を出す（3.12.1で修正）。Linuxのパッケージ版3.11でも同じ警告を確認したので、手元でもCIと同じ公式配布版を使う。
 
+演習のPython環境は、uv用の `workbook/pyproject.toml`・`workbook/uv.lock`（`site/nav.yaml` の `course_handouts`、公開先は `downloads/course/`）と、pip用の各回の `requirements.txt` で配る。依存を変えるときは、`pyproject.toml` と `requirements.txt` を同じ固定に揃え、`workbook/` で `uv lock` を実行する。`required-environments` はWindows・macOSのホイールがない版をロック時に拒否する。`make check` は両者の依存の一致と、`uv.lock` の固定・取得元（PyPIのみ）を検査する。
+
 図のソースとSVGは各回の `figures/` に置く。`make figures` で第04回・第07回のTeX図と第10回のPython図を生成する。第04回・第07回にはLuaLaTeX、TikZ、日本語用パッケージとNoto Sans CJK JP、poppler-utilsが必要。TeX/PythonソースがないSVGはSVG自体を編集する。通常のサイト生成では同梱SVGを使う。
 
 ## リリース

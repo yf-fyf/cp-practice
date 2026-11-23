@@ -13,7 +13,7 @@ from pathlib import Path
 import subprocess
 from urllib.parse import unquote, urlsplit
 
-from course import OUTPUT, ROOT, SAMPLES
+from course import COURSE_DOWNLOADS, COURSE_HANDOUTS, OUTPUT, ROOT, SAMPLES, course_handout
 from code_preview import check_previews
 
 
@@ -108,6 +108,17 @@ def check_samples(samples, output=OUTPUT):
             elif source.read_bytes() != target.read_bytes():
                 errors.append(f"配布内容不一致: 第{sample.number}回 {name}")
             handout_count += 1
+    folder = output / COURSE_DOWNLOADS
+    actual = {p.relative_to(folder).as_posix() for p in folder.rglob("*") if p.is_file()}
+    if actual != set(COURSE_HANDOUTS):
+        errors.append(f"全回共通の配布一覧不一致: 不足={sorted(set(COURSE_HANDOUTS)-actual)}, 余分={sorted(actual-set(COURSE_HANDOUTS))}")
+    for name in COURSE_HANDOUTS:
+        source, target = course_handout(name), folder / name
+        if not source.is_file() or not target.is_file():
+            errors.append(f"配布ファイルなし: 全回共通 {name}")
+        elif source.read_bytes() != target.read_bytes():
+            errors.append(f"配布内容不一致: 全回共通 {name}")
+        handout_count += 1
     # 登録外の経路へコピーされた教員用ファイルも見つける。
     for path in output.rglob("*"):
         if path.is_file() and ("teacher" in path.relative_to(output).parts

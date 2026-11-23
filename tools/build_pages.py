@@ -7,7 +7,7 @@ import shutil
 import subprocess
 import sys
 import zipfile
-from course import ROOT, SAMPLES
+from course import COURSE_DOWNLOADS, COURSE_HANDOUTS, ROOT, SAMPLES
 from check_publish import check_sources, files
 from code_preview import ASSETS, preview_path, text_handouts
 
@@ -48,7 +48,8 @@ def verify_output(output, version):
     expected.update('legal/' + name for name in LEGAL)
     expected.update('assets/' + name for name in ('lesson-style.css', 'lesson-syntax.css',
                     'lesson-lightbox.css', 'lesson-lightbox.js', 'course-home.css', 'site-header.css', *ASSETS))
-    expected.update(preview_path(url) for url in text_handouts(SAMPLES.values()))
+    expected.update(preview_path(url) for url in text_handouts(SAMPLES.values(), COURSE_HANDOUTS))
+    expected.update(f'{COURSE_DOWNLOADS}/{name}' for name in COURSE_HANDOUTS)
     katex = ROOT / 'site/vendor/katex'
     expected.update('assets/katex/' + p.relative_to(katex).as_posix() for p in katex.rglob('*') if p.is_file())
     for sample in SAMPLES.values():

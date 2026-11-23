@@ -12,6 +12,7 @@
 - 同じフォルダーの `advanced-exercises.md`：発展・選択演習
 - 同じフォルダーの `guides/` と `figures/`：手引きと図
 - `workbook/sessions/<URL名>/`：配布するモデル・入力・確認用ファイル
+- `workbook/pyproject.toml`・`workbook/uv.lock`：第09回・第10回で使う全回共通のPython環境（uv用）
 - `site/nav.yaml`：URL、原稿の対応、配布するファイルの一覧
 
 例えば第07回は `materials/sessions/07-schedule/lesson.md` を編集します。サイトのURLは `/sessions/07-schedule/` です。

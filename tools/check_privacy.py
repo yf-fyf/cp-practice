@@ -21,7 +21,7 @@ SKIP_DIRNAMES = {".git", ".site", ".pages", "_build", "__pycache__",
 
 # 検査対象にする素のテキストの拡張子
 TEXT_SUFFIXES = {".md", ".py", ".mzn", ".dzn", ".pl", ".txt", ".yaml", ".yml",
-                 ".tex", ".lua", ".css", ".js", ".html"}
+                 ".tex", ".lua", ".css", ".js", ".html", ".toml"}
 
 # チェックの途中で出す補足（違反ではない）。各チェックの先頭で clear される。
 NOTES: list[str] = []

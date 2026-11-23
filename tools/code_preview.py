@@ -4,30 +4,35 @@ import json
 import re
 import subprocess
 
-from course import ROOT
+from course import COURSE_DOWNLOADS, COURSE_HANDOUTS, ROOT, course_handout
 
 LANGUAGES = {
     '.pl': ('prolog', 'Prolog'), '.mzn': ('minizinc', 'MiniZinc'),
     '.dzn': ('minizinc', 'MiniZincの入力'), '.py': ('python', 'Python'),
     '.json': ('json', 'JSON'), '.md': ('plaintext', 'Markdown'),
+    '.toml': ('toml', 'TOML'),
 }
 ASSETS = ('code-preview.css', 'code-preview.js')
 
 
-def text_handouts(samples):
-    """公開登録されたUTF-8テキストだけを返す。ZIPやバイナリは含めない。"""
+def text_handouts(samples, course=()):
+    """公開登録されたUTF-8テキストだけを返す。ZIPやバイナリは含めない。
+
+    course には全回共通の配布物の名前を渡す（通常は course.COURSE_HANDOUTS）。
+    """
+    candidates = [(f'downloads/session-{sample.number}/{name}', sample.handout_directory / name)
+                  for sample in samples for name in sample.handouts]
+    candidates += [(f'{COURSE_DOWNLOADS}/{name}', course_handout(name)) for name in course]
     result = {}
-    for sample in samples:
-        for name in sample.handouts:
-            source = sample.handout_directory / name
-            if source.suffix.lower() == '.zip':
-                continue
-            try:
-                text = source.read_bytes().decode('utf-8')
-            except UnicodeDecodeError:
-                continue
-            if '\0' not in text:
-                result[f'downloads/session-{sample.number}/{name}'] = (source, text)
+    for download, source in candidates:
+        if source.suffix.lower() == '.zip':
+            continue
+        try:
+            text = source.read_bytes().decode('utf-8')
+        except UnicodeDecodeError:
+            continue
+        if '\0' not in text:
+            result[download] = (source, text)
     return result
 
 
@@ -82,7 +87,7 @@ def highlighted_lines(items):
 
 
 def build_previews(samples, output):
-    entries = text_handouts(samples)
+    entries = text_handouts(samples, COURSE_HANDOUTS)
     styles = [LANGUAGES.get(source.suffix.lower(), ('plaintext', 'テキスト')) for source, _ in entries.values()]
     rendered = highlighted_lines([(style[0], text) for style, (_, text) in zip(styles, entries.values())])
     for (download, (source, text)), (language, label), lines in zip(entries.items(), styles, rendered):
@@ -97,7 +102,7 @@ def build_previews(samples, output):
 
 def check_previews(samples, output):
     errors = []
-    entries = text_handouts(samples)
+    entries = text_handouts(samples, COURSE_HANDOUTS)
     expected = {preview_path(download) for download in entries}
     actual = {p.relative_to(output).as_posix() for p in (output / 'previews').rglob('*') if p.is_file()}
     if actual != expected:

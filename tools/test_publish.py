@@ -8,6 +8,11 @@ import zipfile
 import course
 import check_publish
 
+PYPROJECT = '[project]\nname = "workbook"\nversion = "1"\ndependencies = ["z3-solver==1.0"]\n'
+LOCK = ('[[package]]\nname = "workbook"\nversion = "1"\nsource = {{ virtual = "." }}\n\n'
+        '[[package]]\nname = "z3-solver"\nversion = "{version}"\nsource = {{ {source} }}\n')
+REGISTRY = 'registry = "https://pypi.org/simple"'
+
 
 class DistributionTests(unittest.TestCase):
     def setUp(self):
@@ -15,12 +20,15 @@ class DistributionTests(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
         sample = course.LessonSample("03", "03-search", "search-challenges",
-                                     ("solutions.json", "session.zip"))
+                                     ("solutions.json", "session.zip", "requirements.txt"))
         for module in (course, check_publish):
             patcher = patch.object(module, "ROOT", self.root)
             patcher.start()
             self.addCleanup(patcher.stop)
         patcher = patch.object(check_publish, "SAMPLES", {"03": sample})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        patcher = patch.object(check_publish, "COURSE_HANDOUTS", ("pyproject.toml", "uv.lock"))
         patcher.start()
         self.addCleanup(patcher.stop)
         self.sample = sample
@@ -29,6 +37,9 @@ class DistributionTests(unittest.TestCase):
         for name in ("lesson.md", "advanced-exercises.md"):
             self.put("materials/sessions/03-search/" + name, "# 第03回")
         self.put("workbook/sessions/03-search/solutions.json", "[]")
+        self.put("workbook/sessions/03-search/requirements.txt", "z3-solver==1.0\n")
+        self.put("workbook/pyproject.toml", PYPROJECT)
+        self.put("workbook/uv.lock", LOCK.format(version="1.0", source=REGISTRY))
         self.bundle()
 
     def put(self, name, content):
@@ -61,6 +72,22 @@ class DistributionTests(unittest.TestCase):
     def test_missing_handout_is_rejected(self):
         (self.sample.handout_directory / "solutions.json").unlink()
         self.assertTrue(any("登録ファイルなし" in error for error in check_publish.check_sources()))
+
+    def test_unregistered_course_file_is_rejected(self):
+        self.put("workbook/extra.toml", "")
+        self.assertTrue(any("未登録のファイル: workbook/extra.toml" in error for error in check_publish.check_sources()))
+
+    def test_requirements_must_match_course_environment(self):
+        self.put("workbook/sessions/03-search/requirements.txt", "z3-solver==2.0\n")
+        self.assertTrue(any("requirements.txt と pyproject.toml" in error for error in check_publish.check_sources()))
+
+    def test_stale_lock_is_rejected(self):
+        self.put("workbook/uv.lock", LOCK.format(version="0.9", source=REGISTRY))
+        self.assertTrue(any("uv.lock が pyproject.toml と不一致" in error for error in check_publish.check_sources()))
+
+    def test_local_lock_source_is_rejected(self):
+        self.put("workbook/uv.lock", LOCK.format(version="1.0", source='path = "../z3"'))
+        self.assertTrue(any("PyPI以外の取得元" in error for error in check_publish.check_sources()))
 
     def test_registered_symlink_is_rejected(self):
         path = self.sample.source / "lesson.md"

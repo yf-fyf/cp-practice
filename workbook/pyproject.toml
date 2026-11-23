@@ -1,0 +1,24 @@
+# 演習でPythonを使う回の共通環境（uv用）。第09回・第10回で使う。
+# 使い方は workbook/README.md と各回の手引きを参照。pipで用意する場合は各回の requirements.txt を使う。
+[project]
+name = "cp-practice-workbook"
+version = "2026"
+description = "実践・制約プログラミングの演習で使うPython環境"
+requires-python = ">=3.13"
+dependencies = [
+    "z3-solver==5.1.0.0",
+]
+
+[tool.uv]
+# 演習フォルダーはパッケージにしない。依存だけを入れる。
+package = false
+# 配布済みのホイールがない環境では、Z3をソースから長時間ビルドせずに止める。
+no-build-package = ["z3-solver"]
+# Windows・macOSで使うホイールがロックに含まれることを、ロック作成時に確かめる。
+required-environments = [
+    "sys_platform == 'win32' and platform_machine == 'AMD64'",
+    "sys_platform == 'win32' and platform_machine == 'ARM64'",
+    "sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+]

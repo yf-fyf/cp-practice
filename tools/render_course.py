@@ -11,7 +11,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from course import LessonSample, OUTPUT, ROOT, SAMPLES
+from course import COURSE_DOWNLOADS, COURSE_HANDOUTS, LessonSample, OUTPUT, ROOT, SAMPLES, course_handout
 from site_header import site_header, session_navigation
 from code_preview import ASSETS, build_previews, preview_path, text_handouts
 
@@ -64,9 +64,11 @@ def rewrite_links(text: str, depth: int, sample: LessonSample, source_name: str)
             destinations[(item.handout_directory / name).resolve()] = f"downloads/session-{item.number}/{name}"
         for figure in (item.source / "figures").glob("*.svg"):
             destinations[figure.resolve()] = f"figures/session-{item.number}/{figure.name}"
+    for name in COURSE_HANDOUTS:
+        destinations[course_handout(name).resolve()] = f"{COURSE_DOWNLOADS}/{name}"
 
     previews = {source.resolve(): preview_path(url)
-                for url, (source, _) in text_handouts(SAMPLES.values()).items()}
+                for url, (source, _) in text_handouts(SAMPLES.values(), COURSE_HANDOUTS).items()}
 
     def replace(match: re.Match[str]) -> str:
         link = match.group(1)
@@ -95,6 +97,11 @@ def build(session: str = "07", output: Path = OUTPUT, *, website: bool = False) 
     for name in ("lesson-style.css", "lesson-syntax.css", "lesson-lightbox.css", "lesson-lightbox.js", "site-header.css", *ASSETS):
         shutil.copyfile(TOOLS / name, assets / name)
     shutil.copytree(TOOLS / "vendor/katex", assets / "katex", dirs_exist_ok=True)
+
+    course_downloads = output / COURSE_DOWNLOADS
+    course_downloads.mkdir(parents=True, exist_ok=True)
+    for name in COURSE_HANDOUTS:
+        shutil.copyfile(course_handout(name), course_downloads / name)
 
     warnings = 0
     selected = list(SAMPLES.values()) if session == "all" else [SAMPLES[session]]
